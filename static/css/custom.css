@@ -1,27 +1,161 @@
-/* Custom styles to complement Bootstrap dark theme */
+/* Custom styles that complement Bootstrap dark theme */
 
-.prayer-request {
-    padding: 1rem;
-    border-radius: 0.25rem;
-    background-color: var(--bs-dark);
+/* Enhanced container spacing */
+.container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Card enhancements */
+.card {
+    border: 1px solid var(--bs-dark);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Form field enhancements */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Navigation enhancements */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--bs-primary);
+    transition: width 0.3s;
+}
+
+.nav-link:hover:after {
+    width: 100%;
+}
+
+/* Prayer request card styles */
+.prayer-card {
+    background: var(--bs-dark);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+}
+
+/* Event card enhancements */
+.event-date {
+    font-size: 1.2rem;
+    color: var(--bs-primary);
+}
+
+/* Sermon library improvements */
+.sermon-filters {
+    background: var(--bs-dark);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+/* Gallery image container */
+.gallery-image {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Donation form enhancements */
+.donation-amount-btn {
+    width: 80px;
+    margin: 0.25rem;
+}
+
+/* Footer improvements */
+.footer {
+    margin-top: auto;
+    padding: 2rem 0;
+}
+
+/* Loading indicator */
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Alert enhancements */
+.alert {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Admin dashboard enhancements */
+.dashboard-stat-card {
+    background: var(--bs-dark);
+    border-radius: 8px;
+    padding: 1.5rem;
     margin-bottom: 1rem;
 }
 
-.card {
-    background-color: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
+.dashboard-stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--bs-primary);
 }
 
-.form-control {
-    background-color: var(--bs-dark);
-    border-color: var(--bs-border-color);
-    color: var(--bs-light);
+/* Table enhancements */
+.table {
+    margin-bottom: 0;
 }
 
-.form-control:focus {
-    background-color: var(--bs-dark);
-    border-color: var(--bs-primary);
-    color: var(--bs-light);
+.table thead th {
+    border-top: none;
+    background: var(--bs-dark);
 }
 
-/* Add more custom styles as needed */
+/* Modal enhancements */
+.modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--bs-dark);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--bs-dark);
+}
