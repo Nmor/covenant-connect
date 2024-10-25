@@ -49,15 +49,16 @@ class Gallery(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Donation(db.Model):
+    __tablename__ = 'donations'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
-    currency = db.Column(db.String(3), nullable=False, default='USD')  # USD, EUR, GBP
+    currency = db.Column(db.String(3), nullable=False, default='USD')
     reference = db.Column(db.String(100), unique=True)
-    status = db.Column(db.String(20), default='pending')  # pending, success, failed
-    payment_method = db.Column(db.String(20), nullable=False)  # paystack, fincra
-    transaction_id = db.Column(db.String(100), unique=True)  # Payment provider's transaction ID
-    error_message = db.Column(db.Text)  # For storing error messages
-    payment_metadata = db.Column(db.JSON)  # For storing additional transaction data
+    status = db.Column(db.String(20), default='pending')
+    payment_method = db.Column(db.String(20), nullable=False)
+    transaction_id = db.Column(db.String(100), unique=True)
+    error_message = db.Column(db.Text)
+    payment_info = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
