@@ -19,18 +19,37 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST" action="{{ url_for('donations.process_donation') }}">
-                        <div class="mb-3">
-                            <label for="amount" class="form-label">Donation Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
+                    <form method="POST" action="{{ url_for('donations.process_donation') }}" id="donationForm" novalidate>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="amount" class="form-label">Donation Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text currency-symbol">$</span>
+                                    <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
+                                    <div class="invalid-feedback">
+                                        Please enter a valid amount (minimum 1).
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select class="form-select" id="currency" name="currency" required>
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a currency.
+                                </div>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
+                            </div>
                             <div class="form-text">We'll send your donation receipt to this address.</div>
                         </div>
 
@@ -52,6 +71,40 @@
                             </div>
                         </div>
 
+                        <div id="internationalFields" class="d-none">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control international-required" id="first_name" name="first_name">
+                                    <div class="invalid-feedback">
+                                        Please enter your first name.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control international-required" id="last_name" name="last_name">
+                                    <div class="invalid-feedback">
+                                        Please enter your last name.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="country" class="form-label">Country</label>
+                                <select class="form-select international-required" id="country" name="country">
+                                    <option value="">Select a country</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="FR">France</option>
+                                    <option value="DE">Germany</option>
+                                    <!-- Add more countries as needed -->
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select your country.
+                                </div>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn btn-primary">Proceed to Payment</button>
                     </form>
                 </div>
@@ -59,4 +112,51 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('donationForm');
+    const internationalFields = document.getElementById('internationalFields');
+    const currencySelect = document.getElementById('currency');
+    const currencySymbol = document.querySelector('.currency-symbol');
+    const paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
+    const internationalRequiredFields = document.querySelectorAll('.international-required');
+
+    // Currency symbol mapping
+    const currencySymbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£'
+    };
+
+    // Update currency symbol when currency changes
+    currencySelect.addEventListener('change', function() {
+        currencySymbol.textContent = currencySymbols[this.value] || '$';
+    });
+
+    // Toggle international fields based on payment method
+    paymentMethodInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value === 'fincra') {
+                internationalFields.classList.remove('d-none');
+                internationalRequiredFields.forEach(field => field.required = true);
+            } else {
+                internationalFields.classList.add('d-none');
+                internationalRequiredFields.forEach(field => field.required = false);
+            }
+        });
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
 {% endblock %}
