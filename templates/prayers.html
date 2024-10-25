@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Prayer Requests - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h2>Submit Prayer Request</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('prayers.submit_prayer') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="request" class="form-label">Prayer Request</label>
+                        <textarea class="form-control" id="request" name="request" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
+                        <label class="form-check-label" for="is_public">Make this prayer request public</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h2>Public Prayer Requests</h2>
+            </div>
+            <div class="card-body">
+                {% if prayers %}
+                    {% for prayer in prayers %}
+                        <div class="prayer-request mb-4">
+                            <h5>{{ prayer.name }}</h5>
+                            <p class="text-muted">{{ prayer.created_at.strftime('%B %d, %Y') }}</p>
+                            <p>{{ prayer.request }}</p>
+                            <hr>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No public prayer requests at this time.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

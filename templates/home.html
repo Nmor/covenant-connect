@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 mb-4">Welcome to Covenant Connect</h1>
+            <p class="lead mb-4">Your spiritual journey starts here. Join our community in prayer, worship, and fellowship.</p>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Prayer Requests</h3>
+                    <p class="card-text">Share your prayer needs with our community or pray for others.</p>
+                    <a href="{{ url_for('prayers.prayers') }}" class="btn btn-primary">Submit Prayer</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Events</h3>
+                    <p class="card-text">Stay updated with our upcoming events and gatherings.</p>
+                    <a href="{{ url_for('events.events') }}" class="btn btn-primary">View Events</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Support Us</h3>
+                    <p class="card-text">Support our ministry through secure online donations.</p>
+                    <a href="{{ url_for('donations.donate') }}" class="btn btn-primary">Donate</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
