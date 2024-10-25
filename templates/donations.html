@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Donate - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Support Our Ministry</h2>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('donations.process_donation') }}">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Donation Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text">We'll send your donation receipt to this address.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Payment Method</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="paystack" value="paystack" checked>
+                                    <label class="form-check-label" for="paystack">
+                                        Local Payment (Paystack)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="fincra" value="fincra">
+                                    <label class="form-check-label" for="fincra">
+                                        International Payment (Fincra)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
