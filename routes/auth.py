@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from flask import Blueprint, render_template, flash, redirect, url_for, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User
@@ -54,6 +54,7 @@ def register():
             flash('Username or email already exists.', 'danger')
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(f"Registration error: {str(e)}")
             flash('An error occurred during registration.', 'danger')
 
     return render_template('auth/register.html')
@@ -66,14 +67,35 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
         
-        if user and user.check_password(password):
+        if not username or not password:
+            flash('Please enter both username and password.', 'danger')
+            current_app.logger.warning(f"Login attempt failed: Missing credentials for username: {username}")
+            return render_template('auth/login.html')
+
+        try:
+            user = User.query.filter_by(username=username).first()
+            
+            if not user:
+                flash('Invalid username or password.', 'danger')
+                current_app.logger.warning(f"Login attempt failed: User not found - {username}")
+                return render_template('auth/login.html')
+            
+            if not user.check_password(password):
+                flash('Invalid username or password.', 'danger')
+                current_app.logger.warning(f"Login attempt failed: Invalid password for user - {username}")
+                return render_template('auth/login.html')
+
             login_user(user)
+            current_app.logger.info(f"User logged in successfully: {username}")
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('home.home'))
-        
-        flash('Invalid username or password', 'danger')
+
+        except Exception as e:
+            current_app.logger.error(f"Login error for user {username}: {str(e)}")
+            flash('An error occurred during login. Please try again.', 'danger')
+            return render_template('auth/login.html')
+
     return render_template('auth/login.html')
 
 @auth_bp.route('/logout')
@@ -141,6 +163,7 @@ def update_profile():
         flash('Username or email already exists.', 'danger')
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Profile update error: {str(e)}")
         flash('An error occurred while updating profile.', 'danger')
 
     return redirect(url_for('auth.profile'))
