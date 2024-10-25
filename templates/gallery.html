@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Gallery - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="mb-4">Photo Gallery</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if images %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for image in images %}
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="image-container position-relative">
+                                    <!-- Loading placeholder -->
+                                    <div class="loading-placeholder">
+                                        <div class="loading-spinner spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <!-- Image with error handling -->
+                                    <img src="{{ image.image_url }}" 
+                                         class="card-img-top gallery-image" 
+                                         alt="{{ image.title }}"
+                                         loading="lazy"
+                                         onerror="this.onerror=null; this.src='/static/img/image-placeholder.svg';">
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ image.title }}</h5>
+                                    <p class="card-text">{{ image.description }}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Added {{ image.created_at.strftime('%B %d, %Y') }}
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No images available in the gallery at this time.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle image loading states
+    const images = document.querySelectorAll('.gallery-image');
+    images.forEach(img => {
+        // Show loading state
+        const container = img.closest('.image-container');
+        const loadingPlaceholder = container.querySelector('.loading-placeholder');
+        
+        img.addEventListener('load', function() {
+            // Hide loading placeholder when image loads
+            if (loadingPlaceholder) {
+                loadingPlaceholder.style.display = 'none';
+            }
+            img.style.opacity = '1';
+        });
+
+        img.addEventListener('error', function() {
+            // Hide loading placeholder on error
+            if (loadingPlaceholder) {
+                loadingPlaceholder.style.display = 'none';
+            }
+            // Error handling is managed by the onerror attribute
+        });
+    });
+});
+</script>
+
+<style>
+/* Gallery specific styles */
+.image-container {
+    position: relative;
+    aspect-ratio: 16/9;
+    background-color: var(--bs-dark);
+    overflow: hidden;
+}
+
+.loading-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bs-dark);
+}
+
+.gallery-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Enhanced hover effects */
+.card:hover .gallery-image {
+    transform: scale(1.05);
+    transition: transform 0.3s ease-in-out;
+}
+
+.card {
+    overflow: hidden;
+    transition: transform 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}
