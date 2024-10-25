@@ -7,6 +7,7 @@ from sqlalchemy.orm import DeclarativeBase
 class Base(DeclarativeBase):
     pass
 
+# Initialize extensions
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
 
@@ -14,7 +15,7 @@ def create_app():
     app = Flask(__name__)
     
     # Configuration
-    app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default-secret-key")
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "default-secret-key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
@@ -46,14 +47,25 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         from models import User
-        return User.query.get(int(user_id))
-    
-    # Create database tables
-    with app.app_context():
-        db.create_all()
+        try:
+            return User.query.get(int(user_id))
+        except Exception as e:
+            app.logger.error(f"Error loading user: {e}")
+            return None
     
     return app
 
+def init_db(app):
+    # Create database tables
+    try:
+        with app.app_context():
+            db.create_all()
+            app.logger.info("Database tables created successfully")
+    except Exception as e:
+        app.logger.error(f"Error creating database tables: {e}")
+        raise
+
 if __name__ == '__main__':
     app = create_app()
+    init_db(app)
     app.run(host='0.0.0.0', port=5000)
