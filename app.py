@@ -46,6 +46,7 @@ def create_app():
     from routes.gallery import gallery_bp
     from routes.prayers import prayers_bp
     from routes.donations import donations_bp
+    from routes.sermons import sermons_bp
     
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
@@ -54,6 +55,7 @@ def create_app():
     app.register_blueprint(gallery_bp)
     app.register_blueprint(prayers_bp)
     app.register_blueprint(donations_bp)
+    app.register_blueprint(sermons_bp)
 
     @login_manager.user_loader
     def load_user(user_id):

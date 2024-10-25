@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Sermon Library - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h2 class="mb-4">Sermon Library</h2>
+            
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('sermons.search_sermons') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ request.args.get('title', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="preacher" class="form-label">Preacher</label>
+                            <input type="text" class="form-control" id="preacher" name="preacher" value="{{ request.args.get('preacher', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="start_date" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="end_date" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="media_type" class="form-label">Media Type</label>
+                            <select class="form-select" id="media_type" name="media_type">
+                                <option value="">All</option>
+                                <option value="video" {% if request.args.get('media_type') == 'video' %}selected{% endif %}>Video</option>
+                                <option value="audio" {% if request.args.get('media_type') == 'audio' %}selected{% endif %}>Audio</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a href="{{ url_for('sermons.sermons') }}" class="btn btn-secondary">Clear</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results -->
+            {% if sermons %}
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    {% for sermon in sermons %}
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ sermon.title }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="bi bi-person"></i> {{ sermon.preacher }}<br>
+                                            <i class="bi bi-calendar"></i> {{ sermon.date.strftime('%B %d, %Y') }}
+                                        </small>
+                                    </p>
+                                    <p class="card-text">{{ sermon.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-{{ 'primary' if sermon.media_type == 'video' else 'info' }}">
+                                            {{ sermon.media_type.title() }}
+                                        </span>
+                                        <a href="{{ sermon.media_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="bi bi-play-circle"></i> Watch/Listen
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No sermons found matching your search criteria.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+{% endblock %}
