@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>{{ 'Edit' if sermon else 'Add New' }} Sermon</h1>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ sermon.title if sermon else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4">{{ sermon.description if sermon else '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="preacher" class="form-label">Preacher</label>
+                        <input type="text" class="form-control" id="preacher" name="preacher" 
+                               value="{{ sermon.preacher if sermon else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ sermon.date.strftime('%Y-%m-%d') if sermon else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="media_url" class="form-label">Media URL</label>
+                        <input type="url" class="form-control" id="media_url" name="media_url" 
+                               value="{{ sermon.media_url if sermon else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="media_type" class="form-label">Media Type</label>
+                        <select class="form-select" id="media_type" name="media_type" required>
+                            <option value="video" {% if sermon and sermon.media_type == 'video' %}selected{% endif %}>Video</option>
+                            <option value="audio" {% if sermon and sermon.media_type == 'audio' %}selected{% endif %}>Audio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {{ 'Update' if sermon else 'Add' }} Sermon
+                        </button>
+                        <a href="{{ url_for('admin.sermons') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
