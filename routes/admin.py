@@ -1,12 +1,14 @@
 from flask import Blueprint, render_template, current_app, flash, redirect, url_for, request
 from flask_login import login_required, current_user
-from models import PrayerRequest, Event, Sermon, Donation, User
+from models import PrayerRequest, Event, Sermon, Donation, User, Gallery
 from app import db
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 from sqlalchemy.exc import SQLAlchemyError
 from functools import wraps
+import csv
+import io
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -15,7 +17,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
             flash('You do not have permission to access this page.', 'danger')
-            return redirect(url_for('home.home'))
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -52,7 +54,6 @@ def dashboard():
         try:
             successful_donations = Donation.query.filter_by(status='success')
             
-            # Calculate total amount and count
             donation_totals = successful_donations.with_entities(
                 func.sum(Donation.amount).label('total_amount'),
                 func.count().label('total_count')
@@ -67,7 +68,6 @@ def dashboard():
                 total_count = 0
                 average_amount = 0
 
-            # Get amounts by currency
             currency_stats = successful_donations.with_entities(
                 Donation.currency,
                 func.sum(Donation.amount).label('amount')
@@ -93,7 +93,6 @@ def dashboard():
                 'currency_amounts': []
             }
 
-        # Combine all statistics
         stats = {
             'prayers': prayer_stats,
             'events': event_stats,
@@ -106,6 +105,7 @@ def dashboard():
         current_app.logger.error(f"Error in admin dashboard: {str(e)}")
         return render_template('admin/dashboard.html', error="An error occurred loading the dashboard")
 
+# User Management Routes
 @admin_bp.route('/admin/users')
 @login_required
 @admin_required
@@ -142,8 +142,12 @@ def create_user():
                 flash('Username or email already exists.', 'danger')
                 return render_template('admin/user_form.html')
 
-            user = User(username=username, email=email, is_admin=is_admin)
+            user = User()
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
             user.set_password(password)
+            
             db.session.add(user)
             db.session.commit()
 
@@ -244,3 +248,211 @@ def delete_user(user_id):
         flash('An error occurred while deleting the user.', 'danger')
     
     return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def user_import():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file uploaded.', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        if not file or file.filename == '':
+            flash('No file selected.', 'danger')
+            return redirect(request.url)
+
+        if not file.filename.endswith('.csv'):
+            flash('Only CSV files are allowed.', 'danger')
+            return redirect(request.url)
+
+        try:
+            # Read CSV file
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_input = csv.DictReader(stream)
+            
+            success_count = 0
+            error_count = 0
+            errors = []
+
+            for row in csv_input:
+                try:
+                    if not all(k in row for k in ['username', 'email', 'password']):
+                        error_count += 1
+                        errors.append(f"Missing required fields in row")
+                        continue
+
+                    # Check if user already exists
+                    if User.query.filter((User.username == row['username']) | 
+                                      (User.email == row['email'])).first():
+                        error_count += 1
+                        errors.append(f"User with username {row['username']} or email {row['email']} already exists")
+                        continue
+
+                    # Create new user
+                    user = User()
+                    user.username = row['username']
+                    user.email = row['email']
+                    user.is_admin = row.get('is_admin', '').lower() == 'true'
+                    user.set_password(row['password'])
+                    db.session.add(user)
+                    success_count += 1
+
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f"Error processing row: {str(e)}")
+
+            db.session.commit()
+            
+            flash(f'Successfully imported {success_count} users. {error_count} errors occurred.', 
+                  'success' if error_count == 0 else 'warning')
+            if errors:
+                for error in errors[:5]:  # Show only first 5 errors
+                    flash(error, 'danger')
+                if len(errors) > 5:
+                    flash(f'... and {len(errors) - 5} more errors', 'danger')
+
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error importing users: {str(e)}")
+            flash('An error occurred while importing users.', 'danger')
+
+        return redirect(url_for('admin.users'))
+
+    return render_template('admin/user_import.html')
+
+# Event Management Routes
+@admin_bp.route('/admin/events')
+@login_required
+@admin_required
+def events():
+    try:
+        events_list = Event.query.order_by(Event.start_date.desc()).all()
+        now = datetime.utcnow()
+        return render_template('admin/events.html', events=events_list, now=now)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching events: {str(e)}")
+        flash('An error occurred while fetching events.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_event():
+    if request.method == 'POST':
+        try:
+            title = request.form.get('title')
+            description = request.form.get('description')
+            location = request.form.get('location')
+            start_date = request.form.get('start_date')
+            start_time = request.form.get('start_time')
+            end_date = request.form.get('end_date')
+            end_time = request.form.get('end_time')
+            
+            if not all([title, start_date, start_time, end_date, end_time, location]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/event_form.html')
+            
+            # Combine date and time
+            start_datetime = datetime.combine(
+                datetime.strptime(start_date, '%Y-%m-%d').date(),
+                datetime.strptime(start_time, '%H:%M').time()
+            )
+            end_datetime = datetime.combine(
+                datetime.strptime(end_date, '%Y-%m-%d').date(),
+                datetime.strptime(end_time, '%H:%M').time()
+            )
+            
+            if end_datetime <= start_datetime:
+                flash('End date/time must be after start date/time.', 'danger')
+                return render_template('admin/event_form.html')
+            
+            event = Event()
+            event.title = title
+            event.description = description
+            event.location = location
+            event.start_date = start_datetime
+            event.end_date = end_datetime
+            
+            db.session.add(event)
+            db.session.commit()
+            
+            flash('Event created successfully.', 'success')
+            return redirect(url_for('admin.events'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error creating event: {str(e)}")
+            flash('An error occurred while creating the event.', 'danger')
+            return render_template('admin/event_form.html')
+    
+    return render_template('admin/event_form.html')
+
+@admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    if request.method == 'POST':
+        try:
+            title = request.form.get('title')
+            description = request.form.get('description')
+            location = request.form.get('location')
+            start_date = request.form.get('start_date')
+            start_time = request.form.get('start_time')
+            end_date = request.form.get('end_date')
+            end_time = request.form.get('end_time')
+            
+            if not all([title, start_date, start_time, end_date, end_time, location]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/event_form.html', event=event)
+            
+            # Combine date and time
+            start_datetime = datetime.combine(
+                datetime.strptime(start_date, '%Y-%m-%d').date(),
+                datetime.strptime(start_time, '%H:%M').time()
+            )
+            end_datetime = datetime.combine(
+                datetime.strptime(end_date, '%Y-%m-%d').date(),
+                datetime.strptime(end_time, '%H:%M').time()
+            )
+            
+            if end_datetime <= start_datetime:
+                flash('End date/time must be after start date/time.', 'danger')
+                return render_template('admin/event_form.html', event=event)
+            
+            event.title = title
+            event.description = description
+            event.location = location
+            event.start_date = start_datetime
+            event.end_date = end_datetime
+            
+            db.session.commit()
+            flash('Event updated successfully.', 'success')
+            return redirect(url_for('admin.events'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating event: {str(e)}")
+            flash('An error occurred while updating the event.', 'danger')
+            return render_template('admin/event_form.html', event=event)
+    
+    return render_template('admin/event_form.html', event=event)
+
+@admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_event(event_id):
+    try:
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting event: {str(e)}")
+        flash('An error occurred while deleting the event.', 'danger')
+    
+    return redirect(url_for('admin.events'))

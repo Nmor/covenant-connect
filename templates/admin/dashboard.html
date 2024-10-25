@@ -1,147 +1,142 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
-{% block title %}Admin Dashboard - Covenant Connect{% endblock %}
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>Dashboard Overview</h1>
+</div>
 
-{% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Admin Dashboard</h1>
-        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">User Management</a>
+<div class="row">
+    <!-- Prayer Requests Stats -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Prayer Requests</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.prayers.total }}</h4>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.prayers.public }}</h4>
+                            <p>Public</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.prayers.private }}</h4>
+                            <p>Private</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <canvas id="prayerRequestsChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="row">
-        <!-- Prayer Requests Stats -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Prayer Requests</h3>
+    <!-- Events Stats -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Events</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.events.total }}</h4>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.events.upcoming }}</h4>
+                            <p>Upcoming</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.events.past }}</h4>
+                            <p>Past</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.prayers.total }}</h4>
-                                <p>Total</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.prayers.public }}</h4>
-                                <p>Public</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.prayers.private }}</h4>
-                                <p>Private</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <canvas id="prayerRequestsChart"></canvas>
-                    </div>
+                <div class="mt-3">
+                    <canvas id="eventsChart"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Events Stats -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Events</h3>
+    <!-- Sermons Stats -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Sermons</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.sermons.total }}</h4>
+                            <p>Total</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.sermons.video }}</h4>
+                            <p>Video</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.sermons.audio }}</h4>
+                            <p>Audio</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.events.total }}</h4>
-                                <p>Total</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.events.upcoming }}</h4>
-                                <p>Upcoming</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.events.past }}</h4>
-                                <p>Past</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <canvas id="eventsChart"></canvas>
-                    </div>
+                <div class="mt-3">
+                    <canvas id="sermonsChart"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Sermons Stats -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Sermons</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.sermons.total }}</h4>
-                                <p>Total</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.sermons.video }}</h4>
-                                <p>Video</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.sermons.audio }}</h4>
-                                <p>Audio</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <canvas id="sermonsChart"></canvas>
-                    </div>
-                </div>
+    <!-- Donations Stats -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Donations</h3>
             </div>
-        </div>
-
-        <!-- Donations Stats -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Donations</h3>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>${{ stats.donations.total_amount }}</h4>
+                            <p>Total Amount</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>{{ stats.donations.total_count }}</h4>
+                            <p>Total Count</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-center">
+                            <h4>${{ stats.donations.average }}</h4>
+                            <p>Average</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>${{ stats.donations.total_amount }}</h4>
-                                <p>Total Amount</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>{{ stats.donations.total_count }}</h4>
-                                <p>Total Count</p>
-                            </div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-center">
-                                <h4>${{ stats.donations.average }}</h4>
-                                <p>Average</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <canvas id="donationsChart"></canvas>
-                    </div>
+                <div class="mt-3">
+                    <canvas id="donationsChart"></canvas>
                 </div>
             </div>
         </div>
@@ -150,6 +145,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
