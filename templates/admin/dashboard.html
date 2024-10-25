@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Admin Dashboard</h1>
+
+    <div class="row">
+        <!-- Prayer Requests Stats -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Prayer Requests</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.prayers.total }}</h4>
+                                <p>Total</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.prayers.public }}</h4>
+                                <p>Public</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.prayers.private }}</h4>
+                                <p>Private</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="prayerRequestsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Stats -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Events</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.events.total }}</h4>
+                                <p>Total</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.events.upcoming }}</h4>
+                                <p>Upcoming</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.events.past }}</h4>
+                                <p>Past</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="eventsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sermons Stats -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Sermons</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.sermons.total }}</h4>
+                                <p>Total</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.sermons.video }}</h4>
+                                <p>Video</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.sermons.audio }}</h4>
+                                <p>Audio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="sermonsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donations Stats -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Donations</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>${{ stats.donations.total_amount }}</h4>
+                                <p>Total Amount</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>{{ stats.donations.total_count }}</h4>
+                                <p>Total Count</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-center">
+                                <h4>${{ stats.donations.average }}</h4>
+                                <p>Average</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <canvas id="donationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prayer Requests Chart
+    new Chart(document.getElementById('prayerRequestsChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Public', 'Private'],
+            datasets: [{
+                data: [{{ stats.prayers.public }}, {{ stats.prayers.private }}],
+                backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)']
+            }]
+        }
+    });
+
+    // Events Chart
+    new Chart(document.getElementById('eventsChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Upcoming', 'Past'],
+            datasets: [{
+                data: [{{ stats.events.upcoming }}, {{ stats.events.past }}],
+                backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)']
+            }]
+        }
+    });
+
+    // Sermons Chart
+    new Chart(document.getElementById('sermonsChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Video', 'Audio'],
+            datasets: [{
+                data: [{{ stats.sermons.video }}, {{ stats.sermons.audio }}],
+                backgroundColor: ['rgba(255, 159, 64, 0.8)', 'rgba(255, 205, 86, 0.8)']
+            }]
+        }
+    });
+
+    // Donations Chart
+    new Chart(document.getElementById('donationsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ stats.donations.currency_labels | tojson }},
+            datasets: [{
+                label: 'Amount by Currency',
+                data: {{ stats.donations.currency_amounts | tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.8)'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
