@@ -28,7 +28,6 @@ def admin_required(f):
 @admin_required
 def dashboard():
     try:
-        # [Previous dashboard code remains unchanged...]
         now = datetime.utcnow()
 
         # Prayer Request Statistics
@@ -107,125 +106,127 @@ def dashboard():
         current_app.logger.error(f"Error in admin dashboard: {str(e)}")
         return render_template('admin/dashboard.html', error="An error occurred loading the dashboard")
 
-# User Management Routes
-@admin_bp.route('/admin/users')
+# Event Management Routes
+@admin_bp.route('/admin/events')
 @login_required
 @admin_required
-def users():
+def events():
     try:
-        users_list = User.query.all()
-        return render_template('admin/users.html', users=users_list)
+        now = datetime.utcnow()
+        events_list = Event.query.order_by(Event.start_date.desc()).all()
+        return render_template('admin/events.html', events=events_list, now=now)
     except Exception as e:
-        current_app.logger.error(f"Error fetching users: {str(e)}")
-        flash('An error occurred while fetching users.', 'danger')
+        current_app.logger.error(f"Error fetching events: {str(e)}")
+        flash('An error occurred while fetching events.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
+@admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def create_user():
+def create_event():
     if request.method == 'POST':
         try:
-            username = request.form.get('username')
-            email = request.form.get('email')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
-            is_admin = bool(request.form.get('is_admin'))
+            title = request.form.get('title')
+            description = request.form.get('description')
+            start_date = request.form.get('start_date')
+            start_time = request.form.get('start_time')
+            end_date = request.form.get('end_date')
+            end_time = request.form.get('end_time')
+            location = request.form.get('location')
 
-            if not all([username, email, password, confirm_password]):
-                flash('All fields are required.', 'danger')
-                return render_template('admin/user_form.html')
+            if not all([title, start_date, start_time, end_date, end_time, location]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/event_form.html')
 
-            if password != confirm_password:
-                flash('Passwords do not match.', 'danger')
-                return render_template('admin/user_form.html')
+            # Combine date and time strings
+            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
 
-            if User.query.filter((User.username == username) | (User.email == email)).first():
-                flash('Username or email already exists.', 'danger')
-                return render_template('admin/user_form.html')
+            if end_datetime <= start_datetime:
+                flash('End date/time must be after start date/time.', 'danger')
+                return render_template('admin/event_form.html')
 
-            user = User()
-            user.username = username
-            user.email = email
-            user.is_admin = is_admin
-            user.set_password(password)
-            
-            db.session.add(user)
+            event = Event(
+                title=title,
+                description=description,
+                start_date=start_datetime,
+                end_date=end_datetime,
+                location=location
+            )
+
+            db.session.add(event)
             db.session.commit()
-
-            flash('User created successfully.', 'success')
-            return redirect(url_for('admin.users'))
+            flash('Event created successfully.', 'success')
+            return redirect(url_for('admin.events'))
 
         except Exception as e:
-            current_app.logger.error(f"Error creating user: {str(e)}")
+            current_app.logger.error(f"Error creating event: {str(e)}")
             db.session.rollback()
-            flash('An error occurred while creating the user.', 'danger')
-            return render_template('admin/user_form.html')
+            flash('An error occurred while creating the event.', 'danger')
+            return render_template('admin/event_form.html')
 
-    return render_template('admin/user_form.html')
+    return render_template('admin/event_form.html')
 
-@admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def edit_user(user_id):
-    user = User.query.get_or_404(user_id)
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
     
     if request.method == 'POST':
         try:
-            username = request.form.get('username')
-            email = request.form.get('email')
-            is_admin = bool(request.form.get('is_admin'))
+            title = request.form.get('title')
+            description = request.form.get('description')
+            start_date = request.form.get('start_date')
+            start_time = request.form.get('start_time')
+            end_date = request.form.get('end_date')
+            end_time = request.form.get('end_time')
+            location = request.form.get('location')
 
-            if not all([username, email]):
-                flash('All fields are required.', 'danger')
-                return render_template('admin/user_form.html', user=user)
+            if not all([title, start_date, start_time, end_date, end_time, location]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/event_form.html', event=event)
 
-            existing_user = User.query.filter(
-                (User.username == username) | (User.email == email),
-                User.id != user_id
-            ).first()
+            # Combine date and time strings
+            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
 
-            if existing_user:
-                flash('Username or email already exists.', 'danger')
-                return render_template('admin/user_form.html', user=user)
+            if end_datetime <= start_datetime:
+                flash('End date/time must be after start date/time.', 'danger')
+                return render_template('admin/event_form.html', event=event)
 
-            user.username = username
-            user.email = email
-            user.is_admin = is_admin
+            event.title = title
+            event.description = description
+            event.start_date = start_datetime
+            event.end_date = end_datetime
+            event.location = location
+
             db.session.commit()
-
-            flash('User updated successfully.', 'success')
-            return redirect(url_for('admin.users'))
+            flash('Event updated successfully.', 'success')
+            return redirect(url_for('admin.events'))
 
         except Exception as e:
-            current_app.logger.error(f"Error updating user: {str(e)}")
+            current_app.logger.error(f"Error updating event: {str(e)}")
             db.session.rollback()
-            flash('An error occurred while updating the user.', 'danger')
-            return render_template('admin/user_form.html', user=user)
+            flash('An error occurred while updating the event.', 'danger')
+            return render_template('admin/event_form.html', event=event)
 
-    return render_template('admin/user_form.html', user=user)
+    return render_template('admin/event_form.html', event=event)
 
-@admin_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
 @login_required
 @admin_required
-def delete_user(user_id):
+def delete_event(event_id):
     try:
-        user = User.query.get_or_404(user_id)
-        
-        # Prevent deleting self
-        if user.id == current_user.id:
-            flash('You cannot delete your own account.', 'danger')
-            return redirect(url_for('admin.users'))
-
-        db.session.delete(user)
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)
         db.session.commit()
-        
-        flash(f'User {user.username} has been deleted.', 'success')
+        flash('Event deleted successfully.', 'success')
     except Exception as e:
-        current_app.logger.error(f"Error deleting user: {str(e)}")
+        current_app.logger.error(f"Error deleting event: {str(e)}")
         db.session.rollback()
-        flash('An error occurred while deleting the user.', 'danger')
+        flash('An error occurred while deleting the event.', 'danger')
     
-    return redirect(url_for('admin.users'))
+    return redirect(url_for('admin.events'))
 
-# [Previous code for other admin routes remains unchanged...]
+# [Previous admin routes remain unchanged...]

@@ -68,5 +68,9 @@ class Settings(db.Model):
     business_name = db.Column(db.String(200), nullable=False, default='Covenant Connect')
     logo_url = db.Column(db.String(500))
     theme_preference = db.Column(db.String(20), default='dark')
+    # New fields for footer content
+    addresses = db.Column(db.JSON, default=list)  # Array of address objects
+    social_media_links = db.Column(db.JSON, default=dict)  # Object with social media platform links
+    contact_info = db.Column(db.JSON, default=dict)  # Object with contact details
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

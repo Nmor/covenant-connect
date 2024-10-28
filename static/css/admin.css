@@ -1,4 +1,4 @@
-/* Admin sidebar styles */
+/* Admin Dashboard Styles */
 .sidebar {
     position: fixed;
     top: 0;
@@ -9,32 +9,99 @@
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
 }
 
-.sidebar .nav-link {
-    font-weight: 500;
-    color: var(--bs-light);
+.sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 48px);
+    padding-top: .5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-.sidebar .nav-link:hover {
-    color: var(--bs-primary);
+/* Loading Spinner Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
-.sidebar .nav-link.active {
-    color: var(--bs-primary);
+.loading-overlay.show {
+    display: flex;
 }
 
-.sidebar .nav-link i {
-    margin-right: 8px;
+/* Dashboard Cards */
+.dashboard-card {
+    transition: transform 0.2s ease-in-out;
 }
 
-/* Main content area */
-main {
-    padding-top: 48px;
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Stats Counter Animation */
+.stat-counter {
+    transition: all 0.5s ease-out;
 }
 
 /* Responsive adjustments */
-@media (max-width: 767.98px) {
+@media (max-width: 768px) {
     .sidebar {
         position: static;
-        padding-top: 1.5rem;
+        height: auto;
+        padding-top: 0;
     }
+    
+    main {
+        margin-left: 0 !important;
+    }
+    
+    .dashboard-stats .col-md-3 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Chart container responsiveness */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Form enhancements */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--bs-primary);
+    opacity: .85;
+}
+
+/* Table responsiveness improvements */
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--bs-dark);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--bs-secondary);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-primary);
 }

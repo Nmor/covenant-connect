@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Covenant Connect{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('home.home') }}">
@@ -76,11 +77,14 @@
         </div>
     </nav>
 
-    <main class="container my-4">
+    <main class="container my-4 flex-grow-1">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -88,13 +92,99 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer mt-auto py-3 bg-dark">
-        <div class="container text-center">
-            <span class="text-muted">© 2024 {{ settings.business_name if settings else 'Covenant Connect' }}. All rights reserved.</span>
+    <footer class="footer mt-auto py-5 bg-dark">
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-lg-4">
+                    <h5 class="text-white mb-3">About Us</h5>
+                    <img src="{{ settings.logo_url if settings and settings.logo_url else url_for('static', filename='img/logo.svg') }}" 
+                         alt="Logo" width="30" height="30" class="d-inline-block mb-2">
+                    <h6 class="text-white">{{ settings.business_name if settings else 'Covenant Connect' }}</h6>
+                    {% if settings and settings.addresses %}
+                        <div class="mt-3">
+                            {% for address in settings.addresses %}
+                                <p class="text-secondary mb-1"><i class="bi bi-geo-alt me-2"></i>{{ address }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-4">
+                    <h5 class="text-white mb-3">Connect With Us</h5>
+                    {% if settings and settings.contact_info %}
+                        {% if settings.contact_info.phone %}
+                            <p class="text-secondary mb-2">
+                                <i class="bi bi-telephone me-2"></i>{{ settings.contact_info.phone }}
+                            </p>
+                        {% endif %}
+                        {% if settings.contact_info.email %}
+                            <p class="text-secondary mb-2">
+                                <i class="bi bi-envelope me-2"></i>{{ settings.contact_info.email }}
+                            </p>
+                        {% endif %}
+                        {% if settings.contact_info.hours %}
+                            <p class="text-secondary mb-2">
+                                <i class="bi bi-clock me-2"></i>{{ settings.contact_info.hours }}
+                            </p>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if settings and settings.social_media_links %}
+                        <div class="mt-3">
+                            {% if settings.social_media_links.facebook %}
+                                <a href="{{ settings.social_media_links.facebook }}" class="btn btn-outline-light btn-sm me-2" target="_blank">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                            {% endif %}
+                            {% if settings.social_media_links.twitter %}
+                                <a href="{{ settings.social_media_links.twitter }}" class="btn btn-outline-light btn-sm me-2" target="_blank">
+                                    <i class="bi bi-twitter"></i>
+                                </a>
+                            {% endif %}
+                            {% if settings.social_media_links.instagram %}
+                                <a href="{{ settings.social_media_links.instagram }}" class="btn btn-outline-light btn-sm me-2" target="_blank">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                            {% endif %}
+                            {% if settings.social_media_links.youtube %}
+                                <a href="{{ settings.social_media_links.youtube }}" class="btn btn-outline-light btn-sm me-2" target="_blank">
+                                    <i class="bi bi-youtube"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-4">
+                    <h5 class="text-white mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{{ url_for('events.events') }}" class="text-secondary text-decoration-none">Events</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('prayers.prayers') }}" class="text-secondary text-decoration-none">Prayer Requests</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('sermons.sermons') }}" class="text-secondary text-decoration-none">Sermons</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('gallery.gallery') }}" class="text-secondary text-decoration-none">Gallery</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('donations.donate') }}" class="text-secondary text-decoration-none">Donate</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="border-secondary my-4">
+
+            <div class="text-center text-secondary">
+                <small>&copy; {{ current_year }} {{ settings.business_name if settings else 'Covenant Connect' }}. All rights reserved.</small>
+            </div>
         </div>
     </footer>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
