@@ -83,13 +83,12 @@ def events():
 def create_event():
     try:
         if request.method == 'POST':
-            event = Event(
-                title=request.form['title'],
-                description=request.form['description'],
-                start_date=datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M'),
-                end_date=datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M'),
-                location=request.form['location']
-            )
+            event = Event()
+            event.title = request.form['title']
+            event.description = request.form['description']
+            event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
+            event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
+            event.location = request.form['location']
             db.session.add(event)
             db.session.commit()
             flash('Event created successfully.', 'success')
@@ -148,6 +147,65 @@ def sermons():
         flash('An error occurred while loading sermons.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
+@admin_bp.route('/admin/sermons/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_sermon():
+    try:
+        if request.method == 'POST':
+            sermon = Sermon()
+            sermon.title = request.form['title']
+            sermon.description = request.form['description']
+            sermon.preacher = request.form['preacher']
+            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            sermon.media_url = request.form['media_url']
+            sermon.media_type = request.form['media_type']
+            db.session.add(sermon)
+            db.session.commit()
+            flash('Sermon added successfully.', 'success')
+            return redirect(url_for('admin.sermons'))
+        return render_template('admin/sermon_form.html')
+    except Exception as e:
+        current_app.logger.error(f"Error creating sermon: {str(e)}")
+        flash('An error occurred while creating sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+
+@admin_bp.route('/admin/sermons/<int:sermon_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_sermon(sermon_id):
+    try:
+        sermon = Sermon.query.get_or_404(sermon_id)
+        if request.method == 'POST':
+            sermon.title = request.form['title']
+            sermon.description = request.form['description']
+            sermon.preacher = request.form['preacher']
+            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            sermon.media_url = request.form['media_url']
+            sermon.media_type = request.form['media_type']
+            db.session.commit()
+            flash('Sermon updated successfully.', 'success')
+            return redirect(url_for('admin.sermons'))
+        return render_template('admin/sermon_form.html', sermon=sermon)
+    except Exception as e:
+        current_app.logger.error(f"Error editing sermon: {str(e)}")
+        flash('An error occurred while editing sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+
+@admin_bp.route('/admin/sermons/<int:sermon_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_sermon(sermon_id):
+    try:
+        sermon = Sermon.query.get_or_404(sermon_id)
+        db.session.delete(sermon)
+        db.session.commit()
+        flash('Sermon deleted successfully.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting sermon: {str(e)}")
+        flash('An error occurred while deleting sermon.', 'danger')
+    return redirect(url_for('admin.sermons'))
+
 # Prayer Request Management Routes
 @admin_bp.route('/admin/prayers')
 @login_required
@@ -198,7 +256,10 @@ def create_user():
             password = request.form.get('password')
             is_admin = bool(request.form.get('is_admin'))
             
-            user = User(username=username, email=email, is_admin=is_admin)
+            user = User()
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
@@ -210,6 +271,47 @@ def create_user():
     except Exception as e:
         current_app.logger.error(f"Error creating user: {str(e)}")
         flash('An error occurred while creating user.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def user_import():
+    try:
+        if request.method == 'POST':
+            if 'file' not in request.files:
+                flash('No file uploaded.', 'danger')
+                return redirect(url_for('admin.users'))
+                
+            file = request.files['file']
+            if file.filename == '':
+                flash('No selected file.', 'danger')
+                return redirect(url_for('admin.users'))
+                
+            if file and file.filename.endswith('.csv'):
+                stream = io.StringIO(file.stream.read().decode("UTF8"))
+                csv_input = csv.reader(stream)
+                next(csv_input)  # Skip header row
+                
+                for row in csv_input:
+                    username, email, is_admin = row
+                    user = User()
+                    user.username = username
+                    user.email = email
+                    user.is_admin = is_admin.lower() == 'true'
+                    user.set_password('changeme123')  # Default password
+                    db.session.add(user)
+                
+                db.session.commit()
+                flash('Users imported successfully.', 'success')
+            else:
+                flash('Please upload a CSV file.', 'danger')
+                
+        return redirect(url_for('admin.users'))
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error importing users: {str(e)}")
+        flash('An error occurred while importing users.', 'danger')
         return redirect(url_for('admin.users'))
 
 # Gallery Management Routes
@@ -224,6 +326,40 @@ def gallery():
         current_app.logger.error(f"Error in gallery route: {str(e)}")
         flash('An error occurred while loading gallery.', 'danger')
         return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/gallery/upload', methods=['POST'])
+@login_required
+@admin_required
+def upload_image():
+    try:
+        if 'image' not in request.files:
+            flash('No image file uploaded.', 'danger')
+            return redirect(url_for('admin.gallery'))
+            
+        image = request.files['image']
+        if image.filename == '':
+            flash('No selected file.', 'danger')
+            return redirect(url_for('admin.gallery'))
+            
+        if image:
+            filename = secure_filename(image.filename)
+            filepath = os.path.join('static/uploads', filename)
+            os.makedirs('static/uploads', exist_ok=True)
+            image.save(filepath)
+            
+            gallery_image = Gallery()
+            gallery_image.title = request.form.get('title', filename)
+            gallery_image.description = request.form.get('description', '')
+            gallery_image.image_url = f"/static/uploads/{filename}"
+            db.session.add(gallery_image)
+            db.session.commit()
+            
+            flash('Image uploaded successfully.', 'success')
+        return redirect(url_for('admin.gallery'))
+    except Exception as e:
+        current_app.logger.error(f"Error uploading image: {str(e)}")
+        flash('An error occurred while uploading image.', 'danger')
+        return redirect(url_for('admin.gallery'))
 
 # Settings Management Routes
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
