@@ -34,6 +34,9 @@ msgstr "Galería"
 msgid "Donate"
 msgstr "Donar"
 
+msgid "Language"
+msgstr "Idioma"
+
 msgid "Admin"
 msgstr "Administrador"
 
@@ -51,3 +54,66 @@ msgstr "Registrarse"
 
 msgid "No new notifications"
 msgstr "No hay nuevas notificaciones"
+
+msgid "Toggle navigation"
+msgstr "Alternar navegación"
+
+msgid "Toggle theme"
+msgstr "Alternar tema"
+
+msgid "unread notifications"
+msgstr "notificaciones no leídas"
+
+msgid "Notifications"
+msgstr "Notificaciones"
+
+msgid "Mark all as read"
+msgstr "Marcar todo como leído"
+
+msgid "New"
+msgstr "Nuevo"
+
+msgid "About Us"
+msgstr "Sobre Nosotros"
+
+msgid "A community of believers growing together in faith."
+msgstr "Una comunidad de creyentes creciendo juntos en la fe."
+
+msgid "Quick Links"
+msgstr "Enlaces Rápidos"
+
+msgid "Contact Us"
+msgstr "Contáctenos"
+
+msgid "All rights reserved."
+msgstr "Todos los derechos reservados."
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Notification Preferences"
+msgstr "Preferencias de Notificación"
+
+msgid "Notification Categories"
+msgstr "Categorías de Notificación"
+
+msgid "Prayer Requests"
+msgstr "Peticiones de Oración"
+
+msgid "News & Updates"
+msgstr "Noticias y Actualizaciones"
+
+msgid "Notification Methods"
+msgstr "Métodos de Notificación"
+
+msgid "Desktop Notifications"
+msgstr "Notificaciones de Escritorio"
+
+msgid "Email Notifications"
+msgstr "Notificaciones por Correo"
+
+msgid "Save Preferences"
+msgstr "Guardar Preferencias"
+
+msgid "Back to Profile"
+msgstr "Volver al Perfil"

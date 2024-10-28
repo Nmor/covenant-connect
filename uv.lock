@@ -351,6 +351,7 @@ dependencies = [
     { name = "flask-sqlalchemy" },
     { name = "flask-sse" },
     { name = "psycopg2-binary" },
+    { name = "redis" },
     { name = "sqlalchemy" },
     { name = "werkzeug" },
 ]
@@ -365,6 +366,7 @@ requires-dist = [
     { name = "flask-sqlalchemy", specifier = ">=3.1.1" },
     { name = "flask-sse", specifier = ">=1.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "redis", specifier = ">=5.2.0" },
     { name = "sqlalchemy", specifier = ">=2.0.36" },
     { name = "werkzeug", specifier = ">=3.0.6" },
 ]

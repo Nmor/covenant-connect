@@ -9,68 +9,106 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
 <body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Enhanced Mobile Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home.home') }}">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home.home') }}">
                 <img src="{{ settings.logo_url if settings and settings.logo_url else url_for('static', filename='img/logo.svg') }}" 
-                     alt="Logo" width="30" height="30" class="d-inline-block align-text-top">
-                {{ settings.business_name if settings else _('Covenant Connect') }}
+                     alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
+                <span>{{ settings.business_name if settings else _('Covenant Connect') }}</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="{{ _('Toggle navigation') }}">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'events.events' }}" 
-                           href="{{ url_for('events.events') }}">{{ _('Events') }}</a>
+                           href="{{ url_for('events.events') }}">
+                           <i class="bi bi-calendar-event d-lg-none me-2"></i>{{ _('Events') }}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'prayers.prayers' }}" 
-                           href="{{ url_for('prayers.prayers') }}">{{ _('Prayers') }}</a>
+                           href="{{ url_for('prayers.prayers') }}">
+                           <i class="bi bi-book d-lg-none me-2"></i>{{ _('Prayers') }}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'sermons.sermons' }}" 
-                           href="{{ url_for('sermons.sermons') }}">{{ _('Sermons') }}</a>
+                           href="{{ url_for('sermons.sermons') }}">
+                           <i class="bi bi-mic d-lg-none me-2"></i>{{ _('Sermons') }}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'gallery.gallery' }}" 
-                           href="{{ url_for('gallery.gallery') }}">{{ _('Gallery') }}</a>
+                           href="{{ url_for('gallery.gallery') }}">
+                           <i class="bi bi-images d-lg-none me-2"></i>{{ _('Gallery') }}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if request.endpoint == 'donations.donate' }}" 
-                           href="{{ url_for('donations.donate') }}">{{ _('Donate') }}</a>
+                           href="{{ url_for('donations.donate') }}">
+                           <i class="bi bi-heart d-lg-none me-2"></i>{{ _('Donate') }}
+                        </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     <!-- Language Selector -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-globe"></i>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <i class="bi bi-globe"></i> {{ _('Language') }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="?lang=en">English</a></li>
-                            <li><a class="dropdown-item" href="?lang=es">Español</a></li>
-                            <li><a class="dropdown-item" href="?lang=fr">Français</a></li>
+                            {% set args = request.args.copy() %}
+                            {% for lang_code, lang_name in [('en', 'English'), ('es', 'Español'), ('fr', 'Français')] %}
+                                {% set args.lang = lang_code %}
+                                <li>
+                                    <a class="dropdown-item{% if session.get('lang', 'en') == lang_code %} active{% endif %}" 
+                                       href="{{ request.path }}?{{ args|urlencode }}"
+                                       aria-current="{{ 'true' if session.get('lang', 'en') == lang_code else 'false' }}">
+                                        {{ lang_name }}
+                                    </a>
+                                </li>
+                            {% endfor %}
                         </ul>
                     </li>
                     <!-- Theme Toggle -->
                     <li class="nav-item">
-                        <button class="btn btn-link nav-link" id="themeToggle">
+                        <button class="btn btn-link nav-link" id="themeToggle" aria-label="{{ _('Toggle theme') }}">
                             <i class="bi bi-moon-fill" id="themeIcon"></i>
                         </button>
                     </li>
-                    <!-- Notification Bell -->
+                    <!-- Enhanced Notification System -->
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notificationBadge">
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" 
+                                  id="notificationBadge">
                                 0
+                                <span class="visually-hidden">{{ _('unread notifications') }}</span>
                             </span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" id="notificationList">
-                            <li><div class="dropdown-item text-muted">{{ _('No new notifications') }}</div></li>
+                        <ul class="dropdown-menu dropdown-menu-end notification-menu" id="notificationList" 
+                            style="width: 300px; max-height: 400px; overflow-y: auto;">
+                            <li>
+                                <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>{{ _('Notifications') }}</span>
+                                    <button class="btn btn-sm btn-link text-decoration-none" id="markAllRead">
+                                        {{ _('Mark all as read') }}
+                                    </button>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <div class="dropdown-item text-muted text-center py-3">
+                                    <i class="bi bi-bell-slash me-2"></i>{{ _('No new notifications') }}
+                                </div>
+                            </li>
                         </ul>
                     </li>
                     {% endif %}
@@ -78,24 +116,34 @@
                         {% if current_user.is_admin %}
                             <li class="nav-item">
                                 <a class="nav-link {{ 'active' if request.endpoint.startswith('admin.') }}" 
-                                   href="{{ url_for('admin.dashboard') }}">{{ _('Admin') }}</a>
+                                   href="{{ url_for('admin.dashboard') }}">
+                                   <i class="bi bi-gear d-lg-none me-2"></i>{{ _('Admin') }}
+                                </a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link {{ 'active' if request.endpoint == 'auth.profile' }}" 
-                               href="{{ url_for('auth.profile') }}">{{ _('Profile') }}</a>
+                               href="{{ url_for('auth.profile') }}">
+                               <i class="bi bi-person d-lg-none me-2"></i>{{ _('Profile') }}
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.logout') }}">{{ _('Logout') }}</a>
+                            <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right d-lg-none me-2"></i>{{ _('Logout') }}
+                            </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
                             <a class="nav-link {{ 'active' if request.endpoint == 'auth.login' }}" 
-                               href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
+                               href="{{ url_for('auth.login') }}">
+                               <i class="bi bi-box-arrow-in-right d-lg-none me-2"></i>{{ _('Login') }}
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {{ 'active' if request.endpoint == 'auth.register' }}" 
-                               href="{{ url_for('auth.register') }}">{{ _('Register') }}</a>
+                               href="{{ url_for('auth.register') }}">
+                               <i class="bi bi-person-plus d-lg-none me-2"></i>{{ _('Register') }}
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
@@ -109,7 +157,8 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                                aria-label="{{ _('Close') }}"></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -119,64 +168,108 @@
     </main>
 
     <footer class="footer mt-auto py-5 bg-dark">
-        <!-- Footer content remains the same -->
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5>{{ _('About Us') }}</h5>
+                    <p class="text-muted">{{ _('A community of believers growing together in faith.') }}</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>{{ _('Quick Links') }}</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('events.events') }}" class="text-decoration-none">{{ _('Events') }}</a></li>
+                        <li><a href="{{ url_for('prayers.prayers') }}" class="text-decoration-none">{{ _('Prayers') }}</a></li>
+                        <li><a href="{{ url_for('sermons.sermons') }}" class="text-decoration-none">{{ _('Sermons') }}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>{{ _('Contact Us') }}</h5>
+                    <address class="text-muted">
+                        {% if settings and settings.contact_info %}
+                            <i class="bi bi-envelope me-2"></i>{{ settings.contact_info.email }}<br>
+                            <i class="bi bi-telephone me-2"></i>{{ settings.contact_info.phone }}
+                        {% endif %}
+                    </address>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="text-muted mb-0">
+                    © {{ current_year }} {{ settings.business_name if settings else _('Covenant Connect') }}. 
+                    {{ _('All rights reserved.') }}
+                </p>
+            </div>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Notification System -->
     {% if current_user.is_authenticated %}
+    <!-- Notification System Script -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const eventSource = new EventSource("{{ url_for('notifications.subscribe') }}");
-            const notificationList = document.getElementById('notificationList');
-            const notificationBadge = document.getElementById('notificationBadge');
-            let notificationCount = 0;
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationList = document.getElementById('notificationList');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const markAllReadBtn = document.getElementById('markAllRead');
+        let notificationCount = 0;
 
-            eventSource.addEventListener('notification', function(e) {
-                const data = JSON.parse(e.data);
-                notificationCount++;
-                updateNotificationBadge();
-                addNotification(data.message, data.type);
-            });
-
-            function updateNotificationBadge() {
-                notificationBadge.textContent = notificationCount;
-                notificationBadge.classList.toggle('d-none', notificationCount === 0);
-            }
-
-            function addNotification(message, type) {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="dropdown-item">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <span>${message}</span>
-                        </div>
-                    </div>
-                `;
-                if (notificationList.children.length === 1 && 
-                    notificationList.children[0].textContent.includes('No new notifications')) {
-                    notificationList.innerHTML = '';
-                }
-                notificationList.insertBefore(li, notificationList.firstChild);
-            }
+        // Connect to SSE for real-time notifications
+        const eventSource = new EventSource("{{ url_for('notifications.subscribe') }}");
+        
+        eventSource.addEventListener('notification', function(e) {
+            const data = JSON.parse(e.data);
+            addNotification(data);
+            updateNotificationCount(1);
         });
+
+        // Handle mark all as read
+        markAllReadBtn.addEventListener('click', function() {
+            const notifications = notificationList.querySelectorAll('.notification-item:not(.read)');
+            notifications.forEach(notification => {
+                notification.classList.add('read');
+                notification.querySelector('.notification-status').classList.add('d-none');
+            });
+            updateNotificationCount(-notificationCount);
+        });
+
+        function addNotification(data) {
+            const emptyNotification = notificationList.querySelector('.text-muted.text-center');
+            if (emptyNotification) {
+                emptyNotification.remove();
+            }
+
+            const li = document.createElement('li');
+            li.className = 'notification-item';
+            li.innerHTML = `
+                <div class="dropdown-item d-flex align-items-center py-2">
+                    <div class="flex-grow-1">
+                        <p class="mb-0">${data.message}</p>
+                        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                    </div>
+                    <span class="notification-status badge bg-primary ms-2">{{ _('New') }}</span>
+                </div>
+            `;
+            
+            notificationList.insertBefore(li, notificationList.querySelector('.dropdown-divider').nextSibling);
+            
+            // Handle notification click
+            li.addEventListener('click', function() {
+                if (!this.classList.contains('read')) {
+                    this.classList.add('read');
+                    this.querySelector('.notification-status').classList.add('d-none');
+                    updateNotificationCount(-1);
+                }
+            });
+        }
+
+        function updateNotificationCount(change) {
+            notificationCount = Math.max(0, notificationCount + change);
+            notificationBadge.textContent = notificationCount;
+            notificationBadge.classList.toggle('d-none', notificationCount === 0);
+        }
+    });
     </script>
     {% endif %}
-
-    <!-- Live Chat Widget (Tawk.to) -->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-        s1.async=true;
-        s1.src='https://embed.tawk.to/YOUR_TAWK_TO_ID/default';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
 
     <!-- Theme Toggle Script -->
     <script>
@@ -203,6 +296,7 @@
         }
     });
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

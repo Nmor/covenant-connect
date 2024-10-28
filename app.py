@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, g, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -13,14 +13,15 @@ mail = Mail()
 babel = Babel()
 
 def get_locale():
-    # Try to get locale from query string
+    # First try to get locale from query parameter
     locale = request.args.get('lang')
-    if locale:
+    if locale in ['en', 'es', 'fr']:
+        session['lang'] = locale
         return locale
-    # Try to get locale from user preferences
-    if hasattr(g, 'user') and g.user and hasattr(g.user, 'locale'):
-        return g.user.locale
-    # Default to browser's language preference
+    # Then try to get locale from session
+    if 'lang' in session:
+        return session['lang']
+    # Finally, fall back to browser's preferred language
     return request.accept_languages.best_match(['en', 'es', 'fr'])
 
 def create_app():
