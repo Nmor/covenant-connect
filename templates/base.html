@@ -13,9 +13,12 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home.home') }}">
-                <img src="{{ settings.logo_url if settings and settings.logo_url else url_for('static', filename='img/logo.svg') }}" 
-                     alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
-                <span>{{ settings.business_name if settings else _('Covenant Connect') }}</span>
+                {% if settings and settings.logo_url %}
+                    <img src="{{ settings.logo_url }}" alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
+                {% endif %}
+                <span>{% if settings %}{{ settings.business_name }}{% else %}{{ _('Covenant Connect') }}{% endif %}</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="{{ _('Toggle navigation') }}">
@@ -24,31 +27,31 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'events.events' }}" 
+                        <a class="nav-link {% if request.endpoint == 'events.events' %}active{% endif %}" 
                            href="{{ url_for('events.events') }}">
                            <i class="bi bi-calendar-event d-lg-none me-2"></i>{{ _('Events') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'prayers.prayers' }}" 
+                        <a class="nav-link {% if request.endpoint == 'prayers.prayers' %}active{% endif %}" 
                            href="{{ url_for('prayers.prayers') }}">
                            <i class="bi bi-book d-lg-none me-2"></i>{{ _('Prayers') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'sermons.sermons' }}" 
+                        <a class="nav-link {% if request.endpoint == 'sermons.sermons' %}active{% endif %}" 
                            href="{{ url_for('sermons.sermons') }}">
                            <i class="bi bi-mic d-lg-none me-2"></i>{{ _('Sermons') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'gallery.gallery' }}" 
+                        <a class="nav-link {% if request.endpoint == 'gallery.gallery' %}active{% endif %}" 
                            href="{{ url_for('gallery.gallery') }}">
                            <i class="bi bi-images d-lg-none me-2"></i>{{ _('Gallery') }}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint == 'donations.donate' }}" 
+                        <a class="nav-link {% if request.endpoint == 'donations.donate' %}active{% endif %}" 
                            href="{{ url_for('donations.donate') }}">
                            <i class="bi bi-heart d-lg-none me-2"></i>{{ _('Donate') }}
                         </a>
@@ -64,7 +67,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             {% set args = request.args.copy() %}
                             {% for lang_code, lang_name in [('en', 'English'), ('es', 'Español'), ('fr', 'Français')] %}
-                                {% set args.lang = lang_code %}
+                                {% set _ = args.update({'lang': lang_code}) %}
                                 <li>
                                     <a class="dropdown-item{% if session.get('lang', 'en') == lang_code %} active{% endif %}" 
                                        href="{{ request.path }}?{{ args|urlencode }}"
@@ -81,8 +84,8 @@
                             <i class="bi bi-moon-fill" id="themeIcon"></i>
                         </button>
                     </li>
-                    <!-- Enhanced Notification System -->
                     {% if current_user.is_authenticated %}
+                    <!-- Notifications -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle position-relative" href="#" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
@@ -112,17 +115,18 @@
                         </ul>
                     </li>
                     {% endif %}
+
                     {% if current_user.is_authenticated %}
                         {% if current_user.is_admin %}
                             <li class="nav-item">
-                                <a class="nav-link {{ 'active' if request.endpoint.startswith('admin.') }}" 
+                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" 
                                    href="{{ url_for('admin.dashboard') }}">
                                    <i class="bi bi-gear d-lg-none me-2"></i>{{ _('Admin') }}
                                 </a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link {{ 'active' if request.endpoint == 'auth.profile' }}" 
+                            <a class="nav-link {% if request.endpoint == 'auth.profile' %}active{% endif %}" 
                                href="{{ url_for('auth.profile') }}">
                                <i class="bi bi-person d-lg-none me-2"></i>{{ _('Profile') }}
                             </a>
@@ -134,13 +138,13 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link {{ 'active' if request.endpoint == 'auth.login' }}" 
+                            <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" 
                                href="{{ url_for('auth.login') }}">
                                <i class="bi bi-box-arrow-in-right d-lg-none me-2"></i>{{ _('Login') }}
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ 'active' if request.endpoint == 'auth.register' }}" 
+                            <a class="nav-link {% if request.endpoint == 'auth.register' %}active{% endif %}" 
                                href="{{ url_for('auth.register') }}">
                                <i class="bi bi-person-plus d-lg-none me-2"></i>{{ _('Register') }}
                             </a>
