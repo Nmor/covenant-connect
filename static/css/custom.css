@@ -56,7 +56,8 @@
     transition: background-color 0.3s ease, 
                 border-color 0.3s ease, 
                 box-shadow 0.3s ease, 
-                color 0.3s ease;
+                color 0.3s ease,
+                transform 0.3s ease;
 }
 
 /* Base styles */
@@ -69,6 +70,10 @@ body {
 .navbar {
     background-color: var(--custom-nav-bg) !important;
     backdrop-filter: blur(10px);
+}
+
+.navbar-brand {
+    color: var(--custom-text-primary);
 }
 
 .navbar-dark .navbar-nav .nav-link {
@@ -84,6 +89,17 @@ body {
 .card {
     background-color: var(--custom-card-bg);
     border-color: var(--custom-border-color);
+    color: var(--custom-text-primary);
+}
+
+.card-text {
+    color: var(--custom-text-secondary);
+}
+
+.card-header {
+    background-color: var(--custom-hover-bg);
+    border-bottom-color: var(--custom-border-color);
+    color: var(--custom-text-primary);
 }
 
 .card:hover {
@@ -91,9 +107,12 @@ body {
     box-shadow: 0 4px 8px var(--custom-hover-shadow);
 }
 
-.card-header {
-    background-color: var(--custom-hover-bg);
-    border-bottom-color: var(--custom-border-color);
+.card-title {
+    color: var(--custom-text-primary);
+}
+
+.card-subtitle {
+    color: var(--custom-text-secondary);
 }
 
 /* Form styles */
@@ -107,6 +126,14 @@ body {
     background-color: var(--custom-input-bg);
     border-color: var(--custom-input-focus-border);
     color: var(--custom-text-primary);
+}
+
+.form-label {
+    color: var(--custom-text-primary);
+}
+
+.form-text {
+    color: var(--custom-text-secondary);
 }
 
 /* Button styles */
@@ -125,6 +152,7 @@ body {
 
 .table thead th {
     background-color: var(--custom-hover-bg);
+    color: var(--custom-text-primary);
 }
 
 .table tbody tr:hover {
@@ -135,12 +163,14 @@ body {
 .alert {
     background-color: var(--custom-card-bg);
     border-color: var(--custom-border-color);
+    color: var(--custom-text-primary);
 }
 
 /* Modal styles */
 .modal-content {
     background-color: var(--custom-card-bg);
     border-color: var(--custom-border-color);
+    color: var(--custom-text-primary);
 }
 
 .modal-header, .modal-footer {
@@ -158,9 +188,14 @@ body {
     border-top-color: var(--custom-border-color);
 }
 
+.text-muted {
+    color: var(--custom-text-secondary) !important;
+}
+
 /* Theme toggle icon transition */
 .bi-moon-fill, .bi-sun-fill {
     transition: transform 0.3s ease;
+    color: var(--custom-text-primary);
 }
 
 .bi-moon-fill:hover, .bi-sun-fill:hover {
@@ -177,6 +212,10 @@ body {
 [data-bs-theme=dark] .dropdown-menu {
     background-color: var(--custom-dropdown-bg);
     border-color: var(--custom-border-color);
+}
+
+[data-bs-theme=dark] .dropdown-item {
+    color: var(--custom-text-primary);
 }
 
 [data-bs-theme=dark] .dropdown-item:hover {
