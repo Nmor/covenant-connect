@@ -34,6 +34,7 @@
                             <div class="col-md-6">
                                 <label for="currency" class="form-label">Currency</label>
                                 <select class="form-select" id="currency" name="currency" required>
+                                    <option value="NGN">NGN - Nigerian Naira</option>
                                     <option value="USD">USD - US Dollar</option>
                                     <option value="EUR">EUR - Euro</option>
                                     <option value="GBP">GBP - British Pound</option>
@@ -97,7 +98,6 @@
                                     <option value="CA">Canada</option>
                                     <option value="FR">France</option>
                                     <option value="DE">Germany</option>
-                                    <!-- Add more countries as needed -->
                                 </select>
                                 <div class="invalid-feedback">
                                     Please select your country.
@@ -105,7 +105,10 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            <span class="btn-text">Proceed to Payment</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -123,23 +126,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const currencySymbol = document.querySelector('.currency-symbol');
     const paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
     const internationalRequiredFields = document.querySelectorAll('.international-required');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const spinner = submitBtn.querySelector('.spinner-border');
+    const btnText = submitBtn.querySelector('.btn-text');
 
     // Currency symbol mapping
     const currencySymbols = {
         'USD': '$',
         'EUR': '€',
-        'GBP': '£'
+        'GBP': '£',
+        'NGN': '₦'
     };
+
+    // Update payment method based on currency
+    function updatePaymentMethod(currency) {
+        const paystackRadio = document.getElementById('paystack');
+        const fincraRadio = document.getElementById('fincra');
+        
+        if (currency === 'NGN') {
+            paystackRadio.checked = true;
+            fincraRadio.disabled = true;
+            internationalFields.classList.add('d-none');
+            internationalRequiredFields.forEach(field => field.required = false);
+        } else {
+            fincraRadio.disabled = false;
+            if (fincraRadio.checked) {
+                internationalFields.classList.remove('d-none');
+                internationalRequiredFields.forEach(field => field.required = true);
+            }
+        }
+    }
 
     // Update currency symbol when currency changes
     currencySelect.addEventListener('change', function() {
         currencySymbol.textContent = currencySymbols[this.value] || '$';
+        updatePaymentMethod(this.value);
     });
+
+    // Initial currency symbol and payment method setup
+    currencySymbol.textContent = currencySymbols[currencySelect.value] || '$';
+    updatePaymentMethod(currencySelect.value);
 
     // Toggle international fields based on payment method
     paymentMethodInputs.forEach(input => {
         input.addEventListener('change', function() {
-            if (this.value === 'fincra') {
+            if (this.value === 'fincra' && currencySelect.value !== 'NGN') {
                 internationalFields.classList.remove('d-none');
                 internationalRequiredFields.forEach(field => field.required = true);
             } else {
@@ -149,11 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Form validation
+    // Form validation and submission
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {
             event.preventDefault();
             event.stopPropagation();
+        } else {
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            btnText.textContent = 'Processing...';
         }
         form.classList.add('was-validated');
     });
