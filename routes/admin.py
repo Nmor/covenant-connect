@@ -106,127 +106,168 @@ def dashboard():
         current_app.logger.error(f"Error in admin dashboard: {str(e)}")
         return render_template('admin/dashboard.html', error="An error occurred loading the dashboard")
 
-# Event Management Routes
-@admin_bp.route('/admin/events')
+# User Management Routes
+@admin_bp.route('/admin/users')
 @login_required
 @admin_required
-def events():
+def users():
     try:
-        now = datetime.utcnow()
-        events_list = Event.query.order_by(Event.start_date.desc()).all()
-        return render_template('admin/events.html', events=events_list, now=now)
+        users_list = User.query.order_by(User.username).all()
+        return render_template('admin/users.html', users=users_list)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in users route: {str(e)}")
+        flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     except Exception as e:
-        current_app.logger.error(f"Error fetching events: {str(e)}")
-        flash('An error occurred while fetching events.', 'danger')
+        current_app.logger.error(f"Error in users route: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
-@admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
+@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def create_event():
+def create_user():
     if request.method == 'POST':
         try:
-            title = request.form.get('title')
-            description = request.form.get('description')
-            start_date = request.form.get('start_date')
-            start_time = request.form.get('start_time')
-            end_date = request.form.get('end_date')
-            end_time = request.form.get('end_time')
-            location = request.form.get('location')
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            is_admin = request.form.get('is_admin') == 'on'
 
-            if not all([title, start_date, start_time, end_date, end_time, location]):
+            if not all([username, email, password]):
                 flash('Please fill in all required fields.', 'danger')
-                return render_template('admin/event_form.html')
+                return render_template('admin/user_form.html')
 
-            # Combine date and time strings
-            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-            end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
+            # Check if username or email already exists
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists.', 'danger')
+                return render_template('admin/user_form.html')
+            
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists.', 'danger')
+                return render_template('admin/user_form.html')
 
-            if end_datetime <= start_datetime:
-                flash('End date/time must be after start date/time.', 'danger')
-                return render_template('admin/event_form.html')
-
-            event = Event(
-                title=title,
-                description=description,
-                start_date=start_datetime,
-                end_date=end_datetime,
-                location=location
-            )
-
-            db.session.add(event)
+            user = User(username=username, email=email, is_admin=is_admin)
+            user.set_password(password)
+            
+            db.session.add(user)
             db.session.commit()
-            flash('Event created successfully.', 'success')
-            return redirect(url_for('admin.events'))
-
-        except Exception as e:
-            current_app.logger.error(f"Error creating event: {str(e)}")
+            flash('User created successfully.', 'success')
+            return redirect(url_for('admin.users'))
+            
+        except SQLAlchemyError as e:
             db.session.rollback()
-            flash('An error occurred while creating the event.', 'danger')
-            return render_template('admin/event_form.html')
+            current_app.logger.error(f"Database error in create_user: {str(e)}")
+            flash('An error occurred while creating the user.', 'danger')
+            return render_template('admin/user_form.html')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error in create_user: {str(e)}")
+            flash('An unexpected error occurred.', 'danger')
+            return render_template('admin/user_form.html')
 
-    return render_template('admin/event_form.html')
+    return render_template('admin/user_form.html')
 
-@admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def edit_event(event_id):
-    event = Event.query.get_or_404(event_id)
-    
-    if request.method == 'POST':
-        try:
-            title = request.form.get('title')
-            description = request.form.get('description')
-            start_date = request.form.get('start_date')
-            start_time = request.form.get('start_time')
-            end_date = request.form.get('end_date')
-            end_time = request.form.get('end_time')
-            location = request.form.get('location')
-
-            if not all([title, start_date, start_time, end_date, end_time, location]):
-                flash('Please fill in all required fields.', 'danger')
-                return render_template('admin/event_form.html', event=event)
-
-            # Combine date and time strings
-            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-            end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-
-            if end_datetime <= start_datetime:
-                flash('End date/time must be after start date/time.', 'danger')
-                return render_template('admin/event_form.html', event=event)
-
-            event.title = title
-            event.description = description
-            event.start_date = start_datetime
-            event.end_date = end_datetime
-            event.location = location
-
-            db.session.commit()
-            flash('Event updated successfully.', 'success')
-            return redirect(url_for('admin.events'))
-
-        except Exception as e:
-            current_app.logger.error(f"Error updating event: {str(e)}")
-            db.session.rollback()
-            flash('An error occurred while updating the event.', 'danger')
-            return render_template('admin/event_form.html', event=event)
-
-    return render_template('admin/event_form.html', event=event)
-
-@admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_event(event_id):
+def edit_user(user_id):
     try:
-        event = Event.query.get_or_404(event_id)
-        db.session.delete(event)
-        db.session.commit()
-        flash('Event deleted successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error deleting event: {str(e)}")
+        user = User.query.get_or_404(user_id)
+        
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            is_admin = request.form.get('is_admin') == 'on'
+
+            if not all([username, email]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+
+            # Check if username or email already exists
+            username_exists = User.query.filter(User.username == username, User.id != user_id).first()
+            email_exists = User.query.filter(User.email == email, User.id != user_id).first()
+
+            if username_exists:
+                flash('Username already exists.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+            
+            if email_exists:
+                flash('Email already exists.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+
+            db.session.commit()
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin.users'))
+
+        return render_template('admin/user_form.html', user=user)
+            
+    except SQLAlchemyError as e:
         db.session.rollback()
-        flash('An error occurred while deleting the event.', 'danger')
-    
-    return redirect(url_for('admin.events'))
+        current_app.logger.error(f"Database error in edit_user: {str(e)}")
+        flash('An error occurred while updating the user.', 'danger')
+        return redirect(url_for('admin.users'))
+    except Exception as e:
+        current_app.logger.error(f"Error in edit_user: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Prevent deletion of own account
+        if user.id == current_user.id:
+            flash('You cannot delete your own account.', 'danger')
+            return redirect(url_for('admin.users'))
+
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully.', 'success')
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in delete_user: {str(e)}")
+        flash('An error occurred while deleting the user.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error in delete_user: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/toggle_admin/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_admin(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Prevent removing admin status from own account
+        if user.id == current_user.id:
+            flash('You cannot modify your own admin status.', 'danger')
+            return redirect(url_for('admin.users'))
+
+        user.is_admin = not user.is_admin
+        db.session.commit()
+        
+        status = 'granted' if user.is_admin else 'revoked'
+        flash(f'Admin privileges {status} successfully.', 'success')
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in toggle_admin: {str(e)}")
+        flash('An error occurred while updating admin status.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error in toggle_admin: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        
+    return redirect(url_for('admin.users'))
 
 # [Previous admin routes remain unchanged...]
