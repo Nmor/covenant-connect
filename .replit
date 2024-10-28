@@ -27,6 +27,10 @@ args = "Insert Test Data"
 task = "workflow.run"
 args = "Flask Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Fix Admin"
+
 [[workflows.workflow]]
 name = "Reset DB"
 author = "agent"
@@ -71,6 +75,17 @@ agentRequireRestartOnSave = false
 task = "shell.exec"
 args = "python main.py"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Fix Admin"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python scripts/fix_admin.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]
