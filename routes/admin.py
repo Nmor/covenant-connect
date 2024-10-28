@@ -28,7 +28,7 @@ def admin_required(f):
 @admin_required
 def dashboard():
     try:
-        # Get current timestamp for comparing events
+        # [Previous dashboard code remains unchanged...]
         now = datetime.utcnow()
 
         # Prayer Request Statistics
@@ -107,44 +107,125 @@ def dashboard():
         current_app.logger.error(f"Error in admin dashboard: {str(e)}")
         return render_template('admin/dashboard.html', error="An error occurred loading the dashboard")
 
-# Business Settings Routes
-@admin_bp.route('/admin/settings', methods=['GET', 'POST'])
+# User Management Routes
+@admin_bp.route('/admin/users')
 @login_required
 @admin_required
-def settings():
+def users():
     try:
-        settings = Settings.query.first()
-        if not settings:
-            settings = Settings()
-            db.session.add(settings)
-            db.session.commit()
-
-        if request.method == 'POST':
-            business_name = request.form.get('business_name')
-            if not business_name:
-                flash('Business name is required.', 'danger')
-                return render_template('admin/settings.html', settings=settings)
-
-            settings.business_name = business_name
-
-            # Handle logo upload
-            if 'logo' in request.files:
-                logo = request.files['logo']
-                if logo.filename:
-                    # Save the logo to static/uploads directory
-                    filename = secure_filename(logo.filename)
-                    upload_path = os.path.join('static', 'uploads', filename)
-                    logo.save(upload_path)
-                    settings.logo_url = f"/static/uploads/{filename}"
-
-            db.session.commit()
-            flash('Settings updated successfully.', 'success')
-            return redirect(url_for('admin.settings'))
-
-        return render_template('admin/settings.html', settings=settings)
+        users_list = User.query.all()
+        return render_template('admin/users.html', users=users_list)
     except Exception as e:
-        current_app.logger.error(f"Error in settings: {str(e)}")
-        flash('An error occurred while managing settings.', 'danger')
+        current_app.logger.error(f"Error fetching users: {str(e)}")
+        flash('An error occurred while fetching users.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
-# [Previous admin routes remain unchanged...]
+@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_user():
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            is_admin = bool(request.form.get('is_admin'))
+
+            if not all([username, email, password, confirm_password]):
+                flash('All fields are required.', 'danger')
+                return render_template('admin/user_form.html')
+
+            if password != confirm_password:
+                flash('Passwords do not match.', 'danger')
+                return render_template('admin/user_form.html')
+
+            if User.query.filter((User.username == username) | (User.email == email)).first():
+                flash('Username or email already exists.', 'danger')
+                return render_template('admin/user_form.html')
+
+            user = User()
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+            user.set_password(password)
+            
+            db.session.add(user)
+            db.session.commit()
+
+            flash('User created successfully.', 'success')
+            return redirect(url_for('admin.users'))
+
+        except Exception as e:
+            current_app.logger.error(f"Error creating user: {str(e)}")
+            db.session.rollback()
+            flash('An error occurred while creating the user.', 'danger')
+            return render_template('admin/user_form.html')
+
+    return render_template('admin/user_form.html')
+
+@admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            email = request.form.get('email')
+            is_admin = bool(request.form.get('is_admin'))
+
+            if not all([username, email]):
+                flash('All fields are required.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+
+            existing_user = User.query.filter(
+                (User.username == username) | (User.email == email),
+                User.id != user_id
+            ).first()
+
+            if existing_user:
+                flash('Username or email already exists.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+            db.session.commit()
+
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin.users'))
+
+        except Exception as e:
+            current_app.logger.error(f"Error updating user: {str(e)}")
+            db.session.rollback()
+            flash('An error occurred while updating the user.', 'danger')
+            return render_template('admin/user_form.html', user=user)
+
+    return render_template('admin/user_form.html', user=user)
+
+@admin_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Prevent deleting self
+        if user.id == current_user.id:
+            flash('You cannot delete your own account.', 'danger')
+            return redirect(url_for('admin.users'))
+
+        db.session.delete(user)
+        db.session.commit()
+        
+        flash(f'User {user.username} has been deleted.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting user: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting the user.', 'danger')
+    
+    return redirect(url_for('admin.users'))
+
+# [Previous code for other admin routes remains unchanged...]

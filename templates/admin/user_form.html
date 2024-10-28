@@ -1,58 +1,141 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
-{% block title %}{{ 'Edit' if user else 'Create' }} User - Admin Dashboard{% endblock %}
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>{{ 'Edit' if user else 'Create New' }} User</h1>
+</div>
 
-{% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card">
-                <div class="card-header">
-                    <h2>{{ 'Edit' if user else 'Create New' }} User</h2>
-                </div>
-                <div class="card-body">
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
-                    <form method="POST">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" 
-                                   value="{{ user.username if user else '' }}" required>
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ user.username if user else '' }}" required
+                               pattern="[A-Za-z0-9_]+" minlength="3">
+                        <div class="invalid-feedback">
+                            Username must be at least 3 characters (letters, numbers, and underscores only).
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   value="{{ user.email if user else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ user.email if user else '' }}" required>
+                        <div class="invalid-feedback">
+                            Please enter a valid email address.
                         </div>
-                        {% if not user %}
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirm Password</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                            </div>
-                        {% endif %}
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin"
-                                   {% if user and user.is_admin %}checked{% endif %}>
+                    </div>
+                    
+                    {% if not user %}
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               required minlength="8">
+                        <div class="invalid-feedback">
+                            Password must be at least 8 characters.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" 
+                               name="confirm_password" required>
+                        <div class="invalid-feedback">
+                            Passwords must match.
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="is_admin" 
+                                   name="is_admin" {% if user and user.is_admin %}checked{% endif %}>
                             <label class="form-check-label" for="is_admin">Admin User</label>
                         </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">{{ 'Update' if user else 'Create' }} User</button>
-                            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {{ 'Update' if user else 'Create' }} User
+                        </button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Help</h5>
+            </div>
+            <div class="card-body">
+                <h6>Username Requirements:</h6>
+                <ul>
+                    <li>At least 3 characters</li>
+                    <li>Letters, numbers, and underscores only</li>
+                    <li>Must be unique</li>
+                </ul>
+                
+                {% if not user %}
+                <h6>Password Requirements:</h6>
+                <ul>
+                    <li>At least 8 characters</li>
+                    <li>Must contain uppercase letters</li>
+                    <li>Must contain lowercase letters</li>
+                    <li>Must contain numbers</li>
+                </ul>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        if (password && confirmPassword && password.value !== confirmPassword.value) {
+            event.preventDefault();
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else if (confirmPassword) {
+            confirmPassword.setCustomValidity('');
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    if (confirmPassword) {
+        confirmPassword.addEventListener('input', function() {
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Passwords do not match');
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

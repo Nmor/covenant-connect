@@ -1,266 +1,201 @@
-/* Custom styles that complement Bootstrap dark theme */
-
+/* Theme Variables */
 :root[data-bs-theme=dark] {
     /* Core theme colors */
     --custom-bg: #212529;
-    --custom-card-bg: rgba(33, 37, 41, 0.95);
-    --custom-hover-bg: rgba(42, 46, 51, 0.95);
+    --custom-card-bg: #2a2e32;
+    --custom-hover-bg: #343a40;
     --custom-border-color: rgba(255, 255, 255, 0.1);
     --custom-shadow: rgba(0, 0, 0, 0.2);
     --custom-hover-shadow: rgba(0, 0, 0, 0.3);
     
     /* Text colors */
     --custom-text-primary: rgba(255, 255, 255, 0.95);
-    --custom-text-secondary: rgba(255, 255, 255, 0.7);
+    --custom-text-secondary: rgba(255, 255, 255, 0.75);
     --custom-text-muted: rgba(255, 255, 255, 0.5);
+    
+    /* Form colors */
+    --custom-input-bg: #2a2e32;
+    --custom-input-border: rgba(255, 255, 255, 0.15);
+    --custom-input-focus-border: rgba(255, 255, 255, 0.25);
+    
+    /* Component colors */
+    --custom-nav-bg: rgba(33, 37, 41, 0.95);
+    --custom-nav-hover: #343a40;
+    --custom-dropdown-bg: #2a2e32;
+    --custom-dropdown-hover: #343a40;
+}
+
+:root[data-bs-theme=light] {
+    /* Core theme colors */
+    --custom-bg: #ffffff;
+    --custom-card-bg: #f8f9fa;
+    --custom-hover-bg: #e9ecef;
+    --custom-border-color: rgba(0, 0, 0, 0.1);
+    --custom-shadow: rgba(0, 0, 0, 0.1);
+    --custom-hover-shadow: rgba(0, 0, 0, 0.15);
+    
+    /* Text colors */
+    --custom-text-primary: rgba(0, 0, 0, 0.87);
+    --custom-text-secondary: rgba(0, 0, 0, 0.65);
+    --custom-text-muted: rgba(0, 0, 0, 0.45);
+    
+    /* Form colors */
+    --custom-input-bg: #ffffff;
+    --custom-input-border: rgba(0, 0, 0, 0.15);
+    --custom-input-focus-border: rgba(0, 0, 0, 0.25);
+    
+    /* Component colors */
+    --custom-nav-bg: rgba(255, 255, 255, 0.95);
+    --custom-nav-hover: #f8f9fa;
+    --custom-dropdown-bg: #ffffff;
+    --custom-dropdown-hover: #f8f9fa;
+}
+
+/* Global transitions */
+*, *::before, *::after {
+    transition: background-color 0.3s ease, 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease, 
+                color 0.3s ease;
 }
 
 /* Base styles */
 body {
-    transition: background-color 0.3s ease;
+    background-color: var(--custom-bg);
+    color: var(--custom-text-primary);
 }
 
-/* Enhanced container spacing */
-.container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+/* Navbar styles */
+.navbar {
+    background-color: var(--custom-nav-bg) !important;
+    backdrop-filter: blur(10px);
 }
 
-/* Mobile spacing and text adjustments */
-@media (max-width: 768px) {
-    .container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-    
-    h1, .h1 { font-size: calc(1.275rem + 0.3vw); }
-    h2, .h2 { font-size: calc(1.25rem + 0.3vw); }
-    h3, .h3 { font-size: calc(1.225rem + 0.3vw); }
-    
-    /* Enhance touch targets */
-    .btn, .nav-link, .form-control {
-        padding: 0.75rem 1rem;
-        min-height: 44px;
-    }
+.navbar-dark .navbar-nav .nav-link {
+    color: var(--custom-text-secondary);
 }
 
-/* Card enhancements */
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--custom-text-primary);
+}
+
+/* Card styles */
 .card {
-    background: var(--custom-card-bg);
-    border: 1px solid var(--custom-border-color);
-    box-shadow: 0 2px 4px var(--custom-shadow);
-    transition: all 0.3s ease-in-out;
+    background-color: var(--custom-card-bg);
+    border-color: var(--custom-border-color);
 }
 
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px var(--custom-hover-shadow);
-    background: var(--custom-hover-bg);
 }
 
-/* Form field enhancements */
+.card-header {
+    background-color: var(--custom-hover-bg);
+    border-bottom-color: var(--custom-border-color);
+}
+
+/* Form styles */
 .form-control, .form-select {
-    background-color: var(--custom-card-bg);
-    border-color: var(--custom-border-color);
-    transition: all 0.2s ease-in-out;
+    background-color: var(--custom-input-bg);
+    border-color: var(--custom-input-border);
     color: var(--custom-text-primary);
 }
 
 .form-control:focus, .form-select:focus {
-    background-color: var(--custom-hover-bg);
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    background-color: var(--custom-input-bg);
+    border-color: var(--custom-input-focus-border);
+    color: var(--custom-text-primary);
 }
 
-/* Loading state styles */
-.form-loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.form-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(2px);
-    z-index: 1000;
-}
-
-/* Button enhancements */
+/* Button styles */
 .btn {
-    position: relative;
     transition: all 0.3s ease;
-    overflow: hidden;
 }
 
 .btn:hover {
     transform: translateY(-1px);
 }
 
-.btn:active {
-    transform: translateY(1px);
-}
-
-.btn-primary {
-    box-shadow: 0 2px 4px rgba(var(--bs-primary-rgb), 0.2);
-}
-
-.btn-primary:hover {
-    box-shadow: 0 4px 8px rgba(var(--bs-primary-rgb), 0.3);
-}
-
-/* Navigation enhancements */
-.navbar {
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 4px var(--custom-shadow);
-    transition: all 0.3s ease;
-}
-
-.navbar-brand {
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.nav-link {
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.nav-link::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 2px;
-    bottom: 0;
-    left: 50%;
-    background-color: var(--bs-primary);
-    transition: all 0.3s ease;
-    transform: translateX(-50%);
-}
-
-.nav-link:hover::after {
-    width: 100%;
-}
-
-/* Loading skeleton animation */
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.skeleton {
-    background: linear-gradient(90deg, 
-        var(--custom-card-bg) 25%, 
-        var(--custom-hover-bg) 50%, 
-        var(--custom-card-bg) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-
-.skeleton-text {
-    height: 1em;
-    margin-bottom: 0.5em;
-    border-radius: 4px;
-}
-
-/* Image loading states */
-.image-container {
-    position: relative;
-    overflow: hidden;
-    background-color: var(--custom-card-bg);
-}
-
-.image-loading {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--custom-card-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Table enhancements */
+/* Table styles */
 .table {
-    --bs-table-bg: transparent;
-    --bs-table-color: var(--custom-text-primary);
+    color: var(--custom-text-primary);
 }
 
 .table thead th {
-    background-color: var(--custom-card-bg);
-    border-bottom: 2px solid var(--custom-border-color);
-}
-
-.table tbody tr {
-    transition: background-color 0.2s ease;
+    background-color: var(--custom-hover-bg);
 }
 
 .table tbody tr:hover {
     background-color: var(--custom-hover-bg);
 }
 
-/* Modal improvements */
+/* Alert styles */
+.alert {
+    background-color: var(--custom-card-bg);
+    border-color: var(--custom-border-color);
+}
+
+/* Modal styles */
 .modal-content {
     background-color: var(--custom-card-bg);
-    border: 1px solid var(--custom-border-color);
-    box-shadow: 0 4px 12px var(--custom-hover-shadow);
+    border-color: var(--custom-border-color);
 }
 
 .modal-header, .modal-footer {
     border-color: var(--custom-border-color);
 }
 
-/* Form validation states */
-.was-validated .form-control:invalid,
-.form-control.is-invalid {
-    border-color: var(--bs-danger);
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb), 0.25);
-}
-
-.was-validated .form-control:valid,
-.form-control.is-valid {
-    border-color: var(--bs-success);
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-success-rgb), 0.25);
-}
-
-/* Accessibility improvements */
-:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-}
-
-/* Footer improvements */
-.footer {
-    background-color: var(--custom-card-bg);
-    border-top: 1px solid var(--custom-border-color);
-    padding: 2rem 0;
-    margin-top: auto;
-}
-
-/* Badge enhancements */
+/* Badge styles */
 .badge {
-    padding: 0.5em 0.8em;
-    font-weight: 500;
-    letter-spacing: 0.5px;
     transition: all 0.2s ease;
 }
 
-/* Card link hover effects */
-.card-link {
-    position: relative;
-    display: inline-block;
-    transition: all 0.3s ease;
+/* Footer styles */
+.footer {
+    background-color: var(--custom-nav-bg);
+    border-top-color: var(--custom-border-color);
 }
 
-.card-link:hover {
-    text-decoration: none;
-    transform: translateX(5px);
+/* Theme toggle icon transition */
+.bi-moon-fill, .bi-sun-fill {
+    transition: transform 0.3s ease;
+}
+
+.bi-moon-fill:hover, .bi-sun-fill:hover {
+    transform: rotate(360deg);
+}
+
+/* Accessibility */
+:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* Dark mode overrides */
+[data-bs-theme=dark] .dropdown-menu {
+    background-color: var(--custom-dropdown-bg);
+    border-color: var(--custom-border-color);
+}
+
+[data-bs-theme=dark] .dropdown-item:hover {
+    background-color: var(--custom-dropdown-hover);
+}
+
+/* Loading states */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--custom-card-bg) 25%,
+        var(--custom-hover-bg) 50%,
+        var(--custom-card-bg) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
