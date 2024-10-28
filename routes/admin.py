@@ -23,35 +23,34 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Dashboard route
 @admin_bp.route('/admin')
 @login_required
 @admin_required
 def dashboard():
     try:
         now = datetime.utcnow()
-
+        
         # Prayer Request Statistics
         prayer_stats = {
             'total': PrayerRequest.query.count(),
             'public': PrayerRequest.query.filter_by(is_public=True).count(),
             'private': PrayerRequest.query.filter_by(is_public=False).count()
         }
-
+        
         # Event Statistics
         event_stats = {
             'total': Event.query.count(),
             'upcoming': Event.query.filter(Event.start_date >= now).count(),
             'past': Event.query.filter(Event.end_date < now).count()
         }
-
+        
         # Sermon Statistics
         sermon_stats = {
             'total': Sermon.query.count(),
             'video': Sermon.query.filter_by(media_type='video').count(),
             'audio': Sermon.query.filter_by(media_type='audio').count()
         }
-
+        
         # Donation Statistics
         try:
             successful_donations = Donation.query.filter_by(status='success')
@@ -60,7 +59,7 @@ def dashboard():
                 func.sum(Donation.amount).label('total_amount'),
                 func.count().label('total_count')
             ).first()
-
+            
             if donation_totals and donation_totals.total_amount:
                 total_amount = float(donation_totals.total_amount)
                 total_count = donation_totals.total_count
@@ -69,15 +68,15 @@ def dashboard():
                 total_amount = 0
                 total_count = 0
                 average_amount = 0
-
+                
             currency_stats = successful_donations.with_entities(
                 Donation.currency,
                 func.sum(Donation.amount).label('amount')
             ).group_by(Donation.currency).all()
-
+            
             currency_labels = [stat.currency for stat in currency_stats]
             currency_amounts = [float(stat.amount) for stat in currency_stats]
-
+            
             donation_stats = {
                 'total_amount': total_amount,
                 'total_count': total_count,
@@ -94,18 +93,181 @@ def dashboard():
                 'currency_labels': [],
                 'currency_amounts': []
             }
-
+        
         stats = {
             'prayers': prayer_stats,
             'events': event_stats,
             'sermons': sermon_stats,
             'donations': donation_stats
         }
-
+        
         return render_template('admin/dashboard.html', stats=stats)
     except Exception as e:
         current_app.logger.error(f"Error in admin dashboard: {str(e)}")
         return render_template('admin/dashboard.html', error="An error occurred loading the dashboard")
+
+# User Management Routes
+@admin_bp.route('/admin/users')
+@login_required
+@admin_required
+def users():
+    try:
+        users_list = User.query.order_by(User.username).all()
+        return render_template('admin/users.html', users=users_list)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in users route: {str(e)}")
+        flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Error in users route: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_user():
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            is_admin = request.form.get('is_admin') == 'on'
+            
+            if not all([username, email, password]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/user_form.html')
+            
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists.', 'danger')
+                return render_template('admin/user_form.html')
+            
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists.', 'danger')
+                return render_template('admin/user_form.html')
+            
+            user = User()
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+            user.set_password(password)
+            
+            db.session.add(user)
+            db.session.commit()
+            flash('User created successfully.', 'success')
+            return redirect(url_for('admin.users'))
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error in create_user: {str(e)}")
+            flash('An error occurred while creating the user.', 'danger')
+            return render_template('admin/user_form.html')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error in create_user: {str(e)}")
+            flash('An unexpected error occurred.', 'danger')
+            return render_template('admin/user_form.html')
+    
+    return render_template('admin/user_form.html')
+
+@admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            is_admin = request.form.get('is_admin') == 'on'
+            
+            if not all([username, email]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+            
+            username_exists = User.query.filter(User.username == username, User.id != user_id).first()
+            email_exists = User.query.filter(User.email == email, User.id != user_id).first()
+            
+            if username_exists:
+                flash('Username already exists.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+            
+            if email_exists:
+                flash('Email already exists.', 'danger')
+                return render_template('admin/user_form.html', user=user)
+            
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+            
+            db.session.commit()
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin.users'))
+        
+        return render_template('admin/user_form.html', user=user)
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in edit_user: {str(e)}")
+        flash('An error occurred while updating the user.', 'danger')
+        return redirect(url_for('admin.users'))
+    except Exception as e:
+        current_app.logger.error(f"Error in edit_user: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        if user.id == current_user.id:
+            flash('You cannot delete your own account.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully.', 'success')
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in delete_user: {str(e)}")
+        flash('An error occurred while deleting the user.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error in delete_user: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+    
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/toggle_admin/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_admin(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        if user.id == current_user.id:
+            flash('You cannot modify your own admin status.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        user.is_admin = not user.is_admin
+        db.session.commit()
+        
+        status = 'granted' if user.is_admin else 'revoked'
+        flash(f'Admin privileges {status} successfully.', 'success')
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in toggle_admin: {str(e)}")
+        flash('An error occurred while updating admin status.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error in toggle_admin: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+    
+    return redirect(url_for('admin.users'))
 
 # Event Management Routes
 @admin_bp.route('/admin/events')
@@ -116,13 +278,9 @@ def events():
         now = datetime.utcnow()
         events_list = Event.query.order_by(Event.start_date.desc()).all()
         return render_template('admin/events.html', events=events_list, now=now)
-    except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in events route: {str(e)}")
-        flash('An error occurred while loading events.', 'danger')
-        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in events route: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
+        flash('An error occurred while loading events.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
@@ -138,38 +296,36 @@ def create_event():
             end_date = request.form.get('end_date')
             end_time = request.form.get('end_time')
             location = request.form.get('location')
-
+            
             if not all([title, start_date, start_time, end_date, end_time, location]):
                 flash('Please fill in all required fields.', 'danger')
                 return render_template('admin/event_form.html')
-
-            # Combine date and time strings
+            
             start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
             end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-
+            
             if end_datetime <= start_datetime:
                 flash('End date/time must be after start date/time.', 'danger')
                 return render_template('admin/event_form.html')
-
-            event = Event(
-                title=title,
-                description=description,
-                start_date=start_datetime,
-                end_date=end_datetime,
-                location=location
-            )
-
+            
+            event = Event()
+            event.title = title
+            event.description = description
+            event.start_date = start_datetime
+            event.end_date = end_datetime
+            event.location = location
+            
             db.session.add(event)
             db.session.commit()
             flash('Event created successfully.', 'success')
             return redirect(url_for('admin.events'))
-
+            
         except Exception as e:
             current_app.logger.error(f"Error creating event: {str(e)}")
             db.session.rollback()
             flash('An error occurred while creating the event.', 'danger')
             return render_template('admin/event_form.html')
-
+    
     return render_template('admin/event_form.html')
 
 @admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
@@ -187,35 +343,34 @@ def edit_event(event_id):
             end_date = request.form.get('end_date')
             end_time = request.form.get('end_time')
             location = request.form.get('location')
-
+            
             if not all([title, start_date, start_time, end_date, end_time, location]):
                 flash('Please fill in all required fields.', 'danger')
                 return render_template('admin/event_form.html', event=event)
-
-            # Combine date and time strings
+            
             start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
             end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-
+            
             if end_datetime <= start_datetime:
                 flash('End date/time must be after start date/time.', 'danger')
                 return render_template('admin/event_form.html', event=event)
-
+            
             event.title = title
             event.description = description
             event.start_date = start_datetime
             event.end_date = end_datetime
             event.location = location
-
+            
             db.session.commit()
             flash('Event updated successfully.', 'success')
             return redirect(url_for('admin.events'))
-
+            
         except Exception as e:
             current_app.logger.error(f"Error updating event: {str(e)}")
             db.session.rollback()
             flash('An error occurred while updating the event.', 'danger')
             return render_template('admin/event_form.html', event=event)
-
+    
     return render_template('admin/event_form.html', event=event)
 
 @admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
@@ -242,13 +397,9 @@ def prayers():
     try:
         prayers_list = PrayerRequest.query.order_by(PrayerRequest.created_at.desc()).all()
         return render_template('admin/prayers.html', prayers=prayers_list)
-    except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in prayers route: {str(e)}")
-        flash('An error occurred while loading prayer requests.', 'danger')
-        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in prayers route: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
+        flash('An error occurred while loading prayer requests.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/prayers/<int:prayer_id>/toggle', methods=['POST'])
@@ -259,18 +410,12 @@ def toggle_prayer_visibility(prayer_id):
         prayer = PrayerRequest.query.get_or_404(prayer_id)
         prayer.is_public = not prayer.is_public
         db.session.commit()
-        
-        status = 'public' if prayer.is_public else 'private'
-        flash(f'Prayer request visibility changed to {status}.', 'success')
-        
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(f"Database error in toggle_prayer_visibility: {str(e)}")
-        flash('An error occurred while updating prayer request visibility.', 'danger')
+        flash(f'Prayer request visibility changed to {"public" if prayer.is_public else "private"}.', 'success')
     except Exception as e:
-        current_app.logger.error(f"Error in toggle_prayer_visibility: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
-        
+        current_app.logger.error(f"Error toggling prayer visibility: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating prayer request visibility.', 'danger')
+    
     return redirect(url_for('admin.prayers'))
 
 @admin_bp.route('/admin/prayers/<int:prayer_id>/delete', methods=['POST'])
@@ -282,15 +427,11 @@ def delete_prayer(prayer_id):
         db.session.delete(prayer)
         db.session.commit()
         flash('Prayer request deleted successfully.', 'success')
-        
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(f"Database error in delete_prayer: {str(e)}")
-        flash('An error occurred while deleting the prayer request.', 'danger')
     except Exception as e:
-        current_app.logger.error(f"Error in delete_prayer: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
-        
+        current_app.logger.error(f"Error deleting prayer: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting the prayer request.', 'danger')
+    
     return redirect(url_for('admin.prayers'))
 
 # Sermon Management Routes
@@ -301,13 +442,9 @@ def sermons():
     try:
         sermons_list = Sermon.query.order_by(Sermon.date.desc()).all()
         return render_template('admin/sermons.html', sermons=sermons_list)
-    except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in sermons route: {str(e)}")
-        flash('An error occurred while loading sermons.', 'danger')
-        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in sermons route: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
+        flash('An error occurred while loading sermons.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/sermons/create', methods=['GET', 'POST'])
@@ -322,33 +459,30 @@ def create_sermon():
             date = request.form.get('date')
             media_url = request.form.get('media_url')
             media_type = request.form.get('media_type')
-
+            
             if not all([title, date, media_url, media_type]):
                 flash('Please fill in all required fields.', 'danger')
                 return render_template('admin/sermon_form.html')
-
-            sermon_date = datetime.strptime(date, "%Y-%m-%d")
             
-            sermon = Sermon(
-                title=title,
-                description=description,
-                preacher=preacher,
-                date=sermon_date,
-                media_url=media_url,
-                media_type=media_type
-            )
-
+            sermon = Sermon()
+            sermon.title = title
+            sermon.description = description
+            sermon.preacher = preacher
+            sermon.date = datetime.strptime(date, "%Y-%m-%d")
+            sermon.media_url = media_url
+            sermon.media_type = media_type
+            
             db.session.add(sermon)
             db.session.commit()
             flash('Sermon added successfully.', 'success')
             return redirect(url_for('admin.sermons'))
-
+            
         except Exception as e:
             current_app.logger.error(f"Error creating sermon: {str(e)}")
             db.session.rollback()
             flash('An error occurred while adding the sermon.', 'danger')
             return render_template('admin/sermon_form.html')
-
+    
     return render_template('admin/sermon_form.html')
 
 @admin_bp.route('/admin/sermons/<int:sermon_id>/edit', methods=['GET', 'POST'])
@@ -365,30 +499,28 @@ def edit_sermon(sermon_id):
             date = request.form.get('date')
             media_url = request.form.get('media_url')
             media_type = request.form.get('media_type')
-
+            
             if not all([title, date, media_url, media_type]):
                 flash('Please fill in all required fields.', 'danger')
                 return render_template('admin/sermon_form.html', sermon=sermon)
-
-            sermon_date = datetime.strptime(date, "%Y-%m-%d")
-
+            
             sermon.title = title
             sermon.description = description
             sermon.preacher = preacher
-            sermon.date = sermon_date
+            sermon.date = datetime.strptime(date, "%Y-%m-%d")
             sermon.media_url = media_url
             sermon.media_type = media_type
-
+            
             db.session.commit()
             flash('Sermon updated successfully.', 'success')
             return redirect(url_for('admin.sermons'))
-
+            
         except Exception as e:
             current_app.logger.error(f"Error updating sermon: {str(e)}")
             db.session.rollback()
             flash('An error occurred while updating the sermon.', 'danger')
             return render_template('admin/sermon_form.html', sermon=sermon)
-
+    
     return render_template('admin/sermon_form.html', sermon=sermon)
 
 @admin_bp.route('/admin/sermons/<int:sermon_id>/delete', methods=['POST'])
@@ -400,15 +532,11 @@ def delete_sermon(sermon_id):
         db.session.delete(sermon)
         db.session.commit()
         flash('Sermon deleted successfully.', 'success')
-        
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(f"Database error in delete_sermon: {str(e)}")
-        flash('An error occurred while deleting the sermon.', 'danger')
     except Exception as e:
-        current_app.logger.error(f"Error in delete_sermon: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
-        
+        current_app.logger.error(f"Error deleting sermon: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting the sermon.', 'danger')
+    
     return redirect(url_for('admin.sermons'))
 
 # Settings Management Routes
@@ -423,13 +551,9 @@ def settings():
             db.session.add(settings)
             db.session.commit()
         return render_template('admin/settings.html', settings=settings)
-    except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in settings route: {str(e)}")
-        flash('An error occurred while loading settings.', 'danger')
-        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in settings route: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
+        flash('An error occurred while loading settings.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/settings/update', methods=['POST'])
@@ -441,10 +565,9 @@ def update_settings():
         if not settings:
             settings = Settings()
             db.session.add(settings)
-
+        
         settings.business_name = request.form.get('business_name')
         
-        # Handle logo upload
         if 'logo' in request.files:
             logo_file = request.files['logo']
             if logo_file and logo_file.filename:
@@ -452,38 +575,30 @@ def update_settings():
                 filepath = os.path.join('static/uploads', filename)
                 logo_file.save(filepath)
                 settings.logo_url = f"/static/uploads/{filename}"
-
-        # Handle addresses
+        
         addresses = request.form.getlist('addresses[]')
         settings.addresses = [addr for addr in addresses if addr]
-
-        # Handle social media links
+        
         social_media = {}
         for platform in ['facebook', 'twitter', 'instagram', 'youtube']:
             value = request.form.get(f'social_media[{platform}]')
             if value:
                 social_media[platform] = value
         settings.social_media_links = social_media
-
-        # Handle contact info
+        
         contact_info = {}
         for field in ['phone', 'email', 'hours']:
             value = request.form.get(f'contact_info[{field}]')
             if value:
                 contact_info[field] = value
         settings.contact_info = contact_info
-
+        
         db.session.commit()
         flash('Settings updated successfully.', 'success')
         
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger.error(f"Database error in update_settings: {str(e)}")
-        flash('An error occurred while updating settings.', 'danger')
     except Exception as e:
-        current_app.logger.error(f"Error in update_settings: {str(e)}")
-        flash('An unexpected error occurred.', 'danger')
-        
+        current_app.logger.error(f"Error updating settings: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating settings.', 'danger')
+    
     return redirect(url_for('admin.settings'))
-
-# [Previous admin routes remain unchanged...]
