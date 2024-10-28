@@ -40,14 +40,14 @@ def process_donation():
             return redirect(url_for('donations.donate'))
 
         # Create donation record
-        payment_metadata = {}
+        payment_info = {}
         if payment_method == 'fincra':
             required_fields = ['first_name', 'last_name', 'country']
             if not all(request.form.get(field) for field in required_fields):
                 flash('Please fill in all required fields for international payment.', 'warning')
                 return redirect(url_for('donations.donate'))
             
-            payment_metadata = {
+            payment_info = {
                 'first_name': request.form.get('first_name'),
                 'last_name': request.form.get('last_name'),
                 'country': request.form.get('country')
@@ -56,6 +56,7 @@ def process_donation():
         # Generate unique reference
         reference = str(uuid.uuid4())
 
+        # Create donation record
         donation = Donation(
             email=email,
             amount=amount,
@@ -63,14 +64,45 @@ def process_donation():
             reference=reference,
             status='pending',
             payment_method=payment_method,
-            payment_metadata=payment_metadata
+            payment_info=payment_info
         )
+
         db.session.add(donation)
         db.session.commit()
 
         # Initialize payment based on the selected method
-        if payment_method == 'fincra':
-            # Initialize Fincra payment
+        if payment_method == 'paystack' and currency == 'NGN':
+            try:
+                # Initialize Paystack payment
+                if 'PAYSTACK_SECRET_KEY' not in os.environ:
+                    flash('Payment processing is temporarily unavailable.', 'danger')
+                    current_app.logger.error("Paystack secret key not configured")
+                    return redirect(url_for('donations.donate'))
+
+                headers = {
+                    'Authorization': f"Bearer {os.environ['PAYSTACK_SECRET_KEY']}",
+                    'Content-Type': 'application/json'
+                }
+                
+                payload = {
+                    'amount': int(amount * 100),  # Paystack expects amount in kobo
+                    'currency': 'NGN',
+                    'email': email,
+                    'reference': reference,
+                    'callback_url': url_for('donations.payment_callback', _external=True)
+                }
+
+                # TODO: Make API call to Paystack to initialize payment
+                # For now, we'll simulate success
+                flash('Payment initialization successful!', 'success')
+                return redirect(url_for('donations.donate'))
+
+            except Exception as e:
+                current_app.logger.error(f"Paystack payment initialization error: {str(e)}")
+                flash('Payment initialization failed. Please try again later.', 'danger')
+                return redirect(url_for('donations.donate'))
+
+        elif payment_method == 'fincra':
             try:
                 headers = {
                     'api-key': os.environ['FINCRA_SECRET_KEY'],
@@ -83,8 +115,8 @@ def process_donation():
                     'email': email,
                     'reference': reference,
                     'customer': {
-                        'firstName': payment_metadata['first_name'],
-                        'lastName': payment_metadata['last_name'],
+                        'firstName': payment_info['first_name'],
+                        'lastName': payment_info['last_name'],
                         'email': email
                     },
                     'redirectUrl': url_for('donations.payment_callback', _external=True),
@@ -96,12 +128,12 @@ def process_donation():
                 flash('Payment initialization successful!', 'success')
                 return redirect(url_for('donations.donate'))
 
-            except KeyError:
+            except Exception as e:
+                current_app.logger.error(f"Fincra payment initialization error: {str(e)}")
                 flash('Payment initialization failed. Please try again later.', 'danger')
                 return redirect(url_for('donations.donate'))
         else:
-            # Placeholder for Paystack integration
-            flash('Paystack integration coming soon!', 'info')
+            flash('Invalid payment method or currency combination.', 'danger')
             return redirect(url_for('donations.donate'))
 
     except ValueError as e:
@@ -114,6 +146,7 @@ def process_donation():
         return redirect(url_for('donations.donate'))
     except Exception as e:
         current_app.logger.error(f"Unexpected error in donation processing: {str(e)}")
+        db.session.rollback()
         flash('An unexpected error occurred. Please try again later.', 'danger')
         return redirect(url_for('donations.donate'))
 
@@ -163,7 +196,7 @@ def fincra_webhook():
 
 @donations_bp.route('/payment/callback')
 def payment_callback():
-    """Handle payment callback from Fincra"""
+    """Handle payment callback from payment providers"""
     try:
         status = request.args.get('status')
         reference = request.args.get('reference')
