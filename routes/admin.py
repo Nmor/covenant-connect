@@ -64,6 +64,228 @@ def dashboard():
         flash('An error occurred while loading the dashboard.', 'danger')
         return redirect(url_for('home.home'))
 
+# User Management Routes
+@admin_bp.route('/admin/users')
+@login_required
+@admin_required
+def users():
+    try:
+        users = User.query.all()
+        return render_template('admin/users.html', users=users)
+    except Exception as e:
+        current_app.logger.error(f"Error in users route: {str(e)}")
+        flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_user():
+    try:
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            is_admin = bool(request.form.get('is_admin'))
+            
+            user = User()
+            user.username = username
+            user.email = email
+            user.is_admin = is_admin
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            
+            flash('User created successfully.', 'success')
+            return redirect(url_for('admin.users'))
+            
+        return render_template('admin/user_form.html')
+    except Exception as e:
+        current_app.logger.error(f"Error creating user: {str(e)}")
+        flash('An error occurred while creating user.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        if request.method == 'POST':
+            user.username = request.form['username']
+            user.email = request.form['email']
+            user.is_admin = bool(request.form.get('is_admin'))
+            if request.form.get('password'):
+                user.set_password(request.form['password'])
+            db.session.commit()
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin.users'))
+        return render_template('admin/user_form.html', user=user)
+    except Exception as e:
+        current_app.logger.error(f"Error editing user: {str(e)}")
+        flash('An error occurred while editing user.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    try:
+        if current_user.id == user_id:
+            flash('You cannot delete your own account.', 'danger')
+            return redirect(url_for('admin.users'))
+            
+        user = User.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting user: {str(e)}")
+        flash('An error occurred while deleting user.', 'danger')
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def user_import():
+    try:
+        if request.method == 'POST':
+            if 'file' not in request.files:
+                flash('No file uploaded.', 'danger')
+                return redirect(url_for('admin.users'))
+                
+            file = request.files['file']
+            if not file.filename:
+                flash('No selected file.', 'danger')
+                return redirect(url_for('admin.users'))
+                
+            if file and file.filename.endswith('.csv'):
+                stream = io.StringIO(file.stream.read().decode("UTF8"))
+                csv_input = csv.reader(stream)
+                next(csv_input)  # Skip header row
+                
+                for row in csv_input:
+                    username, email, is_admin = row
+                    user = User()
+                    user.username = username
+                    user.email = email
+                    user.is_admin = is_admin.lower() == 'true'
+                    user.set_password('changeme123')  # Default password
+                    db.session.add(user)
+                
+                db.session.commit()
+                flash('Users imported successfully.', 'success')
+            else:
+                flash('Please upload a CSV file.', 'danger')
+                
+        return redirect(url_for('admin.users'))
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error importing users: {str(e)}")
+        flash('An error occurred while importing users.', 'danger')
+        return redirect(url_for('admin.users'))
+
+# Gallery Management Routes
+@admin_bp.route('/admin/gallery')
+@login_required
+@admin_required
+def gallery():
+    try:
+        images = Gallery.query.order_by(Gallery.created_at.desc()).all()
+        return render_template('admin/gallery.html', images=images)
+    except Exception as e:
+        current_app.logger.error(f"Error in gallery route: {str(e)}")
+        flash('An error occurred while loading gallery.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/gallery/upload', methods=['POST'])
+@login_required
+@admin_required
+def upload_image():
+    try:
+        if 'image' not in request.files:
+            flash('No image file uploaded.', 'danger')
+            return redirect(url_for('admin.gallery'))
+            
+        image = request.files['image']
+        if not image.filename:
+            flash('No selected file.', 'danger')
+            return redirect(url_for('admin.gallery'))
+            
+        if image:
+            filename = secure_filename(str(image.filename))
+            filepath = os.path.join('static/uploads', filename)
+            os.makedirs('static/uploads', exist_ok=True)
+            image.save(filepath)
+            
+            gallery_image = Gallery()
+            gallery_image.title = request.form.get('title', filename)
+            gallery_image.description = request.form.get('description', '')
+            gallery_image.image_url = f"/static/uploads/{filename}"
+            db.session.add(gallery_image)
+            db.session.commit()
+            
+            flash('Image uploaded successfully.', 'success')
+        return redirect(url_for('admin.gallery'))
+    except Exception as e:
+        current_app.logger.error(f"Error uploading image: {str(e)}")
+        flash('An error occurred while uploading image.', 'danger')
+        return redirect(url_for('admin.gallery'))
+
+# Settings Management Routes
+@admin_bp.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def settings():
+    try:
+        settings = Settings.query.first()
+        if not settings:
+            settings = Settings()
+            db.session.add(settings)
+            db.session.commit()
+            
+        if request.method == 'POST':
+            settings.business_name = request.form['business_name']
+            
+            # Handle logo upload
+            if 'logo' in request.files:
+                logo_file = request.files['logo']
+                if logo_file.filename:
+                    filename = secure_filename(str(logo_file.filename))
+                    filepath = os.path.join('static/uploads', filename)
+                    os.makedirs('static/uploads', exist_ok=True)
+                    logo_file.save(filepath)
+                    settings.logo_url = f"/static/uploads/{filename}"
+            
+            # Update addresses
+            addresses = request.form.getlist('addresses[]')
+            settings.addresses = [addr for addr in addresses if addr]
+            
+            # Update social media links
+            settings.social_media_links = {
+                'facebook': request.form.get('social_media[facebook]'),
+                'twitter': request.form.get('social_media[twitter]'),
+                'instagram': request.form.get('social_media[instagram]'),
+                'youtube': request.form.get('social_media[youtube]')
+            }
+            
+            # Update contact info
+            settings.contact_info = {
+                'phone': request.form.get('contact_info[phone]'),
+                'email': request.form.get('contact_info[email]'),
+                'hours': request.form.get('contact_info[hours]')
+            }
+            
+            db.session.commit()
+            flash('Settings updated successfully.', 'success')
+            return redirect(url_for('admin.settings'))
+            
+        return render_template('admin/settings.html', settings=settings)
+    except Exception as e:
+        current_app.logger.error(f"Error managing settings: {str(e)}")
+        flash('An error occurred while managing settings.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
 # Event Management Routes
 @admin_bp.route('/admin/events')
 @login_required
@@ -96,7 +318,7 @@ def create_event():
         return render_template('admin/event_form.html')
     except Exception as e:
         current_app.logger.error(f"Error creating event: {str(e)}")
-        flash('An error occurred while creating the event.', 'danger')
+        flash('An error occurred while creating event.', 'danger')
         return redirect(url_for('admin.events'))
 
 @admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
@@ -117,7 +339,7 @@ def edit_event(event_id):
         return render_template('admin/event_form.html', event=event)
     except Exception as e:
         current_app.logger.error(f"Error editing event: {str(e)}")
-        flash('An error occurred while editing the event.', 'danger')
+        flash('An error occurred while editing event.', 'danger')
         return redirect(url_for('admin.events'))
 
 @admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
@@ -131,10 +353,51 @@ def delete_event(event_id):
         flash('Event deleted successfully.', 'success')
     except Exception as e:
         current_app.logger.error(f"Error deleting event: {str(e)}")
-        flash('An error occurred while deleting the event.', 'danger')
+        flash('An error occurred while deleting event.', 'danger')
     return redirect(url_for('admin.events'))
 
-# Sermon Management Routes
+# Prayer Request Management Routes
+@admin_bp.route('/admin/prayers')
+@login_required
+@admin_required
+def prayers():
+    try:
+        prayers = PrayerRequest.query.order_by(PrayerRequest.created_at.desc()).all()
+        return render_template('admin/prayers.html', prayers=prayers)
+    except Exception as e:
+        current_app.logger.error(f"Error in prayers route: {str(e)}")
+        flash('An error occurred while loading prayers.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/prayers/<int:prayer_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_prayer_visibility(prayer_id):
+    try:
+        prayer = PrayerRequest.query.get_or_404(prayer_id)
+        prayer.is_public = not prayer.is_public
+        db.session.commit()
+        flash('Prayer request visibility updated successfully.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error toggling prayer visibility: {str(e)}")
+        flash('An error occurred while updating prayer request.', 'danger')
+    return redirect(url_for('admin.prayers'))
+
+@admin_bp.route('/admin/prayers/<int:prayer_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_prayer(prayer_id):
+    try:
+        prayer = PrayerRequest.query.get_or_404(prayer_id)
+        db.session.delete(prayer)
+        db.session.commit()
+        flash('Prayer request deleted successfully.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting prayer: {str(e)}")
+        flash('An error occurred while deleting prayer request.', 'danger')
+    return redirect(url_for('admin.prayers'))
+
+# Sermon Management Routes 
 @admin_bp.route('/admin/sermons')
 @login_required
 @admin_required
@@ -206,19 +469,6 @@ def delete_sermon(sermon_id):
         flash('An error occurred while deleting sermon.', 'danger')
     return redirect(url_for('admin.sermons'))
 
-# Prayer Request Management Routes
-@admin_bp.route('/admin/prayers')
-@login_required
-@admin_required
-def prayers():
-    try:
-        prayers = PrayerRequest.query.order_by(PrayerRequest.created_at.desc()).all()
-        return render_template('admin/prayers.html', prayers=prayers)
-    except Exception as e:
-        current_app.logger.error(f"Error in prayers route: {str(e)}")
-        flash('An error occurred while loading prayers.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
 # Donation Management Routes
 @admin_bp.route('/admin/donations')
 @login_required
@@ -231,214 +481,3 @@ def donations():
         current_app.logger.error(f"Error in donations route: {str(e)}")
         flash('An error occurred while loading donations.', 'danger')
         return redirect(url_for('admin.dashboard'))
-
-# User Management Routes
-@admin_bp.route('/admin/users')
-@login_required
-@admin_required
-def users():
-    try:
-        users = User.query.all()
-        return render_template('admin/users.html', users=users)
-    except Exception as e:
-        current_app.logger.error(f"Error in users route: {str(e)}")
-        flash('An error occurred while loading users.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def create_user():
-    try:
-        if request.method == 'POST':
-            username = request.form.get('username')
-            email = request.form.get('email')
-            password = request.form.get('password')
-            is_admin = bool(request.form.get('is_admin'))
-            
-            user = User()
-            user.username = username
-            user.email = email
-            user.is_admin = is_admin
-            user.set_password(password)
-            db.session.add(user)
-            db.session.commit()
-            
-            flash('User created successfully.', 'success')
-            return redirect(url_for('admin.users'))
-            
-        return render_template('admin/user_form.html')
-    except Exception as e:
-        current_app.logger.error(f"Error creating user: {str(e)}")
-        flash('An error occurred while creating user.', 'danger')
-        return redirect(url_for('admin.users'))
-
-@admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def user_import():
-    try:
-        if request.method == 'POST':
-            if 'file' not in request.files:
-                flash('No file uploaded.', 'danger')
-                return redirect(url_for('admin.users'))
-                
-            file = request.files['file']
-            if file.filename == '':
-                flash('No selected file.', 'danger')
-                return redirect(url_for('admin.users'))
-                
-            if file and file.filename.endswith('.csv'):
-                stream = io.StringIO(file.stream.read().decode("UTF8"))
-                csv_input = csv.reader(stream)
-                next(csv_input)  # Skip header row
-                
-                for row in csv_input:
-                    username, email, is_admin = row
-                    user = User()
-                    user.username = username
-                    user.email = email
-                    user.is_admin = is_admin.lower() == 'true'
-                    user.set_password('changeme123')  # Default password
-                    db.session.add(user)
-                
-                db.session.commit()
-                flash('Users imported successfully.', 'success')
-            else:
-                flash('Please upload a CSV file.', 'danger')
-                
-        return redirect(url_for('admin.users'))
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error importing users: {str(e)}")
-        flash('An error occurred while importing users.', 'danger')
-        return redirect(url_for('admin.users'))
-
-# Gallery Management Routes
-@admin_bp.route('/admin/gallery')
-@login_required
-@admin_required
-def gallery():
-    try:
-        images = Gallery.query.order_by(Gallery.created_at.desc()).all()
-        return render_template('admin/gallery.html', images=images)
-    except Exception as e:
-        current_app.logger.error(f"Error in gallery route: {str(e)}")
-        flash('An error occurred while loading gallery.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/gallery/upload', methods=['POST'])
-@login_required
-@admin_required
-def upload_image():
-    try:
-        if 'image' not in request.files:
-            flash('No image file uploaded.', 'danger')
-            return redirect(url_for('admin.gallery'))
-            
-        image = request.files['image']
-        if image.filename == '':
-            flash('No selected file.', 'danger')
-            return redirect(url_for('admin.gallery'))
-            
-        if image:
-            filename = secure_filename(image.filename)
-            filepath = os.path.join('static/uploads', filename)
-            os.makedirs('static/uploads', exist_ok=True)
-            image.save(filepath)
-            
-            gallery_image = Gallery()
-            gallery_image.title = request.form.get('title', filename)
-            gallery_image.description = request.form.get('description', '')
-            gallery_image.image_url = f"/static/uploads/{filename}"
-            db.session.add(gallery_image)
-            db.session.commit()
-            
-            flash('Image uploaded successfully.', 'success')
-        return redirect(url_for('admin.gallery'))
-    except Exception as e:
-        current_app.logger.error(f"Error uploading image: {str(e)}")
-        flash('An error occurred while uploading image.', 'danger')
-        return redirect(url_for('admin.gallery'))
-
-# Settings Management Routes
-@admin_bp.route('/admin/settings', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def settings():
-    try:
-        settings = Settings.query.first()
-        if not settings:
-            settings = Settings()
-            db.session.add(settings)
-            db.session.commit()
-            
-        if request.method == 'POST':
-            settings.business_name = request.form['business_name']
-            
-            # Handle logo upload
-            if 'logo' in request.files:
-                logo_file = request.files['logo']
-                if logo_file.filename:
-                    filename = secure_filename(logo_file.filename)
-                    filepath = os.path.join('static/uploads', filename)
-                    os.makedirs('static/uploads', exist_ok=True)
-                    logo_file.save(filepath)
-                    settings.logo_url = f"/static/uploads/{filename}"
-            
-            # Update addresses
-            addresses = request.form.getlist('addresses[]')
-            settings.addresses = [addr for addr in addresses if addr]
-            
-            # Update social media links
-            settings.social_media_links = {
-                'facebook': request.form.get('social_media[facebook]'),
-                'twitter': request.form.get('social_media[twitter]'),
-                'instagram': request.form.get('social_media[instagram]'),
-                'youtube': request.form.get('social_media[youtube]')
-            }
-            
-            # Update contact info
-            settings.contact_info = {
-                'phone': request.form.get('contact_info[phone]'),
-                'email': request.form.get('contact_info[email]'),
-                'hours': request.form.get('contact_info[hours]')
-            }
-            
-            db.session.commit()
-            flash('Settings updated successfully.', 'success')
-            return redirect(url_for('admin.settings'))
-            
-        return render_template('admin/settings.html', settings=settings)
-    except Exception as e:
-        current_app.logger.error(f"Error managing settings: {str(e)}")
-        flash('An error occurred while managing settings.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/prayers/<int:prayer_id>/toggle', methods=['POST'])
-@login_required
-@admin_required
-def toggle_prayer_visibility(prayer_id):
-    try:
-        prayer = PrayerRequest.query.get_or_404(prayer_id)
-        prayer.is_public = not prayer.is_public
-        db.session.commit()
-        flash('Prayer request visibility updated successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error toggling prayer visibility: {str(e)}")
-        flash('An error occurred while updating prayer request.', 'danger')
-    return redirect(url_for('admin.prayers'))
-
-@admin_bp.route('/admin/prayers/<int:prayer_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_prayer(prayer_id):
-    try:
-        prayer = PrayerRequest.query.get_or_404(prayer_id)
-        db.session.delete(prayer)
-        db.session.commit()
-        flash('Prayer request deleted successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error deleting prayer: {str(e)}")
-        flash('An error occurred while deleting prayer request.', 'danger')
-    return redirect(url_for('admin.prayers'))
