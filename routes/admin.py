@@ -64,6 +64,43 @@ def dashboard():
         flash('An error occurred while loading the dashboard.', 'danger')
         return redirect(url_for('home.home'))
 
+@admin_bp.route('/admin/users')
+@login_required
+@admin_required
+def users():
+    try:
+        users = User.query.all()
+        return render_template('admin/users.html', users=users)
+    except Exception as e:
+        current_app.logger.error(f"Error in users route: {str(e)}")
+        flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_user():
+    try:
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            is_admin = bool(request.form.get('is_admin'))
+            
+            user = User(username=username, email=email, is_admin=is_admin)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            
+            flash('User created successfully.', 'success')
+            return redirect(url_for('admin.users'))
+            
+        return render_template('admin/user_form.html')
+    except Exception as e:
+        current_app.logger.error(f"Error creating user: {str(e)}")
+        flash('An error occurred while creating user.', 'danger')
+        return redirect(url_for('admin.users'))
+
 # Gallery Management Routes
 @admin_bp.route('/admin/gallery')
 @login_required
@@ -152,26 +189,5 @@ def delete_image(image_id):
         current_app.logger.error(f"Error deleting image: {str(e)}")
         db.session.rollback()
         flash('An error occurred while deleting the image.', 'danger')
-    
-    return redirect(url_for('admin.gallery'))
-
-@admin_bp.route('/admin/gallery/<int:image_id>/update', methods=['POST'])
-@login_required
-@admin_required
-def update_image_details(image_id):
-    try:
-        image = Gallery.query.get_or_404(image_id)
-        
-        # Update image details
-        image.title = request.form.get('title', image.title)
-        image.description = request.form.get('description', image.description)
-        
-        db.session.commit()
-        flash('Image details updated successfully.', 'success')
-        
-    except Exception as e:
-        current_app.logger.error(f"Error updating image details: {str(e)}")
-        db.session.rollback()
-        flash('An error occurred while updating the image details.', 'danger')
     
     return redirect(url_for('admin.gallery'))
