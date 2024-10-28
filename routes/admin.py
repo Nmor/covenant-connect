@@ -23,7 +23,46 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# [Previous routes remain unchanged...]
+@admin_bp.route('/admin')
+@admin_bp.route('/admin/dashboard')
+@login_required
+@admin_required
+def dashboard():
+    try:
+        # Add dashboard statistics
+        prayer_stats = {
+            'total': PrayerRequest.query.count(),
+            'public': PrayerRequest.query.filter_by(is_public=True).count(),
+            'private': PrayerRequest.query.filter_by(is_public=False).count()
+        }
+        
+        event_stats = {
+            'upcoming': Event.query.filter(Event.start_date >= datetime.now()).count(),
+            'past': Event.query.filter(Event.end_date < datetime.now()).count(),
+            'total': Event.query.count()
+        }
+        
+        sermon_stats = {
+            'total': Sermon.query.count(),
+            'video': Sermon.query.filter_by(media_type='video').count(),
+            'audio': Sermon.query.filter_by(media_type='audio').count()
+        }
+        
+        donation_stats = {
+            'total': Donation.query.filter_by(status='success').count(),
+            'amount': db.session.query(func.sum(Donation.amount)).filter_by(status='success').scalar() or 0
+        }
+        
+        return render_template('admin/dashboard.html',
+                             prayer_stats=prayer_stats,
+                             event_stats=event_stats,
+                             sermon_stats=sermon_stats,
+                             donation_stats=donation_stats)
+                             
+    except Exception as e:
+        current_app.logger.error(f"Error in dashboard route: {str(e)}")
+        flash('An error occurred while loading the dashboard.', 'danger')
+        return redirect(url_for('home.home'))
 
 # Gallery Management Routes
 @admin_bp.route('/admin/gallery')
@@ -136,5 +175,3 @@ def update_image_details(image_id):
         flash('An error occurred while updating the image details.', 'danger')
     
     return redirect(url_for('admin.gallery'))
-
-# [Rest of the file remains unchanged...]
