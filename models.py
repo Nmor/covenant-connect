@@ -62,3 +62,11 @@ class Donation(db.Model):
     payment_info = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Settings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    business_name = db.Column(db.String(200), nullable=False, default='Covenant Connect')
+    logo_url = db.Column(db.String(500))
+    theme_preference = db.Column(db.String(20), default='dark')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
