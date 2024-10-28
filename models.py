@@ -9,6 +9,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, default=False)
+    locale = db.Column(db.String(10), default='en')  # Language preference
+    notification_preferences = db.Column(db.JSON, default=dict)  # Notification settings
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -49,7 +51,6 @@ class Gallery(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Donation(db.Model):
-    __tablename__ = 'donations'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
@@ -68,7 +69,6 @@ class Settings(db.Model):
     business_name = db.Column(db.String(200), nullable=False, default='Covenant Connect')
     logo_url = db.Column(db.String(500))
     theme_preference = db.Column(db.String(20), default='dark')
-    # New fields for footer content
     addresses = db.Column(db.JSON, default=list)  # Array of address objects
     social_media_links = db.Column(db.JSON, default=dict)  # Object with social media platform links
     contact_info = db.Column(db.JSON, default=dict)  # Object with contact details

@@ -1,13 +1,27 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_babel import Babel
+from flask_sse import sse
 import os
 from datetime import datetime
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+babel = Babel()
+
+def get_locale():
+    # Try to get locale from query string
+    locale = request.args.get('lang')
+    if locale:
+        return locale
+    # Try to get locale from user preferences
+    if hasattr(g, 'user') and g.user and hasattr(g.user, 'locale'):
+        return g.user.locale
+    # Default to browser's language preference
+    return request.accept_languages.best_match(['en', 'es', 'fr'])
 
 def create_app():
     app = Flask(__name__)
@@ -25,10 +39,19 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 
+    # Babel configuration
+    app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+    app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
+
+    # SSE configuration
+    app.config["REDIS_URL"] = "memory://"
+    app.register_blueprint(sse, url_prefix='/stream')
+
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    babel.init_app(app, locale_selector=get_locale)
     login_manager.login_view = 'auth.login'
 
     # Register blueprints
@@ -40,6 +63,7 @@ def create_app():
     from routes.sermons import sermons_bp
     from routes.gallery import gallery_bp
     from routes.donations import donations_bp
+    from routes.notifications import notifications_bp
 
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
@@ -49,6 +73,7 @@ def create_app():
     app.register_blueprint(sermons_bp)
     app.register_blueprint(gallery_bp)
     app.register_blueprint(donations_bp)
+    app.register_blueprint(notifications_bp)
 
     # Context processors
     @app.context_processor

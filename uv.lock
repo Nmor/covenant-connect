@@ -2,6 +2,24 @@ version = 1
 requires-python = ">=3.11"
 
 [[package]]
+name = "async-timeout"
+version = "4.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/d6/21b30a550dafea84b1b8eee21b5e23fa16d010ae006011221f33dcd8d7f8/async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f", size = 8345 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/fa/e01228c2938de91d47b307831c62ab9e4001e747789d0b05baf779a6488c/async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028", size = 5721 },
+]
+
+[[package]]
+name = "babel"
+version = "2.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/74/f1bc80f23eeba13393b7222b11d95ca3af2c1e28edca18af487137eefed9/babel-2.16.0.tar.gz", hash = "sha256:d1f3554ca26605fe173f3de0c65f750f5a42f924499bf134de6423582298e316", size = 9348104 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/20/bc79bc575ba2e2a7f70e8a1155618bb1301eaa5132a8271373a6903f73f8/babel-2.16.0-py3-none-any.whl", hash = "sha256:368b5b98b37c06b7daf6696391c3240c938b37767d4584413e8438c5c435fa8b", size = 9587599 },
+]
+
+[[package]]
 name = "blinker"
 version = "1.8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -70,6 +88,21 @@ wheels = [
 ]
 
 [[package]]
+name = "flask-babel"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "babel" },
+    { name = "flask" },
+    { name = "jinja2" },
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/58/1a/4c65e3b90bda699a637bfb7fb96818b0a9bbff7636ea91aade67f6020a31/flask_babel-4.0.0.tar.gz", hash = "sha256:dbeab4027a3f4a87678a11686496e98e1492eb793cbdd77ab50f4e9a2602a593", size = 10178 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/c2/e0ab5abe37882e118482884f2ec660cd06da644ddfbceccf5f88f546b574/flask_babel-4.0.0-py3-none-any.whl", hash = "sha256:638194cf91f8b301380f36d70e2034c77ee25b98cb5d80a1626820df9a6d4625", size = 9602 },
+]
+
+[[package]]
 name = "flask-login"
 version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
@@ -106,6 +139,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/91/53/b0a9fcc1b1297f51e68b69ed3b7c3c40d8c45be1391d77ae198712914392/flask_sqlalchemy-3.1.1.tar.gz", hash = "sha256:e4b68bb881802dda1a7d878b2fc84c06d1ee57fb40b874d3dc97dabfa36b8312", size = 81899 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/6a/89963a5c6ecf166e8be29e0d1bf6806051ee8fe6c82e232842e3aeac9204/flask_sqlalchemy-3.1.1-py3-none-any.whl", hash = "sha256:4ba4be7f419dc72f4efd8802d69974803c37259dd42f3913b0dcf75c9447e0a0", size = 25125 },
+]
+
+[[package]]
+name = "flask-sse"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flask" },
+    { name = "redis" },
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/38/31/82586853cb1c0fcc2b8b533891606a779acc0da7d4cda5c8d7f2c2b05a29/Flask-SSE-1.0.0.tar.gz", hash = "sha256:4f84714c2549a45e4f17bfc5f68ee8a9f298b22740a6844404d1c74551f2090d", size = 16190 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/83/f9fe86f554a153fdd300fb8027121d508a2177605bd158d967ddd7325948/Flask_SSE-1.0.0-py2.py3-none-any.whl", hash = "sha256:f86d7ecff0607333755c444130c395e7a133fb7ae6cf76fbd29b1da36d34776b", size = 4952 },
 ]
 
 [[package]]
@@ -271,15 +318,38 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2024.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/31/3c70bf7603cc2dca0f19bdc53b4537a797747a58875b552c8c413d963a3f/pytz-2024.2.tar.gz", hash = "sha256:2aa355083c50a0f93fa581709deac0c9ad65cca8a9e9beac660adcbd493c798a", size = 319692 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/c3/005fcca25ce078d2cc29fd559379817424e94885510568bc1bc53d7d5846/pytz-2024.2-py2.py3-none-any.whl", hash = "sha256:31c7c1817eb7fae7ca4b8c7ee50c72f93aa2dd863de768e1ef4245d426aa0725", size = 508002 },
+]
+
+[[package]]
+name = "redis"
+version = "5.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "async-timeout", marker = "python_full_version < '3.11.3'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/17/2f4a87ffa4cd93714cf52edfa3ea94589e9de65f71e9f99cbcfa84347a53/redis-5.2.0.tar.gz", hash = "sha256:0b1087665a771b1ff2e003aa5bdd354f15a70c9e25d5a7dbf9c722c16528a7b0", size = 4607878 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/f5/ffa560ecc4bafbf25f7961c3d6f50d627a90186352e27e7d0ba5b1f6d87d/redis-5.2.0-py3-none-any.whl", hash = "sha256:ae174f2bb3b1bf2b09d54bf3e51fbc1469cf6c10aa03e21141f51969801a7897", size = 261428 },
+]
+
+[[package]]
 name = "repl-nix-vitecovenantconnect"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "email-validator" },
     { name = "flask" },
+    { name = "flask-babel" },
     { name = "flask-login" },
     { name = "flask-mail" },
     { name = "flask-sqlalchemy" },
+    { name = "flask-sse" },
     { name = "psycopg2-binary" },
     { name = "sqlalchemy" },
     { name = "werkzeug" },
@@ -289,12 +359,23 @@ dependencies = [
 requires-dist = [
     { name = "email-validator", specifier = ">=2.2.0" },
     { name = "flask", specifier = ">=3.0.3" },
+    { name = "flask-babel", specifier = ">=4.0.0" },
     { name = "flask-login", specifier = ">=0.6.3" },
     { name = "flask-mail", specifier = ">=0.10.0" },
     { name = "flask-sqlalchemy", specifier = ">=3.1.1" },
+    { name = "flask-sse", specifier = ">=1.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "sqlalchemy", specifier = ">=2.0.36" },
     { name = "werkzeug", specifier = ">=3.0.6" },
+]
+
+[[package]]
+name = "six"
+version = "1.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926", size = 34041 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254", size = 11053 },
 ]
 
 [[package]]
