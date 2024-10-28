@@ -3,9 +3,9 @@ from flask_login import login_required, current_user
 from models import PrayerRequest, Event, Sermon, Donation, User, Gallery, Settings
 from app import db
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, time
 from decimal import Decimal
-from sqlalchemy.exc import SQLAlchemyError
 from functools import wraps
 import csv
 import io
@@ -59,8 +59,13 @@ def dashboard():
                              sermon_stats=sermon_stats,
                              donation_stats=donation_stats)
                              
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in dashboard route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading the dashboard.', 'danger')
+        return redirect(url_for('home.home'))
     except Exception as e:
-        current_app.logger.error(f"Error in dashboard route: {str(e)}")
+        current_app.logger.error(f"Unexpected error in dashboard route: {str(e)}")
         flash('An error occurred while loading the dashboard.', 'danger')
         return redirect(url_for('home.home'))
 
@@ -72,8 +77,13 @@ def users():
     try:
         users = User.query.all()
         return render_template('admin/users.html', users=users)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in users route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     except Exception as e:
-        current_app.logger.error(f"Error in users route: {str(e)}")
+        current_app.logger.error(f"Unexpected error in users route: {str(e)}")
         flash('An error occurred while loading users.', 'danger')
         return redirect(url_for('admin.dashboard'))
 
@@ -100,6 +110,11 @@ def create_user():
             return redirect(url_for('admin.users'))
             
         return render_template('admin/user_form.html')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating user: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating user.', 'danger')
+        return redirect(url_for('admin.users'))
     except Exception as e:
         current_app.logger.error(f"Error creating user: {str(e)}")
         flash('An error occurred while creating user.', 'danger')
@@ -121,6 +136,11 @@ def edit_user(user_id):
             flash('User updated successfully.', 'success')
             return redirect(url_for('admin.users'))
         return render_template('admin/user_form.html', user=user)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error editing user: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while editing user.', 'danger')
+        return redirect(url_for('admin.users'))
     except Exception as e:
         current_app.logger.error(f"Error editing user: {str(e)}")
         flash('An error occurred while editing user.', 'danger')
@@ -139,6 +159,10 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
         flash('User deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting user: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting user.', 'danger')
     except Exception as e:
         current_app.logger.error(f"Error deleting user: {str(e)}")
         flash('An error occurred while deleting user.', 'danger')
@@ -179,11 +203,159 @@ def user_import():
                 flash('Please upload a CSV file.', 'danger')
                 
         return redirect(url_for('admin.users'))
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error importing users: {str(e)}")
+        flash('An error occurred while importing users.', 'danger')
+        return redirect(url_for('admin.users'))
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error importing users: {str(e)}")
         flash('An error occurred while importing users.', 'danger')
         return redirect(url_for('admin.users'))
+
+# Event Management Routes
+@admin_bp.route('/admin/events')
+@login_required
+@admin_required
+def events():
+    try:
+        events = Event.query.order_by(Event.start_date.desc()).all()
+        return render_template('admin/events.html', events=events)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in events route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading events.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Error in events route: {str(e)}")
+        flash('An error occurred while loading events.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_event():
+    try:
+        if request.method == 'POST':
+            event = Event()
+            event.title = request.form['title']
+            event.description = request.form['description']
+            event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
+            event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
+            event.location = request.form['location']
+            db.session.add(event)
+            db.session.commit()
+            flash('Event created successfully.', 'success')
+            return redirect(url_for('admin.events'))
+        return render_template('admin/event_form.html')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating event: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating event.', 'danger')
+        return redirect(url_for('admin.events'))
+    except Exception as e:
+        current_app.logger.error(f"Error creating event: {str(e)}")
+        flash('An error occurred while creating event.', 'danger')
+        return redirect(url_for('admin.events'))
+
+@admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_event(event_id):
+    try:
+        event = Event.query.get_or_404(event_id)
+        if request.method == 'POST':
+            event.title = request.form['title']
+            event.description = request.form['description']
+            event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
+            event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
+            event.location = request.form['location']
+            db.session.commit()
+            flash('Event updated successfully.', 'success')
+            return redirect(url_for('admin.events'))
+        return render_template('admin/event_form.html', event=event)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error editing event: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while editing event.', 'danger')
+        return redirect(url_for('admin.events'))
+    except Exception as e:
+        current_app.logger.error(f"Error editing event: {str(e)}")
+        flash('An error occurred while editing event.', 'danger')
+        return redirect(url_for('admin.events'))
+
+@admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_event(event_id):
+    try:
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting event: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting event.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting event: {str(e)}")
+        flash('An error occurred while deleting event.', 'danger')
+    return redirect(url_for('admin.events'))
+
+# Prayer Request Management Routes
+@admin_bp.route('/admin/prayers')
+@login_required
+@admin_required
+def prayers():
+    try:
+        prayers = PrayerRequest.query.order_by(PrayerRequest.created_at.desc()).all()
+        return render_template('admin/prayers.html', prayers=prayers)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in prayers route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading prayers.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Error in prayers route: {str(e)}")
+        flash('An error occurred while loading prayers.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/prayers/<int:prayer_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_prayer_visibility(prayer_id):
+    try:
+        prayer = PrayerRequest.query.get_or_404(prayer_id)
+        prayer.is_public = not prayer.is_public
+        db.session.commit()
+        flash('Prayer request visibility updated successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error toggling prayer visibility: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating prayer request.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error toggling prayer visibility: {str(e)}")
+        flash('An error occurred while updating prayer request.', 'danger')
+    return redirect(url_for('admin.prayers'))
+
+@admin_bp.route('/admin/prayers/<int:prayer_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_prayer(prayer_id):
+    try:
+        prayer = PrayerRequest.query.get_or_404(prayer_id)
+        db.session.delete(prayer)
+        db.session.commit()
+        flash('Prayer request deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting prayer: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting prayer request.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting prayer: {str(e)}")
+        flash('An error occurred while deleting prayer request.', 'danger')
+    return redirect(url_for('admin.prayers'))
 
 # Gallery Management Routes
 @admin_bp.route('/admin/gallery')
@@ -193,6 +365,11 @@ def gallery():
     try:
         images = Gallery.query.order_by(Gallery.created_at.desc()).all()
         return render_template('admin/gallery.html', images=images)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in gallery route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading gallery.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in gallery route: {str(e)}")
         flash('An error occurred while loading gallery.', 'danger')
@@ -227,10 +404,130 @@ def upload_image():
             
             flash('Image uploaded successfully.', 'success')
         return redirect(url_for('admin.gallery'))
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error uploading image: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while uploading image.', 'danger')
+        return redirect(url_for('admin.gallery'))
     except Exception as e:
         current_app.logger.error(f"Error uploading image: {str(e)}")
         flash('An error occurred while uploading image.', 'danger')
         return redirect(url_for('admin.gallery'))
+
+@admin_bp.route('/admin/gallery/<int:image_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_image(image_id):
+    try:
+        image = Gallery.query.get_or_404(image_id)
+        # Remove the file from filesystem
+        if image.image_url:
+            file_path = os.path.join('static', image.image_url.lstrip('/'))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        db.session.delete(image)
+        db.session.commit()
+        flash('Image deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting image: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting image.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting image: {str(e)}")
+        flash('An error occurred while deleting image.', 'danger')
+    return redirect(url_for('admin.gallery'))
+
+# Sermon Management Routes
+@admin_bp.route('/admin/sermons')
+@login_required
+@admin_required
+def sermons():
+    try:
+        sermons = Sermon.query.order_by(Sermon.date.desc()).all()
+        return render_template('admin/sermons.html', sermons=sermons)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in sermons route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading sermons.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Error in sermons route: {str(e)}")
+        flash('An error occurred while loading sermons.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/admin/sermons/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_sermon():
+    try:
+        if request.method == 'POST':
+            sermon = Sermon()
+            sermon.title = request.form['title']
+            sermon.description = request.form['description']
+            sermon.preacher = request.form['preacher']
+            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            sermon.media_url = request.form['media_url']
+            sermon.media_type = request.form['media_type']
+            db.session.add(sermon)
+            db.session.commit()
+            flash('Sermon added successfully.', 'success')
+            return redirect(url_for('admin.sermons'))
+        return render_template('admin/sermon_form.html')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating sermon: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+    except Exception as e:
+        current_app.logger.error(f"Error creating sermon: {str(e)}")
+        flash('An error occurred while creating sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+
+@admin_bp.route('/admin/sermons/<int:sermon_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_sermon(sermon_id):
+    try:
+        sermon = Sermon.query.get_or_404(sermon_id)
+        if request.method == 'POST':
+            sermon.title = request.form['title']
+            sermon.description = request.form['description']
+            sermon.preacher = request.form['preacher']
+            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            sermon.media_url = request.form['media_url']
+            sermon.media_type = request.form['media_type']
+            db.session.commit()
+            flash('Sermon updated successfully.', 'success')
+            return redirect(url_for('admin.sermons'))
+        return render_template('admin/sermon_form.html', sermon=sermon)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error editing sermon: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while editing sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+    except Exception as e:
+        current_app.logger.error(f"Error editing sermon: {str(e)}")
+        flash('An error occurred while editing sermon.', 'danger')
+        return redirect(url_for('admin.sermons'))
+
+@admin_bp.route('/admin/sermons/<int:sermon_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_sermon(sermon_id):
+    try:
+        sermon = Sermon.query.get_or_404(sermon_id)
+        db.session.delete(sermon)
+        db.session.commit()
+        flash('Sermon deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting sermon: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting sermon.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting sermon: {str(e)}")
+        flash('An error occurred while deleting sermon.', 'danger')
+    return redirect(url_for('admin.sermons'))
 
 # Settings Management Routes
 @admin_bp.route('/admin/settings', methods=['GET', 'POST'])
@@ -281,193 +578,15 @@ def settings():
             return redirect(url_for('admin.settings'))
             
         return render_template('admin/settings.html', settings=settings)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error managing settings: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while managing settings.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error managing settings: {str(e)}")
         flash('An error occurred while managing settings.', 'danger')
         return redirect(url_for('admin.dashboard'))
-
-# Event Management Routes
-@admin_bp.route('/admin/events')
-@login_required
-@admin_required
-def events():
-    try:
-        events = Event.query.order_by(Event.start_date.desc()).all()
-        return render_template('admin/events.html', events=events)
-    except Exception as e:
-        current_app.logger.error(f"Error in events route: {str(e)}")
-        flash('An error occurred while loading events.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/events/create', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def create_event():
-    try:
-        if request.method == 'POST':
-            event = Event()
-            event.title = request.form['title']
-            event.description = request.form['description']
-            event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
-            event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
-            event.location = request.form['location']
-            db.session.add(event)
-            db.session.commit()
-            flash('Event created successfully.', 'success')
-            return redirect(url_for('admin.events'))
-        return render_template('admin/event_form.html')
-    except Exception as e:
-        current_app.logger.error(f"Error creating event: {str(e)}")
-        flash('An error occurred while creating event.', 'danger')
-        return redirect(url_for('admin.events'))
-
-@admin_bp.route('/admin/events/<int:event_id>/edit', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_event(event_id):
-    try:
-        event = Event.query.get_or_404(event_id)
-        if request.method == 'POST':
-            event.title = request.form['title']
-            event.description = request.form['description']
-            event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
-            event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
-            event.location = request.form['location']
-            db.session.commit()
-            flash('Event updated successfully.', 'success')
-            return redirect(url_for('admin.events'))
-        return render_template('admin/event_form.html', event=event)
-    except Exception as e:
-        current_app.logger.error(f"Error editing event: {str(e)}")
-        flash('An error occurred while editing event.', 'danger')
-        return redirect(url_for('admin.events'))
-
-@admin_bp.route('/admin/events/<int:event_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_event(event_id):
-    try:
-        event = Event.query.get_or_404(event_id)
-        db.session.delete(event)
-        db.session.commit()
-        flash('Event deleted successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error deleting event: {str(e)}")
-        flash('An error occurred while deleting event.', 'danger')
-    return redirect(url_for('admin.events'))
-
-# Prayer Request Management Routes
-@admin_bp.route('/admin/prayers')
-@login_required
-@admin_required
-def prayers():
-    try:
-        prayers = PrayerRequest.query.order_by(PrayerRequest.created_at.desc()).all()
-        return render_template('admin/prayers.html', prayers=prayers)
-    except Exception as e:
-        current_app.logger.error(f"Error in prayers route: {str(e)}")
-        flash('An error occurred while loading prayers.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/prayers/<int:prayer_id>/toggle', methods=['POST'])
-@login_required
-@admin_required
-def toggle_prayer_visibility(prayer_id):
-    try:
-        prayer = PrayerRequest.query.get_or_404(prayer_id)
-        prayer.is_public = not prayer.is_public
-        db.session.commit()
-        flash('Prayer request visibility updated successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error toggling prayer visibility: {str(e)}")
-        flash('An error occurred while updating prayer request.', 'danger')
-    return redirect(url_for('admin.prayers'))
-
-@admin_bp.route('/admin/prayers/<int:prayer_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_prayer(prayer_id):
-    try:
-        prayer = PrayerRequest.query.get_or_404(prayer_id)
-        db.session.delete(prayer)
-        db.session.commit()
-        flash('Prayer request deleted successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error deleting prayer: {str(e)}")
-        flash('An error occurred while deleting prayer request.', 'danger')
-    return redirect(url_for('admin.prayers'))
-
-# Sermon Management Routes 
-@admin_bp.route('/admin/sermons')
-@login_required
-@admin_required
-def sermons():
-    try:
-        sermons = Sermon.query.order_by(Sermon.date.desc()).all()
-        return render_template('admin/sermons.html', sermons=sermons)
-    except Exception as e:
-        current_app.logger.error(f"Error in sermons route: {str(e)}")
-        flash('An error occurred while loading sermons.', 'danger')
-        return redirect(url_for('admin.dashboard'))
-
-@admin_bp.route('/admin/sermons/create', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def create_sermon():
-    try:
-        if request.method == 'POST':
-            sermon = Sermon()
-            sermon.title = request.form['title']
-            sermon.description = request.form['description']
-            sermon.preacher = request.form['preacher']
-            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-            sermon.media_url = request.form['media_url']
-            sermon.media_type = request.form['media_type']
-            db.session.add(sermon)
-            db.session.commit()
-            flash('Sermon added successfully.', 'success')
-            return redirect(url_for('admin.sermons'))
-        return render_template('admin/sermon_form.html')
-    except Exception as e:
-        current_app.logger.error(f"Error creating sermon: {str(e)}")
-        flash('An error occurred while creating sermon.', 'danger')
-        return redirect(url_for('admin.sermons'))
-
-@admin_bp.route('/admin/sermons/<int:sermon_id>/edit', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_sermon(sermon_id):
-    try:
-        sermon = Sermon.query.get_or_404(sermon_id)
-        if request.method == 'POST':
-            sermon.title = request.form['title']
-            sermon.description = request.form['description']
-            sermon.preacher = request.form['preacher']
-            sermon.date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-            sermon.media_url = request.form['media_url']
-            sermon.media_type = request.form['media_type']
-            db.session.commit()
-            flash('Sermon updated successfully.', 'success')
-            return redirect(url_for('admin.sermons'))
-        return render_template('admin/sermon_form.html', sermon=sermon)
-    except Exception as e:
-        current_app.logger.error(f"Error editing sermon: {str(e)}")
-        flash('An error occurred while editing sermon.', 'danger')
-        return redirect(url_for('admin.sermons'))
-
-@admin_bp.route('/admin/sermons/<int:sermon_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_sermon(sermon_id):
-    try:
-        sermon = Sermon.query.get_or_404(sermon_id)
-        db.session.delete(sermon)
-        db.session.commit()
-        flash('Sermon deleted successfully.', 'success')
-    except Exception as e:
-        current_app.logger.error(f"Error deleting sermon: {str(e)}")
-        flash('An error occurred while deleting sermon.', 'danger')
-    return redirect(url_for('admin.sermons'))
 
 # Donation Management Routes
 @admin_bp.route('/admin/donations')
@@ -477,6 +596,11 @@ def donations():
     try:
         donations = Donation.query.order_by(Donation.created_at.desc()).all()
         return render_template('admin/donations.html', donations=donations)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in donations route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading donations.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     except Exception as e:
         current_app.logger.error(f"Error in donations route: {str(e)}")
         flash('An error occurred while loading donations.', 'danger')
