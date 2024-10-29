@@ -1,55 +1,69 @@
 /* Admin Dashboard Styles */
 .sidebar {
     position: fixed;
-    top: 0;
+    top: 60px; /* Adjust to match navbar height */
     bottom: 0;
     left: 0;
     z-index: 100;
-    padding: 48px 0 0;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-[data-bs-theme=dark] .sidebar {
-    background-color: var(--bs-dark);
-    color: var(--bs-light);
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, .1);
-}
-
-[data-bs-theme=light] .sidebar {
-    background-color: var(--bs-light);
-    color: var(--bs-dark);
+    padding: 0;
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 16.66666667%; /* col-md-2 equivalent */
 }
 
 .sidebar-sticky {
-    position: relative;
+    position: sticky;
     top: 0;
-    height: calc(100vh - 48px);
+    height: calc(100vh - 60px - 250px); /* Subtract navbar and footer heights */
     padding-top: .5rem;
     overflow-x: hidden;
     overflow-y: auto;
+    margin-bottom: 1rem; /* Add space at the bottom */
 }
 
 /* Sidebar navigation links */
 .sidebar .nav-link {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     color: inherit;
-    opacity: 0.75;
-    transition: opacity 0.3s ease, background-color 0.3s ease;
+    text-decoration: none;
+    opacity: 0.85;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
 }
 
 .sidebar .nav-link:hover {
     opacity: 1;
     background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-left-color: var(--bs-primary);
 }
 
 .sidebar .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
     opacity: 1;
-    background-color: rgba(var(--bs-primary-rgb), 0.2);
+    border-left-color: var(--bs-primary);
 }
 
 .sidebar .nav-link i {
-    margin-right: 0.5rem;
+    margin-right: 0.75rem;
+    width: 1.25em;
+    text-align: center;
+}
+
+/* Theme-specific styles */
+[data-bs-theme=dark] .sidebar {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+}
+
+[data-bs-theme=light] .sidebar {
+    background-color: var(--bs-light);
+    color: var(--bs-dark);
+}
+
+/* Main content area */
+.main-content {
+    margin-left: 16.66666667%; /* Matches sidebar width */
 }
 
 /* Loading Spinner Overlay */
@@ -70,72 +84,17 @@
     display: flex;
 }
 
-/* Dashboard Cards */
-.dashboard-card {
-    transition: transform 0.2s ease-in-out;
-}
-
-.dashboard-card:hover {
-    transform: translateY(-5px);
-}
-
-/* Stats Counter Animation */
-.stat-counter {
-    transition: all 0.5s ease-out;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {
         position: static;
+        width: 100%;
         height: auto;
         padding-top: 0;
+        top: 0;
     }
     
-    main {
+    .main-content {
         margin-left: 0 !important;
     }
-    
-    .dashboard-stats .col-md-3 {
-        margin-bottom: 1rem;
-    }
-}
-
-/* Chart container responsiveness */
-.chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-
-/* Form enhancements */
-.form-floating > .form-control:focus ~ label,
-.form-floating > .form-control:not(:placeholder-shown) ~ label {
-    color: var(--bs-primary);
-    opacity: .85;
-}
-
-/* Table responsiveness improvements */
-.table-responsive {
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-/* Custom scrollbar */
-.table-responsive::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-    background: var(--bs-body-bg);
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-    background: var(--bs-secondary);
-    border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: var(--bs-primary);
 }
