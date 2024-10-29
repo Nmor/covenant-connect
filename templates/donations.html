@@ -1,115 +1,113 @@
 {% extends "base.html" %}
 
-{% block title %}Donate - Covenant Connect{% endblock %}
+{% block title %}{{ _('Donate') }} - {{ _('Covenant Connect') }}{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h2>Support Our Ministry</h2>
+                    <h2 class="h5 mb-0">{{ _('Make a Donation') }}</h2>
                 </div>
                 <div class="card-body">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" 
+                                            aria-label="{{ _('Close') }}"></button>
+                                </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST" action="{{ url_for('donations.process_donation') }}" id="donationForm" novalidate>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="amount" class="form-label">Donation Amount</label>
-                                <div class="input-group">
-                                    <span class="input-group-text currency-symbol">$</span>
-                                    <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
-                                    <div class="invalid-feedback">
-                                        Please enter a valid amount (minimum 1).
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="currency" class="form-label">Currency</label>
-                                <select class="form-select" id="currency" name="currency" required>
-                                    <option value="NGN">NGN - Nigerian Naira</option>
-                                    <option value="USD">USD - US Dollar</option>
-                                    <option value="EUR">EUR - Euro</option>
-                                    <option value="GBP">GBP - British Pound</option>
-                                </select>
-                                <div class="invalid-feedback">
-                                    Please select a currency.
-                                </div>
+                    <form method="POST" action="{{ url_for('donations.process_donation') }}" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback">
+                                {{ _('Please enter a valid email address.') }}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <label for="amount" class="form-label">{{ _('Amount') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       min="1" step="0.01" required>
+                                <select class="form-select" name="currency" id="currency">
+                                    <option value="USD">{{ _('USD') }}</option>
+                                    <option value="EUR">{{ _('EUR') }}</option>
+                                    <option value="GBP">{{ _('GBP') }}</option>
+                                    <option value="NGN">{{ _('NGN') }}</option>
+                                </select>
+                            </div>
                             <div class="invalid-feedback">
-                                Please enter a valid email address.
-                            </div>
-                            <div class="form-text">We'll send your donation receipt to this address.</div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Payment Method</label>
-                            <div class="d-flex gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="paystack" value="paystack" checked>
-                                    <label class="form-check-label" for="paystack">
-                                        Local Payment (Paystack)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="payment_method" id="fincra" value="fincra">
-                                    <label class="form-check-label" for="fincra">
-                                        International Payment (Fincra)
-                                    </label>
-                                </div>
+                                {{ _('Please enter a valid amount.') }}
                             </div>
                         </div>
 
-                        <div id="internationalFields" class="d-none">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="first_name" class="form-label">First Name</label>
-                                    <input type="text" class="form-control international-required" id="first_name" name="first_name">
-                                    <div class="invalid-feedback">
-                                        Please enter your first name.
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="last_name" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control international-required" id="last_name" name="last_name">
-                                    <div class="invalid-feedback">
-                                        Please enter your last name.
-                                    </div>
-                                </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Payment Method') }}</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="paystack" value="paystack" required>
+                                <label class="form-check-label" for="paystack">
+                                    {{ _('Paystack (NGN only)') }}
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="fincra" value="fincra" required>
+                                <label class="form-check-label" for="fincra">
+                                    {{ _('International Payment (Fincra)') }}
+                                </label>
+                            </div>
+                            <div class="invalid-feedback">
+                                {{ _('Please select a payment method.') }}
+                            </div>
+                        </div>
+
+                        <div id="fincra_fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">{{ _('First Name') }}</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name">
                             </div>
                             <div class="mb-3">
-                                <label for="country" class="form-label">Country</label>
-                                <select class="form-select international-required" id="country" name="country">
-                                    <option value="">Select a country</option>
-                                    <option value="GB">United Kingdom</option>
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="FR">France</option>
-                                    <option value="DE">Germany</option>
-                                </select>
-                                <div class="invalid-feedback">
-                                    Please select your country.
-                                </div>
+                                <label for="last_name" class="form-label">{{ _('Last Name') }}</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="country" class="form-label">{{ _('Country') }}</label>
+                                <input type="text" class="form-control" id="country" name="country">
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                            <span class="btn-text">Proceed to Payment</span>
-                        </button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">{{ _('Proceed to Payment') }}</button>
+                        </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">{{ _('Why Donate?') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% trans %}
+                    Your generous donations help us:
+                    <ul>
+                        <li>Support our community outreach programs</li>
+                        <li>Maintain and improve our facilities</li>
+                        <li>Fund various ministry activities</li>
+                        <li>Assist those in need within our community</li>
+                    </ul>
+                    Thank you for your support!
+                    {% endtrans %}
                 </div>
             </div>
         </div>
@@ -120,75 +118,26 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('donationForm');
-    const internationalFields = document.getElementById('internationalFields');
+    const form = document.querySelector('form');
+    const fincraFields = document.getElementById('fincra_fields');
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
     const currencySelect = document.getElementById('currency');
-    const currencySymbol = document.querySelector('.currency-symbol');
-    const paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
-    const internationalRequiredFields = document.querySelectorAll('.international-required');
-    const submitBtn = document.querySelector('button[type="submit"]');
-    const spinner = submitBtn.querySelector('.spinner-border');
-    const btnText = submitBtn.querySelector('.btn-text');
 
-    // Currency symbol mapping
-    const currencySymbols = {
-        'USD': '$',
-        'EUR': '€',
-        'GBP': '£',
-        'NGN': '₦'
-    };
-
-    // Update payment method based on currency
-    function updatePaymentMethod(currency) {
-        const paystackRadio = document.getElementById('paystack');
-        const fincraRadio = document.getElementById('fincra');
-        
-        if (currency === 'NGN') {
-            paystackRadio.checked = true;
-            fincraRadio.disabled = true;
-            internationalFields.classList.add('d-none');
-            internationalRequiredFields.forEach(field => field.required = false);
-        } else {
-            fincraRadio.disabled = false;
-            if (fincraRadio.checked) {
-                internationalFields.classList.remove('d-none');
-                internationalRequiredFields.forEach(field => field.required = true);
-            }
-        }
-    }
-
-    // Update currency symbol when currency changes
-    currencySelect.addEventListener('change', function() {
-        currencySymbol.textContent = currencySymbols[this.value] || '$';
-        updatePaymentMethod(this.value);
-    });
-
-    // Initial currency symbol and payment method setup
-    currencySymbol.textContent = currencySymbols[currencySelect.value] || '$';
-    updatePaymentMethod(currencySelect.value);
-
-    // Toggle international fields based on payment method
-    paymentMethodInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            if (this.value === 'fincra' && currencySelect.value !== 'NGN') {
-                internationalFields.classList.remove('d-none');
-                internationalRequiredFields.forEach(field => field.required = true);
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
+            if (this.value === 'fincra') {
+                fincraFields.style.display = 'block';
             } else {
-                internationalFields.classList.add('d-none');
-                internationalRequiredFields.forEach(field => field.required = false);
+                fincraFields.style.display = 'none';
+                currencySelect.value = 'NGN';
             }
         });
     });
 
-    // Form validation and submission
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {
             event.preventDefault();
             event.stopPropagation();
-        } else {
-            submitBtn.disabled = true;
-            spinner.classList.remove('d-none');
-            btnText.textContent = 'Processing...';
         }
         form.classList.add('was-validated');
     });

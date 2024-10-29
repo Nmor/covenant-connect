@@ -1,0 +1,262 @@
+# Translations template for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-10-29 12:22+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: routes/notifications.py:34
+msgid "Notification preferences updated successfully."
+msgstr ""
+
+#: routes/notifications.py:51
+msgid "An error occurred while managing notification preferences."
+msgstr ""
+
+#: templates/base.html:6 templates/base.html:20 templates/base.html:199
+#: templates/donations.html:3 templates/notifications/preferences.html:3
+msgid "Covenant Connect"
+msgstr ""
+
+#: templates/base.html:16 templates/base.html:18
+msgid "Logo"
+msgstr ""
+
+#: templates/base.html:23
+msgid "Toggle navigation"
+msgstr ""
+
+#: templates/base.html:31 templates/base.html:181
+#: templates/notifications/preferences.html:31
+msgid "Events"
+msgstr ""
+
+#: templates/base.html:37 templates/base.html:182
+msgid "Prayers"
+msgstr ""
+
+#: templates/base.html:43 templates/base.html:183
+#: templates/notifications/preferences.html:40
+msgid "Sermons"
+msgstr ""
+
+#: templates/base.html:49
+msgid "Gallery"
+msgstr ""
+
+#: templates/base.html:55 templates/donations.html:3
+msgid "Donate"
+msgstr ""
+
+#: templates/base.html:63
+msgid "Language"
+msgstr ""
+
+#: templates/base.html:81
+msgid "Toggle theme"
+msgstr ""
+
+#: templates/base.html:93
+msgid "unread notifications"
+msgstr ""
+
+#: templates/base.html:100
+msgid "Notifications"
+msgstr ""
+
+#: templates/base.html:102
+msgid "Mark all as read"
+msgstr ""
+
+#: templates/base.html:109
+msgid "No new notifications"
+msgstr ""
+
+#: templates/base.html:121
+msgid "Admin"
+msgstr ""
+
+#: templates/base.html:128
+msgid "Profile"
+msgstr ""
+
+#: templates/base.html:133
+msgid "Logout"
+msgstr ""
+
+#: templates/base.html:140
+msgid "Login"
+msgstr ""
+
+#: templates/base.html:146
+msgid "Register"
+msgstr ""
+
+#: templates/base.html:162 templates/donations.html:20
+msgid "Close"
+msgstr ""
+
+#: templates/base.html:175
+msgid "About Us"
+msgstr ""
+
+#: templates/base.html:176
+msgid "A community of believers growing together in faith."
+msgstr ""
+
+#: templates/base.html:179
+msgid "Quick Links"
+msgstr ""
+
+#: templates/base.html:187
+msgid "Contact Us"
+msgstr ""
+
+#: templates/base.html:200
+msgid "All rights reserved."
+msgstr ""
+
+#: templates/base.html:247
+msgid "New"
+msgstr ""
+
+#: templates/donations.html:11
+msgid "Make a Donation"
+msgstr ""
+
+#: templates/donations.html:28
+msgid "Email Address"
+msgstr ""
+
+#: templates/donations.html:31
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: templates/donations.html:36
+msgid "Amount"
+msgstr ""
+
+#: templates/donations.html:42
+msgid "USD"
+msgstr ""
+
+#: templates/donations.html:43
+msgid "EUR"
+msgstr ""
+
+#: templates/donations.html:44
+msgid "GBP"
+msgstr ""
+
+#: templates/donations.html:45
+msgid "NGN"
+msgstr ""
+
+#: templates/donations.html:49
+msgid "Please enter a valid amount."
+msgstr ""
+
+#: templates/donations.html:54
+msgid "Payment Method"
+msgstr ""
+
+#: templates/donations.html:59
+msgid "Paystack (NGN only)"
+msgstr ""
+
+#: templates/donations.html:66
+msgid "International Payment (Fincra)"
+msgstr ""
+
+#: templates/donations.html:70
+msgid "Please select a payment method."
+msgstr ""
+
+#: templates/donations.html:76
+msgid "First Name"
+msgstr ""
+
+#: templates/donations.html:80
+msgid "Last Name"
+msgstr ""
+
+#: templates/donations.html:84
+msgid "Country"
+msgstr ""
+
+#: templates/donations.html:90
+msgid "Proceed to Payment"
+msgstr ""
+
+#: templates/donations.html:98
+msgid "Why Donate?"
+msgstr ""
+
+#: templates/donations.html:101
+msgid ""
+"\n"
+"                    Your generous donations help us:\n"
+"                    <ul>\n"
+"                        <li>Support our community outreach programs</li>\n"
+"                        <li>Maintain and improve our facilities</li>\n"
+"                        <li>Fund various ministry activities</li>\n"
+"                        <li>Assist those in need within our "
+"community</li>\n"
+"                    </ul>\n"
+"                    Thank you for your support!\n"
+"                    "
+msgstr ""
+
+#: templates/notifications/preferences.html:3
+#: templates/notifications/preferences.html:11
+msgid "Notification Preferences"
+msgstr ""
+
+#: templates/notifications/preferences.html:15
+msgid "Notification Categories"
+msgstr ""
+
+#: templates/notifications/preferences.html:22
+msgid "Prayer Requests"
+msgstr ""
+
+#: templates/notifications/preferences.html:49
+msgid "Donations"
+msgstr ""
+
+#: templates/notifications/preferences.html:58
+msgid "News & Updates"
+msgstr ""
+
+#: templates/notifications/preferences.html:64
+msgid "Notification Methods"
+msgstr ""
+
+#: templates/notifications/preferences.html:71
+msgid "Desktop Notifications"
+msgstr ""
+
+#: templates/notifications/preferences.html:80
+msgid "Email Notifications"
+msgstr ""
+
+#: templates/notifications/preferences.html:88
+msgid "Save Preferences"
+msgstr ""
+
+#: templates/notifications/preferences.html:91
+msgid "Back to Profile"
+msgstr ""
+

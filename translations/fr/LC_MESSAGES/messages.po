@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 09:15+0000\n"
+"POT-Creation-Date: 2024-10-29 12:22+0000\n"
 "PO-Revision-Date: 2024-10-28 10:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -17,116 +17,254 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-msgid "Covenant Connect"
-msgstr "Connection d'Alliance"
-
-msgid "Events"
-msgstr "Événements"
-
-msgid "Prayers"
-msgstr "Prières"
-
-msgid "Sermons"
-msgstr "Sermons"
-
-msgid "Gallery"
-msgstr "Galerie"
-
-msgid "Donate"
-msgstr "Faire un Don"
-
-msgid "Language"
-msgstr "Langue"
-
-msgid "Admin"
-msgstr "Administrateur"
-
-msgid "Profile"
-msgstr "Profil"
-
-msgid "Logout"
-msgstr "Déconnexion"
-
-msgid "Login"
-msgstr "Connexion"
-
-msgid "Register"
-msgstr "S'inscrire"
-
-msgid "No new notifications"
-msgstr "Aucune nouvelle notification"
-
-msgid "Toggle navigation"
-msgstr "Basculer la navigation"
-
-msgid "Toggle theme"
-msgstr "Basculer le thème"
-
-msgid "unread notifications"
-msgstr "notifications non lues"
-
-msgid "Notifications"
-msgstr "Notifications"
-
-msgid "Mark all as read"
-msgstr "Tout marquer comme lu"
-
-msgid "New"
-msgstr "Nouveau"
-
-msgid "About Us"
-msgstr "À Propos de Nous"
-
-msgid "A community of believers growing together in faith."
-msgstr "Une communauté de croyants grandissant ensemble dans la foi."
-
-msgid "Quick Links"
-msgstr "Liens Rapides"
-
-msgid "Contact Us"
-msgstr "Contactez-nous"
-
-msgid "All rights reserved."
-msgstr "Tous droits réservés."
-
-msgid "Close"
-msgstr "Fermer"
-
-msgid "Notification Preferences"
-msgstr "Préférences de Notification"
-
-msgid "Notification Categories"
-msgstr "Catégories de Notification"
-
-msgid "Prayer Requests"
-msgstr "Demandes de Prière"
-
-msgid "News & Updates"
-msgstr "Actualités et Mises à Jour"
-
-msgid "Notification Methods"
-msgstr "Méthodes de Notification"
-
-msgid "Desktop Notifications"
-msgstr "Notifications de Bureau"
-
-msgid "Email Notifications"
-msgstr "Notifications par Email"
-
-msgid "Save Preferences"
-msgstr "Enregistrer les Préférences"
-
-msgid "Back to Profile"
-msgstr "Retour au Profil"
-
+#: routes/notifications.py:34
 msgid "Notification preferences updated successfully."
 msgstr "Préférences de notification mises à jour avec succès."
 
+#: routes/notifications.py:51
 msgid "An error occurred while managing notification preferences."
 msgstr "Une erreur s'est produite lors de la gestion des préférences de notification."
 
+#: templates/base.html:6 templates/base.html:20 templates/base.html:199
+#: templates/donations.html:3 templates/notifications/preferences.html:3
+msgid "Covenant Connect"
+msgstr "Connection d'Alliance"
+
+#: templates/base.html:16 templates/base.html:18
 msgid "Logo"
 msgstr "Logo"
 
+#: templates/base.html:23
+msgid "Toggle navigation"
+msgstr "Basculer la navigation"
+
+#: templates/base.html:31 templates/base.html:181
+#: templates/notifications/preferences.html:31
+msgid "Events"
+msgstr "Événements"
+
+#: templates/base.html:37 templates/base.html:182
+msgid "Prayers"
+msgstr "Prières"
+
+#: templates/base.html:43 templates/base.html:183
+#: templates/notifications/preferences.html:40
+msgid "Sermons"
+msgstr "Sermons"
+
+#: templates/base.html:49
+msgid "Gallery"
+msgstr "Galerie"
+
+#: templates/base.html:55 templates/donations.html:3
+msgid "Donate"
+msgstr "Faire un Don"
+
+#: templates/base.html:63
+msgid "Language"
+msgstr "Langue"
+
+#: templates/base.html:81
+msgid "Toggle theme"
+msgstr "Basculer le thème"
+
+#: templates/base.html:93
+msgid "unread notifications"
+msgstr "notifications non lues"
+
+#: templates/base.html:100
+msgid "Notifications"
+msgstr "Notifications"
+
+#: templates/base.html:102
+msgid "Mark all as read"
+msgstr "Tout marquer comme lu"
+
+#: templates/base.html:109
+msgid "No new notifications"
+msgstr "Aucune nouvelle notification"
+
+#: templates/base.html:121
+msgid "Admin"
+msgstr "Administrateur"
+
+#: templates/base.html:128
+msgid "Profile"
+msgstr "Profil"
+
+#: templates/base.html:133
+msgid "Logout"
+msgstr "Déconnexion"
+
+#: templates/base.html:140
+msgid "Login"
+msgstr "Connexion"
+
+#: templates/base.html:146
+msgid "Register"
+msgstr "S'inscrire"
+
+#: templates/base.html:162 templates/donations.html:20
+msgid "Close"
+msgstr "Fermer"
+
+#: templates/base.html:175
+msgid "About Us"
+msgstr "À Propos de Nous"
+
+#: templates/base.html:176
+msgid "A community of believers growing together in faith."
+msgstr "Une communauté de croyants grandissant ensemble dans la foi."
+
+#: templates/base.html:179
+msgid "Quick Links"
+msgstr "Liens Rapides"
+
+#: templates/base.html:187
+msgid "Contact Us"
+msgstr "Contactez-nous"
+
+#: templates/base.html:200
+msgid "All rights reserved."
+msgstr "Tous droits réservés."
+
+#: templates/base.html:247
+msgid "New"
+msgstr "Nouveau"
+
+#: templates/donations.html:11
+msgid "Make a Donation"
+msgstr "Faire un Don"
+
+#: templates/donations.html:28
+msgid "Email Address"
+msgstr "Adresse Email"
+
+#: templates/donations.html:31
+msgid "Please enter a valid email address."
+msgstr "Veuillez entrer une adresse email valide."
+
+#: templates/donations.html:36
+msgid "Amount"
+msgstr "Montant"
+
+#: templates/donations.html:42
+msgid "USD"
+msgstr "USD"
+
+#: templates/donations.html:43
+msgid "EUR"
+msgstr "EUR"
+
+#: templates/donations.html:44
+msgid "GBP"
+msgstr "GBP"
+
+#: templates/donations.html:45
+msgid "NGN"
+msgstr "NGN"
+
+#: templates/donations.html:49
+msgid "Please enter a valid amount."
+msgstr "Veuillez entrer un montant valide."
+
+#: templates/donations.html:54
+msgid "Payment Method"
+msgstr "Méthode de Paiement"
+
+#: templates/donations.html:59
+msgid "Paystack (NGN only)"
+msgstr "Paystack (NGN uniquement)"
+
+#: templates/donations.html:66
+msgid "International Payment (Fincra)"
+msgstr "Paiement International (Fincra)"
+
+#: templates/donations.html:70
+msgid "Please select a payment method."
+msgstr "Veuillez sélectionner une méthode de paiement."
+
+#: templates/donations.html:76
+msgid "First Name"
+msgstr "Prénom"
+
+#: templates/donations.html:80
+msgid "Last Name"
+msgstr "Nom"
+
+#: templates/donations.html:84
+msgid "Country"
+msgstr "Pays"
+
+#: templates/donations.html:90
+msgid "Proceed to Payment"
+msgstr "Procéder au Paiement"
+
+#: templates/donations.html:98
+msgid "Why Donate?"
+msgstr "Pourquoi Faire un Don ?"
+
+#: templates/donations.html:101
+msgid ""
+"\n"
+"                    Your generous donations help us:\n"
+"                    <ul>\n"
+"                        <li>Support our community outreach programs</li>\n"
+"                        <li>Maintain and improve our facilities</li>\n"
+"                        <li>Fund various ministry activities</li>\n"
+"                        <li>Assist those in need within our community</li>\n"
+"                    </ul>\n"
+"                    Thank you for your support!\n"
+"                    "
+msgstr ""
+"\n"
+"                    Vos dons généreux nous aident à :\n"
+"                    <ul>\n"
+"                        <li>Soutenir nos programmes communautaires</li>\n"
+"                        <li>Maintenir et améliorer nos installations</li>\n"
+"                        <li>Financer diverses activités ministérielles</li>\n"
+"                        <li>Aider les personnes dans le besoin au sein de notre communauté</li>\n"
+"                    </ul>\n"
+"                    Merci pour votre soutien !\n"
+"                    "
+
+#: templates/notifications/preferences.html:3
+#: templates/notifications/preferences.html:11
+msgid "Notification Preferences"
+msgstr "Préférences de Notification"
+
+#: templates/notifications/preferences.html:15
+msgid "Notification Categories"
+msgstr "Catégories de Notification"
+
+#: templates/notifications/preferences.html:22
+msgid "Prayer Requests"
+msgstr "Demandes de Prière"
+
+#: templates/notifications/preferences.html:49
 msgid "Donations"
 msgstr "Dons"
+
+#: templates/notifications/preferences.html:58
+msgid "News & Updates"
+msgstr "Actualités et Mises à Jour"
+
+#: templates/notifications/preferences.html:64
+msgid "Notification Methods"
+msgstr "Méthodes de Notification"
+
+#: templates/notifications/preferences.html:71
+msgid "Desktop Notifications"
+msgstr "Notifications de Bureau"
+
+#: templates/notifications/preferences.html:80
+msgid "Email Notifications"
+msgstr "Notifications par Email"
+
+#: templates/notifications/preferences.html:88
+msgid "Save Preferences"
+msgstr "Enregistrer les Préférences"
+
+#: templates/notifications/preferences.html:91
+msgid "Back to Profile"
+msgstr "Retour au Profil"
