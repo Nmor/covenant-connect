@@ -1,55 +1,71 @@
-function updateTheme(theme) {
-    document.addEventListener('DOMContentLoaded', function() {
-        const html = document.documentElement;
-        const footer = document.querySelector('.footer');
-        
-        if (!html || !footer) return; // Guard against null elements
-        
-        html.setAttribute('data-bs-theme', theme);
-        localStorage.setItem('theme', theme);
-        
-        const themeIcon = document.getElementById('themeIcon');
+document.addEventListener('DOMContentLoaded', function() {
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const footer = document.querySelector('.footer');
+
+    function updateTheme(theme) {
+        // Update HTML theme
+        if (html) {
+            html.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        // Update theme icon
         if (themeIcon) {
             themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
         }
-        
-        footer.classList.toggle('bg-dark', theme === 'dark');
-        footer.classList.toggle('bg-light', theme === 'light');
-        
-        const footerTexts = footer.querySelectorAll('.footer-text');
-        footerTexts.forEach(text => {
-            text.classList.toggle('text-light', theme === 'dark');
-            text.classList.toggle('text-dark', theme === 'light');
-        });
-        
-        const footerHeadings = footer.querySelectorAll('.footer-heading');
-        footerHeadings.forEach(heading => {
-            heading.classList.toggle('text-light', theme === 'dark');
-            heading.classList.toggle('text-dark', theme === 'light');
-        });
-        
-        const footerLinks = footer.querySelectorAll('.footer-link');
-        footerLinks.forEach(link => {
-            link.classList.toggle('text-light', theme === 'dark');
-            link.classList.toggle('text-dark', theme === 'light');
-        });
-        
-        const footerDivider = footer.querySelector('.footer-divider');
-        if (footerDivider) {
-            footerDivider.classList.toggle('border-light', theme === 'dark');
-            footerDivider.classList.toggle('border-dark', theme === 'light');
-        }
-    });
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-    const themeToggle = document.getElementById('themeToggle');
+        // Update footer if it exists
+        if (footer) {
+            // Toggle background classes
+            footer.classList.remove('bg-dark', 'bg-light');
+            footer.classList.add(theme === 'dark' ? 'bg-dark' : 'bg-light');
+
+            // Update footer text elements
+            const footerTexts = footer.querySelectorAll('.footer-text');
+            footerTexts.forEach(text => {
+                if (text) {
+                    text.classList.remove('text-light', 'text-dark');
+                    text.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
+                }
+            });
+
+            // Update footer headings
+            const footerHeadings = footer.querySelectorAll('.footer-heading');
+            footerHeadings.forEach(heading => {
+                if (heading) {
+                    heading.classList.remove('text-light', 'text-dark');
+                    heading.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
+                }
+            });
+
+            // Update footer links
+            const footerLinks = footer.querySelectorAll('.footer-link');
+            footerLinks.forEach(link => {
+                if (link) {
+                    link.classList.remove('text-light', 'text-dark');
+                    link.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
+                }
+            });
+
+            // Update footer divider
+            const footerDivider = footer.querySelector('.footer-divider');
+            if (footerDivider) {
+                footerDivider.classList.remove('border-light', 'border-dark');
+                footerDivider.classList.add(theme === 'dark' ? 'border-light' : 'border-dark');
+            }
+        }
+    }
+
+    // Initialize theme from localStorage or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    updateTheme(savedTheme);
+
+    // Add click handler for theme toggle if it exists
     if (themeToggle) {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        updateTheme(savedTheme);
-        
         themeToggle.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const currentTheme = html.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             updateTheme(newTheme);
         });
