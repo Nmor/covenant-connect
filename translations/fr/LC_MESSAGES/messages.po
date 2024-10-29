@@ -17,117 +17,116 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#~ msgid "Covenant Connect"
-#~ msgstr ""
+msgid "Covenant Connect"
+msgstr "Connection d'Alliance"
 
-#~ msgid "Events"
-#~ msgstr ""
+msgid "Events"
+msgstr "Événements"
 
-#~ msgid "Prayers"
-#~ msgstr ""
+msgid "Prayers"
+msgstr "Prières"
 
-#~ msgid "Sermons"
-#~ msgstr ""
+msgid "Sermons"
+msgstr "Sermons"
 
-#~ msgid "Gallery"
-#~ msgstr ""
+msgid "Gallery"
+msgstr "Galerie"
 
-#~ msgid "Donate"
-#~ msgstr ""
+msgid "Donate"
+msgstr "Faire un Don"
 
-#~ msgid "Language"
-#~ msgstr ""
+msgid "Language"
+msgstr "Langue"
 
-#~ msgid "Admin"
-#~ msgstr ""
+msgid "Admin"
+msgstr "Administrateur"
 
-#~ msgid "Profile"
-#~ msgstr ""
+msgid "Profile"
+msgstr "Profil"
 
-#~ msgid "Logout"
-#~ msgstr ""
+msgid "Logout"
+msgstr "Déconnexion"
 
-#~ msgid "Login"
-#~ msgstr ""
+msgid "Login"
+msgstr "Connexion"
 
-#~ msgid "Register"
-#~ msgstr ""
+msgid "Register"
+msgstr "S'inscrire"
 
-#~ msgid "No new notifications"
-#~ msgstr ""
+msgid "No new notifications"
+msgstr "Aucune nouvelle notification"
 
-#~ msgid "Toggle navigation"
-#~ msgstr ""
+msgid "Toggle navigation"
+msgstr "Basculer la navigation"
 
-#~ msgid "Toggle theme"
-#~ msgstr ""
+msgid "Toggle theme"
+msgstr "Basculer le thème"
 
-#~ msgid "unread notifications"
-#~ msgstr ""
+msgid "unread notifications"
+msgstr "notifications non lues"
 
-#~ msgid "Notifications"
-#~ msgstr ""
+msgid "Notifications"
+msgstr "Notifications"
 
-#~ msgid "Mark all as read"
-#~ msgstr ""
+msgid "Mark all as read"
+msgstr "Tout marquer comme lu"
 
-#~ msgid "New"
-#~ msgstr ""
+msgid "New"
+msgstr "Nouveau"
 
-#~ msgid "About Us"
-#~ msgstr ""
+msgid "About Us"
+msgstr "À Propos de Nous"
 
-#~ msgid "A community of believers growing together in faith."
-#~ msgstr ""
+msgid "A community of believers growing together in faith."
+msgstr "Une communauté de croyants grandissant ensemble dans la foi."
 
-#~ msgid "Quick Links"
-#~ msgstr ""
+msgid "Quick Links"
+msgstr "Liens Rapides"
 
-#~ msgid "Contact Us"
-#~ msgstr ""
+msgid "Contact Us"
+msgstr "Contactez-nous"
 
-#~ msgid "All rights reserved."
-#~ msgstr ""
+msgid "All rights reserved."
+msgstr "Tous droits réservés."
 
-#~ msgid "Close"
-#~ msgstr ""
+msgid "Close"
+msgstr "Fermer"
 
-#~ msgid "Notification Preferences"
-#~ msgstr ""
+msgid "Notification Preferences"
+msgstr "Préférences de Notification"
 
-#~ msgid "Notification Categories"
-#~ msgstr ""
+msgid "Notification Categories"
+msgstr "Catégories de Notification"
 
-#~ msgid "Prayer Requests"
-#~ msgstr ""
+msgid "Prayer Requests"
+msgstr "Demandes de Prière"
 
-#~ msgid "News & Updates"
-#~ msgstr ""
+msgid "News & Updates"
+msgstr "Actualités et Mises à Jour"
 
-#~ msgid "Notification Methods"
-#~ msgstr ""
+msgid "Notification Methods"
+msgstr "Méthodes de Notification"
 
-#~ msgid "Desktop Notifications"
-#~ msgstr ""
+msgid "Desktop Notifications"
+msgstr "Notifications de Bureau"
 
-#~ msgid "Email Notifications"
-#~ msgstr ""
+msgid "Email Notifications"
+msgstr "Notifications par Email"
 
-#~ msgid "Save Preferences"
-#~ msgstr ""
+msgid "Save Preferences"
+msgstr "Enregistrer les Préférences"
 
-#~ msgid "Back to Profile"
-#~ msgstr ""
+msgid "Back to Profile"
+msgstr "Retour au Profil"
 
-#~ msgid "Notification preferences updated successfully."
-#~ msgstr ""
+msgid "Notification preferences updated successfully."
+msgstr "Préférences de notification mises à jour avec succès."
 
-#~ msgid "An error occurred while managing notification preferences."
-#~ msgstr ""
+msgid "An error occurred while managing notification preferences."
+msgstr "Une erreur s'est produite lors de la gestion des préférences de notification."
 
-#~ msgid "Logo"
-#~ msgstr ""
+msgid "Logo"
+msgstr "Logo"
 
-#~ msgid "Donations"
-#~ msgstr ""
-
+msgid "Donations"
+msgstr "Dons"
