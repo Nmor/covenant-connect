@@ -125,7 +125,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python scripts/fix_admin.py"
+args = "python3 scripts/fix_admin.py"
 
 [[workflows.workflow]]
 name = "Create Test Users"
