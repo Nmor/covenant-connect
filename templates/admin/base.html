@@ -4,55 +4,55 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Admin Sidebar -->
-        <div class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" 
                            href="{{ url_for('admin.dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+                            <i class="bi bi-speedometer2"></i> {{ _('Dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}" 
                            href="{{ url_for('admin.users') }}">
-                            <i class="bi bi-people"></i> Users
+                            <i class="bi bi-people"></i> {{ _('Users') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.events' %}active{% endif %}" 
                            href="{{ url_for('admin.events') }}">
-                            <i class="bi bi-calendar-event"></i> Events
+                            <i class="bi bi-calendar-event"></i> {{ _('Events') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.prayers' %}active{% endif %}" 
                            href="{{ url_for('admin.prayers') }}">
-                            <i class="bi bi-book"></i> Prayers
+                            <i class="bi bi-book"></i> {{ _('Prayers') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.sermons' %}active{% endif %}" 
                            href="{{ url_for('admin.sermons') }}">
-                            <i class="bi bi-mic"></i> Sermons
+                            <i class="bi bi-mic"></i> {{ _('Sermons') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.gallery' %}active{% endif %}" 
                            href="{{ url_for('admin.gallery') }}">
-                            <i class="bi bi-images"></i> Gallery
+                            <i class="bi bi-images"></i> {{ _('Gallery') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.donations' %}active{% endif %}" 
                            href="{{ url_for('admin.donations') }}">
-                            <i class="bi bi-credit-card"></i> Donations
+                            <i class="bi bi-credit-card"></i> {{ _('Donations') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" 
                            href="{{ url_for('admin.settings') }}">
-                            <i class="bi bi-gear"></i> Settings
+                            <i class="bi bi-gear"></i> {{ _('Settings') }}
                         </a>
                     </li>
                 </ul>

@@ -213,13 +213,19 @@
         const markAllReadBtn = document.getElementById('markAllRead');
         let notificationCount = 0;
 
-        const eventSource = new EventSource("{{ url_for('notifications.subscribe') }}");
-        
-        eventSource.addEventListener('notification', function(e) {
-            const data = JSON.parse(e.data);
-            addNotification(data);
-            updateNotificationCount(1);
-        });
+        function checkNotifications() {
+            fetch("{{ url_for('notifications.get_notifications') }}")
+                .then(response => response.json())
+                .then(notifications => {
+                    if (notifications.length > 0) {
+                        notifications.forEach(data => addNotification(data));
+                    }
+                });
+        }
+
+        // Check for notifications every 30 seconds
+        setInterval(checkNotifications, 30000);
+        checkNotifications(); // Initial check
 
         markAllReadBtn.addEventListener('click', function() {
             const notifications = notificationList.querySelectorAll('.notification-item:not(.read)');
@@ -257,6 +263,7 @@
                     updateNotificationCount(-1);
                 }
             });
+            updateNotificationCount(1);
         }
 
         function updateNotificationCount(change) {

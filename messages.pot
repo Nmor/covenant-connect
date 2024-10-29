@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 15:45+0000\n"
+"POT-Creation-Date: 2024-10-29 15:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,21 +38,21 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr ""
 
-#: templates/base.html:31 templates/base.html:181
+#: templates/admin/base.html:25 templates/base.html:31 templates/base.html:181
 #: templates/notifications/preferences.html:31
 msgid "Events"
 msgstr ""
 
-#: templates/base.html:37 templates/base.html:182
+#: templates/admin/base.html:31 templates/base.html:37 templates/base.html:182
 msgid "Prayers"
 msgstr ""
 
-#: templates/base.html:43 templates/base.html:183
+#: templates/admin/base.html:37 templates/base.html:43 templates/base.html:183
 #: templates/notifications/preferences.html:40
 msgid "Sermons"
 msgstr ""
 
-#: templates/base.html:49
+#: templates/admin/base.html:43 templates/base.html:49
 msgid "Gallery"
 msgstr ""
 
@@ -219,6 +219,22 @@ msgid ""
 "                    "
 msgstr ""
 
+#: templates/admin/base.html:13
+msgid "Dashboard"
+msgstr ""
+
+#: templates/admin/base.html:19
+msgid "Users"
+msgstr ""
+
+#: templates/admin/base.html:49 templates/notifications/preferences.html:49
+msgid "Donations"
+msgstr ""
+
+#: templates/admin/base.html:55
+msgid "Settings"
+msgstr ""
+
 #: templates/notifications/preferences.html:3
 #: templates/notifications/preferences.html:11
 msgid "Notification Preferences"
@@ -230,10 +246,6 @@ msgstr ""
 
 #: templates/notifications/preferences.html:22
 msgid "Prayer Requests"
-msgstr ""
-
-#: templates/notifications/preferences.html:49
-msgid "Donations"
 msgstr ""
 
 #: templates/notifications/preferences.html:58

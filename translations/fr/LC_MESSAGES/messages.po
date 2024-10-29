@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 12:22+0000\n"
+"POT-Creation-Date: 2024-10-29 15:51+0000\n"
 "PO-Revision-Date: 2024-10-28 10:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -23,7 +23,9 @@ msgstr "Préférences de notification mises à jour avec succès."
 
 #: routes/notifications.py:51
 msgid "An error occurred while managing notification preferences."
-msgstr "Une erreur s'est produite lors de la gestion des préférences de notification."
+msgstr ""
+"Une erreur s'est produite lors de la gestion des préférences de "
+"notification."
 
 #: templates/base.html:6 templates/base.html:20 templates/base.html:199
 #: templates/donations.html:3 templates/notifications/preferences.html:3
@@ -38,21 +40,21 @@ msgstr "Logo"
 msgid "Toggle navigation"
 msgstr "Basculer la navigation"
 
-#: templates/base.html:31 templates/base.html:181
+#: templates/admin/base.html:25 templates/base.html:31 templates/base.html:181
 #: templates/notifications/preferences.html:31
 msgid "Events"
 msgstr "Événements"
 
-#: templates/base.html:37 templates/base.html:182
+#: templates/admin/base.html:31 templates/base.html:37 templates/base.html:182
 msgid "Prayers"
 msgstr "Prières"
 
-#: templates/base.html:43 templates/base.html:183
+#: templates/admin/base.html:37 templates/base.html:43 templates/base.html:183
 #: templates/notifications/preferences.html:40
 msgid "Sermons"
 msgstr "Sermons"
 
-#: templates/base.html:49
+#: templates/admin/base.html:43 templates/base.html:49
 msgid "Gallery"
 msgstr "Galerie"
 
@@ -212,7 +214,8 @@ msgid ""
 "                        <li>Support our community outreach programs</li>\n"
 "                        <li>Maintain and improve our facilities</li>\n"
 "                        <li>Fund various ministry activities</li>\n"
-"                        <li>Assist those in need within our community</li>\n"
+"                        <li>Assist those in need within our "
+"community</li>\n"
 "                    </ul>\n"
 "                    Thank you for your support!\n"
 "                    "
@@ -221,12 +224,32 @@ msgstr ""
 "                    Vos dons généreux nous aident à :\n"
 "                    <ul>\n"
 "                        <li>Soutenir nos programmes communautaires</li>\n"
-"                        <li>Maintenir et améliorer nos installations</li>\n"
-"                        <li>Financer diverses activités ministérielles</li>\n"
-"                        <li>Aider les personnes dans le besoin au sein de notre communauté</li>\n"
+"                        <li>Maintenir et améliorer nos installations</li>"
+"\n"
+"                        <li>Financer diverses activités "
+"ministérielles</li>\n"
+"                        <li>Aider les personnes dans le besoin au sein de"
+" notre communauté</li>\n"
 "                    </ul>\n"
 "                    Merci pour votre soutien !\n"
 "                    "
+
+#: templates/admin/base.html:13
+msgid "Dashboard"
+msgstr ""
+
+#: templates/admin/base.html:19
+#, fuzzy
+msgid "Users"
+msgstr "Sermons"
+
+#: templates/admin/base.html:49 templates/notifications/preferences.html:49
+msgid "Donations"
+msgstr "Dons"
+
+#: templates/admin/base.html:55
+msgid "Settings"
+msgstr ""
 
 #: templates/notifications/preferences.html:3
 #: templates/notifications/preferences.html:11
@@ -240,10 +263,6 @@ msgstr "Catégories de Notification"
 #: templates/notifications/preferences.html:22
 msgid "Prayer Requests"
 msgstr "Demandes de Prière"
-
-#: templates/notifications/preferences.html:49
-msgid "Donations"
-msgstr "Dons"
 
 #: templates/notifications/preferences.html:58
 msgid "News & Updates"
@@ -268,3 +287,4 @@ msgstr "Enregistrer les Préférences"
 #: templates/notifications/preferences.html:91
 msgid "Back to Profile"
 msgstr "Retour au Profil"
+

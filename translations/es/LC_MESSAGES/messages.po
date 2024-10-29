@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 12:22+0000\n"
+"POT-Creation-Date: 2024-10-29 15:51+0000\n"
 "PO-Revision-Date: 2024-10-28 10:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -38,21 +38,21 @@ msgstr "Logo"
 msgid "Toggle navigation"
 msgstr "Alternar navegación"
 
-#: templates/base.html:31 templates/base.html:181
+#: templates/admin/base.html:25 templates/base.html:31 templates/base.html:181
 #: templates/notifications/preferences.html:31
 msgid "Events"
 msgstr "Eventos"
 
-#: templates/base.html:37 templates/base.html:182
+#: templates/admin/base.html:31 templates/base.html:37 templates/base.html:182
 msgid "Prayers"
 msgstr "Oraciones"
 
-#: templates/base.html:43 templates/base.html:183
+#: templates/admin/base.html:37 templates/base.html:43 templates/base.html:183
 #: templates/notifications/preferences.html:40
 msgid "Sermons"
 msgstr "Sermones"
 
-#: templates/base.html:49
+#: templates/admin/base.html:43 templates/base.html:49
 msgid "Gallery"
 msgstr "Galería"
 
@@ -212,7 +212,8 @@ msgid ""
 "                        <li>Support our community outreach programs</li>\n"
 "                        <li>Maintain and improve our facilities</li>\n"
 "                        <li>Fund various ministry activities</li>\n"
-"                        <li>Assist those in need within our community</li>\n"
+"                        <li>Assist those in need within our "
+"community</li>\n"
 "                    </ul>\n"
 "                    Thank you for your support!\n"
 "                    "
@@ -221,12 +222,32 @@ msgstr ""
 "                    Sus generosas donaciones nos ayudan a:\n"
 "                    <ul>\n"
 "                        <li>Apoyar nuestros programas comunitarios</li>\n"
-"                        <li>Mantener y mejorar nuestras instalaciones</li>\n"
-"                        <li>Financiar varias actividades ministeriales</li>\n"
-"                        <li>Ayudar a los necesitados en nuestra comunidad</li>\n"
+"                        <li>Mantener y mejorar nuestras "
+"instalaciones</li>\n"
+"                        <li>Financiar varias actividades "
+"ministeriales</li>\n"
+"                        <li>Ayudar a los necesitados en nuestra "
+"comunidad</li>\n"
 "                    </ul>\n"
 "                    ¡Gracias por su apoyo!\n"
 "                    "
+
+#: templates/admin/base.html:13
+msgid "Dashboard"
+msgstr ""
+
+#: templates/admin/base.html:19
+#, fuzzy
+msgid "Users"
+msgstr "Sermones"
+
+#: templates/admin/base.html:49 templates/notifications/preferences.html:49
+msgid "Donations"
+msgstr "Donaciones"
+
+#: templates/admin/base.html:55
+msgid "Settings"
+msgstr ""
 
 #: templates/notifications/preferences.html:3
 #: templates/notifications/preferences.html:11
@@ -240,10 +261,6 @@ msgstr "Categorías de Notificación"
 #: templates/notifications/preferences.html:22
 msgid "Prayer Requests"
 msgstr "Peticiones de Oración"
-
-#: templates/notifications/preferences.html:49
-msgid "Donations"
-msgstr "Donaciones"
 
 #: templates/notifications/preferences.html:58
 msgid "News & Updates"
@@ -268,3 +285,4 @@ msgstr "Guardar Preferencias"
 #: templates/notifications/preferences.html:91
 msgid "Back to Profile"
 msgstr "Volver al Perfil"
+
