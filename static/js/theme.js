@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const footer = document.querySelector('.footer');
 
     function updateTheme(theme) {
+        console.log('Theme toggle clicked:', {
+            themeIcon: !!themeIcon,
+            html: !!html,
+            theme: html?.getAttribute('data-bs-theme')
+        });
+
         // Update HTML theme
         if (html) {
             html.setAttribute('data-bs-theme', theme);
@@ -12,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Update theme icon
-        if (themeIcon) {
+        if (themeIcon && html) {
             themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
         }
 
@@ -65,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click handler for theme toggle if it exists
     if (themeToggle) {
         themeToggle.addEventListener('click', function() {
-            const currentTheme = html.getAttribute('data-bs-theme');
+            const currentTheme = html?.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             updateTheme(newTheme);
         });

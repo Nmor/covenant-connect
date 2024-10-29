@@ -22,31 +22,31 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('prayers.') }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint == 'prayers.prayers' or request.endpoint.startswith('prayers.') }}" 
                            href="{{ url_for('prayers.prayers') }}">
                             <i class="bi bi-book me-1"></i>Prayers
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('events.') }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint == 'events.events' or request.endpoint.startswith('events.') }}" 
                            href="{{ url_for('events.events') }}">
                             <i class="bi bi-calendar-event me-1"></i>Events
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('sermons.') }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint == 'sermons.sermons' or request.endpoint.startswith('sermons.') }}" 
                            href="{{ url_for('sermons.sermons') }}">
                             <i class="bi bi-mic me-1"></i>Sermons
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('gallery.') }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint == 'gallery.gallery' or request.endpoint.startswith('gallery.') }}" 
                            href="{{ url_for('gallery.gallery') }}">
                             <i class="bi bi-images me-1"></i>Gallery
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('donations.') }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint == 'donations.donate' or request.endpoint.startswith('donations.') }}" 
                            href="{{ url_for('donations.donate') }}">
                             <i class="bi bi-heart me-1"></i>Donate
                         </a>
@@ -84,7 +84,7 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 {% if current_user.is_admin %}
                                     <li>
-                                        <a class="dropdown-item {{ 'active' if request.endpoint and request.endpoint.startswith('admin.') }}" 
+                                        <a class="dropdown-item {{ 'active' if request.endpoint.startswith('admin.') }}" 
                                            href="{{ url_for('admin.dashboard') }}">
                                             <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
                                         </a>
