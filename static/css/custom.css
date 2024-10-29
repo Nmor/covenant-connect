@@ -1,231 +1,45 @@
-/* Theme Variables */
-:root[data-bs-theme=dark] {
-    /* Core theme colors */
-    --custom-bg: #212529;
-    --custom-card-bg: #2a2e32;
-    --custom-hover-bg: #343a40;
-    --custom-border-color: rgba(255, 255, 255, 0.1);
-    --custom-shadow: rgba(0, 0, 0, 0.2);
-    --custom-hover-shadow: rgba(0, 0, 0, 0.3);
-    
-    /* Text colors */
-    --custom-text-primary: rgba(255, 255, 255, 0.95);
-    --custom-text-secondary: rgba(255, 255, 255, 0.75);
-    --custom-text-muted: rgba(255, 255, 255, 0.5);
-    
-    /* Form colors */
-    --custom-input-bg: #2a2e32;
-    --custom-input-border: rgba(255, 255, 255, 0.15);
-    --custom-input-focus-border: rgba(255, 255, 255, 0.25);
-    
-    /* Component colors */
-    --custom-nav-bg: rgba(33, 37, 41, 0.95);
-    --custom-nav-hover: #343a40;
-    --custom-dropdown-bg: #2a2e32;
-    --custom-dropdown-hover: #343a40;
-    
-    /* Footer specific colors */
-    --footer-bg: var(--custom-bg);
-    --footer-text: var(--custom-text-primary);
-    --footer-link: var(--custom-text-secondary);
-    --footer-link-hover: var(--custom-text-primary);
-    --footer-border: var(--custom-border-color);
+/* Theme-specific styles */
+[data-bs-theme=dark] {
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #e9ecef;
 }
 
-:root[data-bs-theme=light] {
-    /* Core theme colors */
-    --custom-bg: #ffffff;
-    --custom-card-bg: #f8f9fa;
-    --custom-hover-bg: #e9ecef;
-    --custom-border-color: rgba(0, 0, 0, 0.1);
-    --custom-shadow: rgba(0, 0, 0, 0.1);
-    --custom-hover-shadow: rgba(0, 0, 0, 0.15);
-    
-    /* Text colors */
-    --custom-text-primary: rgba(0, 0, 0, 0.87);
-    --custom-text-secondary: rgba(0, 0, 0, 0.65);
-    --custom-text-muted: rgba(0, 0, 0, 0.45);
-    
-    /* Form colors */
-    --custom-input-bg: #ffffff;
-    --custom-input-border: rgba(0, 0, 0, 0.15);
-    --custom-input-focus-border: rgba(0, 0, 0, 0.25);
-    
-    /* Component colors */
-    --custom-nav-bg: rgba(255, 255, 255, 0.95);
-    --custom-nav-hover: #f8f9fa;
-    --custom-dropdown-bg: #ffffff;
-    --custom-dropdown-hover: #f8f9fa;
-    
-    /* Footer specific colors */
-    --footer-bg: var(--custom-card-bg);
-    --footer-text: var(--custom-text-primary);
-    --footer-link: var(--custom-text-secondary);
-    --footer-link-hover: var(--custom-text-primary);
-    --footer-border: var(--custom-border-color);
-}
-
-/* Global transitions */
-*, *::before, *::after {
-    transition: background-color 0.3s ease, 
-                border-color 0.3s ease, 
-                box-shadow 0.3s ease, 
-                color 0.3s ease,
-                transform 0.3s ease;
-}
-
-/* Base styles */
-body {
-    background-color: var(--custom-bg);
-    color: var(--custom-text-primary);
-}
-
-/* Navbar styles */
-.navbar {
-    background-color: var(--custom-nav-bg) !important;
-    backdrop-filter: blur(10px);
-}
-
-.navbar-brand {
-    color: var(--custom-text-primary);
-}
-
-.nav-link {
-    color: var(--custom-text-secondary);
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: var(--custom-text-primary);
+[data-bs-theme=light] {
+    --bs-body-bg: #ffffff;
+    --bs-body-color: #212529;
 }
 
 /* Footer styles */
 .footer {
-    background-color: var(--footer-bg);
-    border-top: 1px solid var(--footer-border);
-}
-
-.footer-text {
-    color: var(--footer-text);
-}
-
-.footer-heading {
-    color: var(--footer-text);
-    margin-bottom: 1rem;
+    margin-top: auto;
 }
 
 .footer-link {
-    color: var(--footer-link);
     text-decoration: none;
-    transition: color 0.3s ease;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
 }
 
 .footer-link:hover {
-    color: var(--footer-link-hover);
-    text-decoration: none;
+    opacity: 1;
 }
 
-.footer-divider {
-    border-color: var(--footer-border);
-    margin: 2rem 0;
-    opacity: 0.2;
+/* Navigation styles */
+.navbar .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white !important;
+    border-radius: 0.25rem;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
 }
 
-/* Card styles */
-.card {
-    background-color: var(--custom-card-bg);
-    border-color: var(--custom-border-color);
-    color: var(--custom-text-primary);
-}
-
-.card-text {
-    color: var(--custom-text-secondary);
-}
-
-.card-header {
-    background-color: var(--custom-hover-bg);
-    border-bottom-color: var(--custom-border-color);
-    color: var(--custom-text-primary);
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--custom-hover-shadow);
-}
-
-/* Form styles */
-.form-control, .form-select {
-    background-color: var(--custom-input-bg);
-    border-color: var(--custom-input-border);
-    color: var(--custom-text-primary);
-}
-
-.form-control:focus, .form-select:focus {
-    background-color: var(--custom-input-bg);
-    border-color: var(--custom-input-focus-border);
-    color: var(--custom-text-primary);
-}
-
-.form-label {
-    color: var(--custom-text-primary);
-}
-
-.form-text {
-    color: var(--custom-text-secondary);
-}
-
-/* Button styles */
-.btn {
+.navbar .nav-link {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
     transition: all 0.3s ease;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-/* Theme toggle icon transition */
-.bi-moon-fill, .bi-sun-fill {
-    transition: transform 0.3s ease;
-    color: var(--custom-text-primary);
-}
-
-.bi-moon-fill:hover, .bi-sun-fill:hover {
-    transform: rotate(360deg);
-}
-
-/* Accessibility */
-:focus-visible {
-    outline: 2px solid var(--bs-primary);
-    outline-offset: 2px;
-}
-
-/* Dark mode specific overrides */
-[data-bs-theme=dark] .dropdown-menu {
-    background-color: var(--custom-dropdown-bg);
-    border-color: var(--custom-border-color);
-}
-
-[data-bs-theme=dark] .dropdown-item {
-    color: var(--custom-text-primary);
-}
-
-[data-bs-theme=dark] .dropdown-item:hover {
-    background-color: var(--custom-dropdown-hover);
-}
-
-/* Loading states */
-.skeleton {
-    background: linear-gradient(
-        90deg,
-        var(--custom-card-bg) 25%,
-        var(--custom-hover-bg) 50%,
-        var(--custom-card-bg) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+.navbar .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-radius: 0.25rem;
 }
