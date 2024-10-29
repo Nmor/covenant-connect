@@ -5,12 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const footer = document.querySelector('.footer');
 
     function updateTheme(theme) {
-        console.log('Theme toggle clicked:', {
-            themeIcon: !!themeIcon,
-            html: !!html,
-            theme: html?.getAttribute('data-bs-theme')
-        });
-
         // Update HTML theme
         if (html) {
             html.setAttribute('data-bs-theme', theme);
@@ -18,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Update theme icon
-        if (themeIcon && html) {
+        if (themeIcon) {
             themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
         }
 
@@ -29,29 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
             footer.classList.add(theme === 'dark' ? 'bg-dark' : 'bg-light');
 
             // Update footer text elements
-            const footerTexts = footer.querySelectorAll('.footer-text');
-            footerTexts.forEach(text => {
-                if (text) {
-                    text.classList.remove('text-light', 'text-dark');
-                    text.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
-                }
-            });
-
-            // Update footer headings
-            const footerHeadings = footer.querySelectorAll('.footer-heading');
-            footerHeadings.forEach(heading => {
-                if (heading) {
-                    heading.classList.remove('text-light', 'text-dark');
-                    heading.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
-                }
-            });
-
-            // Update footer links
-            const footerLinks = footer.querySelectorAll('.footer-link');
-            footerLinks.forEach(link => {
-                if (link) {
-                    link.classList.remove('text-light', 'text-dark');
-                    link.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
+            const footerElements = footer.querySelectorAll('.footer-text, .footer-heading, .footer-link');
+            footerElements.forEach(element => {
+                if (element) {
+                    element.classList.remove('text-light', 'text-dark');
+                    element.classList.add(theme === 'dark' ? 'text-light' : 'text-dark');
                 }
             });
 
@@ -71,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click handler for theme toggle if it exists
     if (themeToggle) {
         themeToggle.addEventListener('click', function() {
-            const currentTheme = html?.getAttribute('data-bs-theme');
+            const currentTheme = html.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             updateTheme(newTheme);
         });
