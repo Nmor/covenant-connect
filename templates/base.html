@@ -63,9 +63,9 @@
                             <i class="bi bi-globe"></i> {{ _('Language') }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            {% for code, name in [('en', 'English'), ('es', 'Español'), ('fr', 'Français')] %}
-                                {% set args = request.args.copy() %}
-                                {% if args.update({'lang': code}) %}{% endif %}
+                            {% for code, name in languages %}
+                                {% set args = dict(request.args) %}
+                                {% set _ = args.update({'lang': code}) %}
                                 <li>
                                     <a class="dropdown-item{% if g.get('lang_code', 'en') == code %} active{% endif %}"
                                        href="{{ request.path }}?{{ args|urlencode }}"
@@ -223,9 +223,8 @@
                 });
         }
 
-        // Check for notifications every 30 seconds
         setInterval(checkNotifications, 30000);
-        checkNotifications(); // Initial check
+        checkNotifications();
 
         markAllReadBtn.addEventListener('click', function() {
             const notifications = notificationList.querySelectorAll('.notification-item:not(.read)');
