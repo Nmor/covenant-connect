@@ -1,0 +1,175 @@
+# Translations template for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-10-29 09:09+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: routes/notifications.py:33
+msgid "Notification preferences updated successfully."
+msgstr ""
+
+#: routes/notifications.py:50
+msgid "An error occurred while managing notification preferences."
+msgstr ""
+
+#: templates/base.html:6 templates/base.html:21 templates/base.html:202
+#: templates/notifications/preferences.html:3
+msgid "Covenant Connect"
+msgstr ""
+
+#: templates/base.html:17 templates/base.html:19
+msgid "Logo"
+msgstr ""
+
+#: templates/base.html:24
+msgid "Toggle navigation"
+msgstr ""
+
+#: templates/base.html:32 templates/base.html:184
+#: templates/notifications/preferences.html:31
+msgid "Events"
+msgstr ""
+
+#: templates/base.html:38 templates/base.html:185
+msgid "Prayers"
+msgstr ""
+
+#: templates/base.html:44 templates/base.html:186
+#: templates/notifications/preferences.html:40
+msgid "Sermons"
+msgstr ""
+
+#: templates/base.html:50
+msgid "Gallery"
+msgstr ""
+
+#: templates/base.html:56
+msgid "Donate"
+msgstr ""
+
+#: templates/base.html:65
+msgid "Language"
+msgstr ""
+
+#: templates/base.html:83
+msgid "Toggle theme"
+msgstr ""
+
+#: templates/base.html:96
+msgid "unread notifications"
+msgstr ""
+
+#: templates/base.html:103
+msgid "Notifications"
+msgstr ""
+
+#: templates/base.html:105
+msgid "Mark all as read"
+msgstr ""
+
+#: templates/base.html:112
+msgid "No new notifications"
+msgstr ""
+
+#: templates/base.html:124
+msgid "Admin"
+msgstr ""
+
+#: templates/base.html:131
+msgid "Profile"
+msgstr ""
+
+#: templates/base.html:136
+msgid "Logout"
+msgstr ""
+
+#: templates/base.html:143
+msgid "Login"
+msgstr ""
+
+#: templates/base.html:149
+msgid "Register"
+msgstr ""
+
+#: templates/base.html:165
+msgid "Close"
+msgstr ""
+
+#: templates/base.html:178
+msgid "About Us"
+msgstr ""
+
+#: templates/base.html:179
+msgid "A community of believers growing together in faith."
+msgstr ""
+
+#: templates/base.html:182
+msgid "Quick Links"
+msgstr ""
+
+#: templates/base.html:190
+msgid "Contact Us"
+msgstr ""
+
+#: templates/base.html:203
+msgid "All rights reserved."
+msgstr ""
+
+#: templates/base.html:253
+msgid "New"
+msgstr ""
+
+#: templates/notifications/preferences.html:3
+#: templates/notifications/preferences.html:11
+msgid "Notification Preferences"
+msgstr ""
+
+#: templates/notifications/preferences.html:15
+msgid "Notification Categories"
+msgstr ""
+
+#: templates/notifications/preferences.html:22
+msgid "Prayer Requests"
+msgstr ""
+
+#: templates/notifications/preferences.html:49
+msgid "Donations"
+msgstr ""
+
+#: templates/notifications/preferences.html:58
+msgid "News & Updates"
+msgstr ""
+
+#: templates/notifications/preferences.html:64
+msgid "Notification Methods"
+msgstr ""
+
+#: templates/notifications/preferences.html:71
+msgid "Desktop Notifications"
+msgstr ""
+
+#: templates/notifications/preferences.html:80
+msgid "Email Notifications"
+msgstr ""
+
+#: templates/notifications/preferences.html:88
+msgid "Save Preferences"
+msgstr ""
+
+#: templates/notifications/preferences.html:91
+msgid "Back to Profile"
+msgstr ""
+

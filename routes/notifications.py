@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, current_app, render_template, request, flash, redirect, url_for
 from flask_sse import sse
 from flask_login import login_required, current_user
+from flask_babel import gettext as _
 from app import db
 from models import User
 
