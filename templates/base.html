@@ -22,27 +22,32 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('prayers.prayers') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('prayers.') }}" 
+                           href="{{ url_for('prayers.prayers') }}">
                             <i class="bi bi-book me-1"></i>Prayers
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('events.events') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('events.') }}" 
+                           href="{{ url_for('events.events') }}">
                             <i class="bi bi-calendar-event me-1"></i>Events
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('sermons.sermons') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('sermons.') }}" 
+                           href="{{ url_for('sermons.sermons') }}">
                             <i class="bi bi-mic me-1"></i>Sermons
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('gallery.gallery') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('gallery.') }}" 
+                           href="{{ url_for('gallery.gallery') }}">
                             <i class="bi bi-images me-1"></i>Gallery
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('donations.donate') }}">
+                        <a class="nav-link {{ 'active' if request.endpoint and request.endpoint.startswith('donations.') }}" 
+                           href="{{ url_for('donations.donate') }}">
                             <i class="bi bi-heart me-1"></i>Donate
                         </a>
                     </li>
@@ -79,19 +84,22 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 {% if current_user.is_admin %}
                                     <li>
-                                        <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                                        <a class="dropdown-item {{ 'active' if request.endpoint and request.endpoint.startswith('admin.') }}" 
+                                           href="{{ url_for('admin.dashboard') }}">
                                             <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% endif %}
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                    <a class="dropdown-item {{ 'active' if request.endpoint == 'auth.profile' }}" 
+                                       href="{{ url_for('auth.profile') }}">
                                         <i class="bi bi-person me-2"></i>Profile
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('notifications.preferences') }}">
+                                    <a class="dropdown-item {{ 'active' if request.endpoint == 'notifications.preferences' }}" 
+                                       href="{{ url_for('notifications.preferences') }}">
                                         <i class="bi bi-bell me-2"></i>Notifications
                                     </a>
                                 </li>
@@ -105,7 +113,8 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'auth.login' }}" 
+                               href="{{ url_for('auth.login') }}">
                                 <i class="bi bi-box-arrow-in-right me-1"></i>Login
                             </a>
                         </li>
@@ -167,7 +176,7 @@
             fetch("{{ url_for('notifications.get_notifications') }}")
                 .then(response => response.json())
                 .then(notifications => {
-                    if (notifications.length > 0) {
+                    if (notifications && notifications.length > 0) {
                         notifications.forEach(data => addNotification(data));
                     }
                 });
@@ -176,14 +185,16 @@
         setInterval(checkNotifications, 30000);
         checkNotifications();
 
-        markAllReadBtn.addEventListener('click', function() {
-            const notifications = notificationList.querySelectorAll('.notification-item:not(.read)');
-            notifications.forEach(notification => {
-                notification.classList.add('read');
-                notification.querySelector('.notification-status').classList.add('d-none');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                const notifications = notificationList.querySelectorAll('.notification-item:not(.read)');
+                notifications.forEach(notification => {
+                    notification.classList.add('read');
+                    notification.querySelector('.notification-status').classList.add('d-none');
+                });
+                updateNotificationCount(-notificationCount);
             });
-            updateNotificationCount(-notificationCount);
-        });
+        }
 
         function addNotification(data) {
             const emptyNotification = notificationList.querySelector('.text-muted.text-center');
@@ -203,7 +214,12 @@
                 </div>
             `;
             
-            notificationList.insertBefore(li, notificationList.querySelector('.dropdown-divider').nextSibling);
+            if (notificationList) {
+                const divider = notificationList.querySelector('.dropdown-divider');
+                if (divider) {
+                    notificationList.insertBefore(li, divider.nextSibling);
+                }
+            }
             
             li.addEventListener('click', function() {
                 if (!this.classList.contains('read')) {
@@ -217,8 +233,10 @@
 
         function updateNotificationCount(change) {
             notificationCount = Math.max(0, notificationCount + change);
-            notificationBadge.textContent = notificationCount;
-            notificationBadge.classList.toggle('d-none', notificationCount === 0);
+            if (notificationBadge) {
+                notificationBadge.textContent = notificationCount;
+                notificationBadge.classList.toggle('d-none', notificationCount === 0);
+            }
         }
     });
     </script>
