@@ -10,32 +10,31 @@ def init_db():
     app = create_app()
     with app.app_context():
         try:
-            # First check if tables exist by attempting a simple query
-            try:
-                db.session.execute(text('SELECT 1 FROM users'))
-                print("Tables already exist, dropping all tables...")
-                db.session.commit()
-                db.drop_all()
-            except Exception:
-                print("No existing tables found")
-                db.session.rollback()
-
-            # Create all tables fresh
-            print("Creating all tables...")
+            # Create tables without dropping existing ones
+            print("Checking and creating missing tables...")
             db.create_all()
             db.session.commit()
-            print("All tables created successfully")
+            print("Database tables verification completed")
             
             # Check if admin user exists
             admin = User.query.filter_by(username='admin').first()
             if not admin:
+                print("Creating admin user...")
                 # Create admin user
                 admin = User(
                     username='admin',
                     email='admin@example.com',
                     is_admin=True,
                     locale='en',
-                    notification_preferences={}
+                    notification_preferences={
+                        'prayer_requests': True,
+                        'events': True,
+                        'sermons': True,
+                        'donations': True,
+                        'news': True,
+                        'desktop': True,
+                        'email': True
+                    }
                 )
                 admin.set_password('admin123')
                 db.session.add(admin)
