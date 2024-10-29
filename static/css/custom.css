@@ -23,6 +23,13 @@
     --custom-nav-hover: #343a40;
     --custom-dropdown-bg: #2a2e32;
     --custom-dropdown-hover: #343a40;
+    
+    /* Footer specific colors */
+    --footer-bg: var(--custom-bg);
+    --footer-text: var(--custom-text-primary);
+    --footer-link: var(--custom-text-secondary);
+    --footer-link-hover: var(--custom-text-primary);
+    --footer-border: var(--custom-border-color);
 }
 
 :root[data-bs-theme=light] {
@@ -49,6 +56,13 @@
     --custom-nav-hover: #f8f9fa;
     --custom-dropdown-bg: #ffffff;
     --custom-dropdown-hover: #f8f9fa;
+    
+    /* Footer specific colors */
+    --footer-bg: var(--custom-card-bg);
+    --footer-text: var(--custom-text-primary);
+    --footer-link: var(--custom-text-secondary);
+    --footer-link-hover: var(--custom-text-primary);
+    --footer-border: var(--custom-border-color);
 }
 
 /* Global transitions */
@@ -76,13 +90,45 @@ body {
     color: var(--custom-text-primary);
 }
 
-.navbar-dark .navbar-nav .nav-link {
+.nav-link {
     color: var(--custom-text-secondary);
 }
 
-.navbar-dark .navbar-nav .nav-link:hover,
-.navbar-dark .navbar-nav .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
     color: var(--custom-text-primary);
+}
+
+/* Footer styles */
+.footer {
+    background-color: var(--footer-bg);
+    border-top: 1px solid var(--footer-border);
+}
+
+.footer-text {
+    color: var(--footer-text);
+}
+
+.footer-heading {
+    color: var(--footer-text);
+    margin-bottom: 1rem;
+}
+
+.footer-link {
+    color: var(--footer-link);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: var(--footer-link-hover);
+    text-decoration: none;
+}
+
+.footer-divider {
+    border-color: var(--footer-border);
+    margin: 2rem 0;
+    opacity: 0.2;
 }
 
 /* Card styles */
@@ -105,14 +151,6 @@ body {
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px var(--custom-hover-shadow);
-}
-
-.card-title {
-    color: var(--custom-text-primary);
-}
-
-.card-subtitle {
-    color: var(--custom-text-secondary);
 }
 
 /* Form styles */
@@ -145,53 +183,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* Table styles */
-.table {
-    color: var(--custom-text-primary);
-}
-
-.table thead th {
-    background-color: var(--custom-hover-bg);
-    color: var(--custom-text-primary);
-}
-
-.table tbody tr:hover {
-    background-color: var(--custom-hover-bg);
-}
-
-/* Alert styles */
-.alert {
-    background-color: var(--custom-card-bg);
-    border-color: var(--custom-border-color);
-    color: var(--custom-text-primary);
-}
-
-/* Modal styles */
-.modal-content {
-    background-color: var(--custom-card-bg);
-    border-color: var(--custom-border-color);
-    color: var(--custom-text-primary);
-}
-
-.modal-header, .modal-footer {
-    border-color: var(--custom-border-color);
-}
-
-/* Badge styles */
-.badge {
-    transition: all 0.2s ease;
-}
-
-/* Footer styles */
-.footer {
-    background-color: var(--custom-nav-bg);
-    border-top-color: var(--custom-border-color);
-}
-
-.text-muted {
-    color: var(--custom-text-secondary) !important;
-}
-
 /* Theme toggle icon transition */
 .bi-moon-fill, .bi-sun-fill {
     transition: transform 0.3s ease;
@@ -208,7 +199,7 @@ body {
     outline-offset: 2px;
 }
 
-/* Dark mode overrides */
+/* Dark mode specific overrides */
 [data-bs-theme=dark] .dropdown-menu {
     background-color: var(--custom-dropdown-bg);
     border-color: var(--custom-border-color);

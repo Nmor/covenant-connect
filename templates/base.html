@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
 <body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home.home') }}">
                 {% if settings and settings.logo_url %}
@@ -168,24 +168,24 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer mt-auto py-5 bg-dark">
+    <footer class="footer mt-auto py-5">
         <div class="container">
             <div class="row g-4">
                 <div class="col-md-4">
-                    <h5>{{ _('About Us') }}</h5>
-                    <p class="text-muted">{{ _('A community of believers growing together in faith.') }}</p>
+                    <h5 class="footer-heading">{{ _('About Us') }}</h5>
+                    <p class="footer-text">{{ _('A community of believers growing together in faith.') }}</p>
                 </div>
                 <div class="col-md-4">
-                    <h5>{{ _('Quick Links') }}</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ url_for('events.events') }}" class="text-decoration-none">{{ _('Events') }}</a></li>
-                        <li><a href="{{ url_for('prayers.prayers') }}" class="text-decoration-none">{{ _('Prayers') }}</a></li>
-                        <li><a href="{{ url_for('sermons.sermons') }}" class="text-decoration-none">{{ _('Sermons') }}</a></li>
+                    <h5 class="footer-heading">{{ _('Quick Links') }}</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="{{ url_for('events.events') }}" class="footer-link">{{ _('Events') }}</a></li>
+                        <li><a href="{{ url_for('prayers.prayers') }}" class="footer-link">{{ _('Prayers') }}</a></li>
+                        <li><a href="{{ url_for('sermons.sermons') }}" class="footer-link">{{ _('Sermons') }}</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">
-                    <h5>{{ _('Contact Us') }}</h5>
-                    <address class="text-muted">
+                    <h5 class="footer-heading">{{ _('Contact Us') }}</h5>
+                    <address class="footer-text">
                         {% if settings and settings.contact_info %}
                             <i class="bi bi-envelope me-2"></i>{{ settings.contact_info.email }}<br>
                             <i class="bi bi-telephone me-2"></i>{{ settings.contact_info.phone }}
@@ -193,9 +193,9 @@
                     </address>
                 </div>
             </div>
-            <hr class="my-4">
+            <hr class="footer-divider">
             <div class="text-center">
-                <p class="text-muted mb-0">
+                <p class="footer-text mb-0">
                     © {{ current_year }} {{ settings.business_name if settings else _('Covenant Connect') }}. 
                     {{ _('All rights reserved.') }}
                 </p>
@@ -273,23 +273,52 @@
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
         const html = document.documentElement;
+        const footer = document.querySelector('.footer');
+        
+        function updateTheme(theme) {
+            html.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+            
+            // Update footer classes based on theme
+            footer.classList.toggle('bg-dark', theme === 'dark');
+            footer.classList.toggle('bg-light', theme === 'light');
+            
+            // Update footer text classes
+            const footerTexts = footer.querySelectorAll('.footer-text');
+            footerTexts.forEach(text => {
+                text.classList.toggle('text-light', theme === 'dark');
+                text.classList.toggle('text-dark', theme === 'light');
+            });
+            
+            // Update footer headings
+            const footerHeadings = footer.querySelectorAll('.footer-heading');
+            footerHeadings.forEach(heading => {
+                heading.classList.toggle('text-light', theme === 'dark');
+                heading.classList.toggle('text-dark', theme === 'light');
+            });
+            
+            // Update footer links
+            const footerLinks = footer.querySelectorAll('.footer-link');
+            footerLinks.forEach(link => {
+                link.classList.toggle('text-light', theme === 'dark');
+                link.classList.toggle('text-dark', theme === 'light');
+            });
+            
+            // Update footer divider
+            const footerDivider = footer.querySelector('.footer-divider');
+            footerDivider.classList.toggle('border-light', theme === 'dark');
+            footerDivider.classList.toggle('border-dark', theme === 'light');
+        }
         
         const savedTheme = localStorage.getItem('theme') || 'dark';
-        html.setAttribute('data-bs-theme', savedTheme);
-        updateThemeIcon(savedTheme);
+        updateTheme(savedTheme);
         
         themeToggle.addEventListener('click', function() {
             const currentTheme = html.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            html.setAttribute('data-bs-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+            updateTheme(newTheme);
         });
-        
-        function updateThemeIcon(theme) {
-            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-        }
     });
     </script>
 
