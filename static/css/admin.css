@@ -1,24 +1,22 @@
 /* Admin Dashboard Styles */
 .sidebar {
     position: fixed;
-    top: 60px; /* Matches navbar height */
+    top: 60px; /* Match navbar height */
     bottom: 0;
     left: 0;
     z-index: 100;
-    padding: 0;
+    padding: 48px 0 0; /* Increased top padding */
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-    width: 16.66666667%; /* col-md-2 equivalent */
+    width: 16.66666667%;
 }
 
 .sidebar-sticky {
-    position: sticky;
+    position: relative;
     top: 0;
-    height: calc(100vh - 60px - 250px); /* Subtract navbar and footer heights */
+    height: calc(100vh - 60px - 48px - 250px); /* Subtract navbar, padding, and footer heights */
     padding-top: .5rem;
     overflow-x: hidden;
     overflow-y: auto;
-    margin-bottom: 1rem; /* Add space at the bottom */
 }
 
 /* Sidebar navigation links */
@@ -65,6 +63,7 @@
 .main-content {
     margin-left: 16.66666667%; /* Matches sidebar width */
     padding-top: 1rem; /* Add padding for fixed navbar */
+    padding-bottom: 250px; /* Match footer height */
 }
 
 /* Loading Spinner Overlay */
