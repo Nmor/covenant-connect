@@ -1,54 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Events - Covenant Connect{% endblock %}
+{% block title %}{{ _('Events') }} - {{ _('Covenant Connect') }}{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            <h2 class="mb-4">Upcoming Events</h2>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            {% if events %}
-                <div class="row row-cols-1 row-cols-md-2 g-4">
-                    {% for event in events %}
-                        <div class="col">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h3 class="card-title">{{ event.title }}</h3>
-                                    <p class="card-text text-muted">
-                                        <i class="bi bi-calendar"></i>
-                                        {{ event.start_date.strftime('%B %d, %Y') }}
-                                        {{ event.start_date.strftime('%I:%M %p') }} -
-                                        {{ event.end_date.strftime('%I:%M %p') }}
-                                    </p>
-                                    <p class="card-text">
-                                        <i class="bi bi-geo-alt"></i>
-                                        {{ event.location }}
-                                    </p>
-                                    <p class="card-text">{{ event.description }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-info">
-                    No upcoming events at this time. Please check back later!
-                </div>
-            {% endif %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center mb-5">
+            <h1 class="display-4 mb-3">{{ _('Church Events') }}</h1>
+            <p class="lead">{{ _('Stay connected with our community through various events and gatherings.') }}</p>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    {% if events %}
+        <div class="row g-4">
+            {% for event in events %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.title }}</h5>
+                            <p class="card-text">{{ event.description[:150] }}...</p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-2"></i>{{ _('Date') }}: 
+                                    {{ event.start_date.strftime('%B %d, %Y') }}
+                                </small>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-2"></i>{{ _('Time') }}: 
+                                    {{ event.start_date.strftime('%I:%M %p') }}
+                                </small>
+                            </p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt me-2"></i>{{ _('Location') }}: 
+                                    {{ event.location }}
+                                </small>
+                            </p>
+                            <a href="{{ url_for('events.event_detail', event_id=event.id) }}" 
+                               class="btn btn-outline-primary">
+                                {{ _('Learn More') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+            <h5 class="text-muted">{{ _('No events found') }}</h5>
+            <p class="text-muted">{{ _('Check back soon for upcoming events!') }}</p>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

@@ -249,7 +249,7 @@
                         <p class="mb-0">${data.message}</p>
                         <small class="text-muted">${new Date().toLocaleTimeString()}</small>
                     </div>
-                    <span class="notification-status badge bg-primary ms-2">{{ _('New') }}</span>
+                    <span class="notification-status badge bg-primary ms-2">{{ _('New')|escape('js') }}</span>
                 </div>
             `;
             
@@ -286,32 +286,27 @@
             localStorage.setItem('theme', theme);
             themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
             
-            // Update footer classes based on theme
             footer.classList.toggle('bg-dark', theme === 'dark');
             footer.classList.toggle('bg-light', theme === 'light');
             
-            // Update footer text classes
             const footerTexts = footer.querySelectorAll('.footer-text');
             footerTexts.forEach(text => {
                 text.classList.toggle('text-light', theme === 'dark');
                 text.classList.toggle('text-dark', theme === 'light');
             });
             
-            // Update footer headings
             const footerHeadings = footer.querySelectorAll('.footer-heading');
             footerHeadings.forEach(heading => {
                 heading.classList.toggle('text-light', theme === 'dark');
                 heading.classList.toggle('text-dark', theme === 'light');
             });
             
-            // Update footer links
             const footerLinks = footer.querySelectorAll('.footer-link');
             footerLinks.forEach(link => {
                 link.classList.toggle('text-light', theme === 'dark');
-                link.classList.toggle('text-dark', theme === 'light');
+                text.classList.toggle('text-dark', theme === 'light');
             });
             
-            // Update footer divider
             const footerDivider = footer.querySelector('.footer-divider');
             footerDivider.classList.toggle('border-light', theme === 'dark');
             footerDivider.classList.toggle('border-dark', theme === 'light');

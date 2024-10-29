@@ -15,28 +15,22 @@ babel = Babel()
 def get_locale():
     # First try to get locale from query parameter
     locale = request.args.get('lang')
-    app.logger.debug(f"Requested locale: {locale}")
-    
     if locale in ['en', 'es', 'fr']:
-        app.logger.debug(f"Valid locale found in query parameters: {locale}")
         session['lang'] = locale
         return locale
     
     # Then try to get locale from session
     if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
-        app.logger.debug(f"Using locale from session: {session['lang']}")
         return session['lang']
     
     # Finally, use browser's preferred language    
-    best_match = request.accept_languages.best_match(['en', 'es', 'fr'])
-    app.logger.debug(f"Using browser's preferred language: {best_match}")
-    return best_match
+    return request.accept_languages.best_match(['en', 'es', 'fr'])
 
 def create_app():
     app = Flask(__name__)
     
     # Configure logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('covenant_connect')
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(
@@ -94,7 +88,6 @@ def create_app():
     @app.before_request
     def before_request():
         g.lang_code = get_locale()
-        logger.debug(f"Current language code set to: {g.lang_code}")
 
     # Context processors
     @app.context_processor

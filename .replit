@@ -47,6 +47,14 @@ args = "Compile Translations"
 task = "workflow.run"
 args = "Extract Messages"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Init Spanish"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Init French"
+
 [[workflows.workflow]]
 name = "Reset DB"
 author = "agent"
@@ -160,7 +168,35 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pybabel extract -F babel.cfg -o messages.pot ."
+args = "pybabel extract -F babel.cfg -k lazy_gettext -o messages.pot ."
+
+[[workflows.workflow]]
+name = "Init Spanish"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pybabel init -i messages.pot -d translations -l es"
+
+[[workflows.workflow]]
+name = "Init French"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pybabel init -i messages.pot -d translations -l fr"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]

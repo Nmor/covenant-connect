@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 16:49+0000\n"
+"POT-Creation-Date: 2024-10-29 17:20+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,8 +25,10 @@ msgstr ""
 msgid "An error occurred while managing notification preferences."
 msgstr ""
 
+#: templates/auth/login.html:3 templates/auth/register.html:3
 #: templates/base.html:6 templates/base.html:20 templates/base.html:199
-#: templates/donations.html:3 templates/notifications/preferences.html:3
+#: templates/donations.html:3 templates/events.html:3 templates/gallery.html:3
+#: templates/notifications/preferences.html:3 templates/prayers.html:3
 msgid "Covenant Connect"
 msgstr ""
 
@@ -40,8 +42,8 @@ msgid "Toggle navigation"
 msgstr ""
 
 #: templates/admin/base.html:25 templates/admin/dashboard.html:58
-#: templates/base.html:31 templates/base.html:181 templates/home.html:32
-#: templates/notifications/preferences.html:31
+#: templates/base.html:31 templates/base.html:181 templates/events.html:3
+#: templates/home.html:30 templates/notifications/preferences.html:31
 msgid "Events"
 msgstr ""
 
@@ -55,7 +57,7 @@ msgstr ""
 msgid "Sermons"
 msgstr ""
 
-#: templates/admin/base.html:43 templates/base.html:49
+#: templates/admin/base.html:43 templates/base.html:49 templates/gallery.html:3
 msgid "Gallery"
 msgstr ""
 
@@ -99,16 +101,20 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
-#: templates/base.html:140
+#: templates/auth/login.html:3 templates/auth/login.html:11
+#: templates/auth/login.html:44 templates/base.html:140
 msgid "Login"
 msgstr ""
 
-#: templates/base.html:146
+#: templates/auth/register.html:3 templates/auth/register.html:11
+#: templates/auth/register.html:62 templates/base.html:146
 msgid "Register"
 msgstr ""
 
 #: templates/admin/event_form.html:14 templates/admin/events.html:19
+#: templates/auth/login.html:20 templates/auth/register.html:20
 #: templates/base.html:162 templates/donations.html:20
+#: templates/gallery.html:43 templates/prayers.html:27
 msgid "Close"
 msgstr ""
 
@@ -140,11 +146,14 @@ msgstr ""
 msgid "Make a Donation"
 msgstr ""
 
-#: templates/admin/settings.html:99 templates/donations.html:28
+#: templates/admin/settings.html:99 templates/auth/login.html:28
+#: templates/auth/register.html:36 templates/donations.html:28
+#: templates/prayers.html:43
 msgid "Email Address"
 msgstr ""
 
-#: templates/donations.html:31
+#: templates/auth/login.html:31 templates/auth/register.html:39
+#: templates/donations.html:31 templates/prayers.html:46
 msgid "Please enter a valid email address."
 msgstr ""
 
@@ -209,18 +218,76 @@ msgid "Why Donate?"
 msgstr ""
 
 #: templates/donations.html:101
-msgid ""
-"\n"
-"                    Your generous donations help us:\n"
-"                    <ul>\n"
-"                        <li>Support our community outreach programs</li>\n"
-"                        <li>Maintain and improve our facilities</li>\n"
-"                        <li>Fund various ministry activities</li>\n"
-"                        <li>Assist those in need within our "
-"community</li>\n"
-"                    </ul>\n"
-"                    Thank you for your support!\n"
-"                    "
+msgid "Your generous donations help us:"
+msgstr ""
+
+#: templates/donations.html:103
+msgid "Support our community outreach programs"
+msgstr ""
+
+#: templates/donations.html:104
+msgid "Maintain and improve our facilities"
+msgstr ""
+
+#: templates/donations.html:105
+msgid "Fund various ministry activities"
+msgstr ""
+
+#: templates/donations.html:106
+msgid "Assist those in need within our community"
+msgstr ""
+
+#: templates/donations.html:108
+msgid "Thank you for your support!"
+msgstr ""
+
+#: templates/events.html:9
+msgid "Church Events"
+msgstr ""
+
+#: templates/events.html:10
+msgid "Stay connected with our community through various events and gatherings."
+msgstr ""
+
+#: templates/events.html:24
+msgid "Date"
+msgstr ""
+
+#: templates/events.html:30
+msgid "Time"
+msgstr ""
+
+#: templates/admin/event_form.html:88 templates/admin/events.html:35
+#: templates/events.html:36
+msgid "Location"
+msgstr ""
+
+#: templates/events.html:42 templates/home.html:100
+msgid "Learn More"
+msgstr ""
+
+#: templates/admin/events.html:80 templates/events.html:52
+msgid "No events found"
+msgstr ""
+
+#: templates/events.html:53
+msgid "Check back soon for upcoming events!"
+msgstr ""
+
+#: templates/gallery.html:9
+msgid "Photo Gallery"
+msgstr ""
+
+#: templates/gallery.html:10
+msgid "Capturing moments of fellowship, worship, and community."
+msgstr ""
+
+#: templates/gallery.html:60
+msgid "No images found"
+msgstr ""
+
+#: templates/gallery.html:61
+msgid "Check back soon for updates to our gallery!"
 msgstr ""
 
 #: templates/home.html:7
@@ -233,58 +300,111 @@ msgid ""
 "worship, and fellowship."
 msgstr ""
 
-#: templates/admin/dashboard.html:28 templates/home.html:18
-#: templates/notifications/preferences.html:22
+#: templates/admin/dashboard.html:28 templates/home.html:17
+#: templates/notifications/preferences.html:22 templates/prayers.html:3
+#: templates/prayers.html:9
 msgid "Prayer Requests"
 msgstr ""
 
-#: templates/home.html:19
+#: templates/home.html:18
 msgid "Share your prayer needs with our community or pray for others."
 msgstr ""
 
-#: templates/home.html:21
+#: templates/home.html:20
 msgid "View Prayers"
 msgstr ""
 
-#: templates/home.html:33
+#: templates/home.html:31
 msgid "Stay updated with our upcoming events and gatherings."
 msgstr ""
 
-#: templates/home.html:35
+#: templates/home.html:33
 msgid "View Events"
 msgstr ""
 
-#: templates/home.html:46
+#: templates/home.html:43
 msgid "Support Us"
 msgstr ""
 
-#: templates/home.html:47
+#: templates/home.html:44
 msgid "Support our ministry through secure online donations."
 msgstr ""
 
-#: templates/home.html:49
+#: templates/home.html:46
 msgid "Donate Now"
 msgstr ""
 
-#: templates/home.html:59
+#: templates/home.html:56
 msgid "Latest Sermons"
 msgstr ""
 
-#: templates/home.html:68
+#: templates/home.html:65
 #, python-format
 msgid "By %(preacher)s"
 msgstr ""
 
-#: templates/home.html:74
+#: templates/home.html:71
 msgid "Watch/Listen"
 msgstr ""
 
-#: templates/home.html:88
+#: templates/home.html:85
 msgid "Upcoming Events"
 msgstr ""
 
-#: templates/home.html:103
-msgid "Learn More"
+#: templates/prayers.html:10
+msgid ""
+"Share your prayer needs with our community and join us in prayer for "
+"others."
+msgstr ""
+
+#: templates/prayers.html:18
+msgid "Submit Prayer Request"
+msgstr ""
+
+#: templates/prayers.html:35
+msgid "Your Name"
+msgstr ""
+
+#: templates/prayers.html:38
+msgid "Please enter your name."
+msgstr ""
+
+#: templates/prayers.html:51
+msgid "Prayer Request"
+msgstr ""
+
+#: templates/prayers.html:54
+msgid "Please share your prayer request."
+msgstr ""
+
+#: templates/prayers.html:62
+msgid "Make this prayer request public"
+msgstr ""
+
+#: templates/prayers.html:66
+msgid ""
+"Public prayers will be shared with the community. Private prayers will "
+"only be seen by our prayer team."
+msgstr ""
+
+#: templates/prayers.html:70
+msgid "Submit Request"
+msgstr ""
+
+#: templates/prayers.html:80
+msgid "Community Prayer Requests"
+msgstr ""
+
+#: templates/prayers.html:86
+msgid "From"
+msgstr ""
+
+#: templates/prayers.html:95
+msgid "Pray for This"
+msgstr ""
+
+#: templates/prayers.html:120
+msgid "Thank you for praying!"
 msgstr ""
 
 #: templates/admin/base.html:13 templates/admin/dashboard.html:5
@@ -405,10 +525,6 @@ msgstr ""
 msgid "Please select an end time."
 msgstr ""
 
-#: templates/admin/event_form.html:88 templates/admin/events.html:35
-msgid "Location"
-msgstr ""
-
 #: templates/admin/event_form.html:92
 msgid "Please enter an event location."
 msgstr ""
@@ -451,10 +567,6 @@ msgstr ""
 
 #: templates/admin/events.html:66 templates/admin/users.html:62
 msgid "Delete"
-msgstr ""
-
-#: templates/admin/events.html:80
-msgid "No events found"
 msgstr ""
 
 #: templates/admin/events.html:81
@@ -561,7 +673,7 @@ msgstr ""
 msgid "Import Users"
 msgstr ""
 
-#: templates/admin/users.html:36
+#: templates/admin/users.html:36 templates/auth/register.html:28
 msgid "Username"
 msgstr ""
 
@@ -603,6 +715,47 @@ msgstr ""
 
 #: templates/admin/users.html:110
 msgid "Import"
+msgstr ""
+
+#: templates/auth/login.html:36 templates/auth/register.html:44
+msgid "Password"
+msgstr ""
+
+#: templates/auth/login.html:39
+msgid "Please enter your password."
+msgstr ""
+
+#: templates/auth/login.html:46
+msgid "Don't have an account?"
+msgstr ""
+
+#: templates/auth/login.html:47
+msgid "Register here"
+msgstr ""
+
+#: templates/auth/register.html:31
+msgid "Please enter a username."
+msgstr ""
+
+#: templates/auth/register.html:48
+msgid "Password must be at least 8 characters long."
+msgstr ""
+
+#: templates/auth/register.html:53
+msgid "Confirm Password"
+msgstr ""
+
+#: templates/auth/register.html:57 templates/auth/register.html:91
+#: templates/auth/register.html:103
+msgid "Passwords do not match."
+msgstr ""
+
+#: templates/auth/register.html:64
+msgid "Already have an account?"
+msgstr ""
+
+#: templates/auth/register.html:65
+msgid "Login here"
 msgstr ""
 
 #: templates/notifications/preferences.html:3

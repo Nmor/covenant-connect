@@ -1,13 +1,14 @@
-# Spanish translations for Covenant Connect.
-# Copyright (C) 2024 Covenant Connect
-# This file is distributed under the same license as the Covenant Connect
-# project.
+# Spanish translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 16:29+0000\n"
-"PO-Revision-Date: 2024-10-28 10:00+0000\n"
+"POT-Creation-Date: 2024-10-29 17:16+0000\n"
+"PO-Revision-Date: 2024-10-29 17:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
 "Language-Team: es <LL@li.org>\n"
@@ -26,10 +27,8 @@ msgid "An error occurred while managing notification preferences."
 msgstr ""
 
 #: templates/base.html:6 templates/base.html:20 templates/base.html:199
-#: templates/donations.html:3 templates/notifications/preferences.html:3
-#, fuzzy
 msgid "Covenant Connect"
-msgstr "Bienvenido a Conexión del Pacto"
+msgstr ""
 
 #: templates/admin/settings.html:32 templates/base.html:16
 #: templates/base.html:18
@@ -40,20 +39,16 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr ""
 
-#: templates/admin/base.html:25 templates/admin/dashboard.html:58
-#: templates/base.html:31 templates/base.html:181 templates/home.html:33
-#: templates/notifications/preferences.html:31
+#: templates/admin/base.html:25 templates/base.html:31 templates/base.html:181
+#: templates/home.html:30
 msgid "Events"
-msgstr "Eventos"
+msgstr ""
 
 #: templates/admin/base.html:31 templates/base.html:37 templates/base.html:182
-#, fuzzy
 msgid "Prayers"
-msgstr "Peticiones de Oración"
+msgstr ""
 
-#: templates/admin/base.html:37 templates/admin/dashboard.html:88
-#: templates/base.html:43 templates/base.html:183
-#: templates/notifications/preferences.html:40
+#: templates/admin/base.html:37 templates/base.html:43 templates/base.html:183
 msgid "Sermons"
 msgstr ""
 
@@ -61,7 +56,7 @@ msgstr ""
 msgid "Gallery"
 msgstr ""
 
-#: templates/base.html:55 templates/donations.html:3
+#: templates/base.html:55
 msgid "Donate"
 msgstr ""
 
@@ -110,7 +105,7 @@ msgid "Register"
 msgstr ""
 
 #: templates/admin/event_form.html:14 templates/admin/events.html:19
-#: templates/base.html:162 templates/donations.html:20
+#: templates/base.html:162
 msgid "Close"
 msgstr ""
 
@@ -138,163 +133,70 @@ msgstr ""
 msgid "New"
 msgstr ""
 
-#: templates/donations.html:11
-msgid "Make a Donation"
-msgstr ""
-
-#: templates/admin/settings.html:99 templates/donations.html:28
-msgid "Email Address"
-msgstr ""
-
-#: templates/donations.html:31
-msgid "Please enter a valid email address."
-msgstr ""
-
-#: templates/donations.html:36
-msgid "Amount"
-msgstr ""
-
-#: templates/donations.html:42
-msgid "USD"
-msgstr ""
-
-#: templates/donations.html:43
-msgid "EUR"
-msgstr ""
-
-#: templates/donations.html:44
-msgid "GBP"
-msgstr ""
-
-#: templates/donations.html:45
-msgid "NGN"
-msgstr ""
-
-#: templates/donations.html:49
-msgid "Please enter a valid amount."
-msgstr ""
-
-#: templates/donations.html:54
-msgid "Payment Method"
-msgstr ""
-
-#: templates/donations.html:59
-msgid "Paystack (NGN only)"
-msgstr ""
-
-#: templates/donations.html:66
-msgid "International Payment (Fincra)"
-msgstr ""
-
-#: templates/donations.html:70
-msgid "Please select a payment method."
-msgstr ""
-
-#: templates/donations.html:76
-msgid "First Name"
-msgstr ""
-
-#: templates/donations.html:80
-msgid "Last Name"
-msgstr ""
-
-#: templates/donations.html:84
-msgid "Country"
-msgstr ""
-
-#: templates/donations.html:90
-msgid "Proceed to Payment"
-msgstr ""
-
-#: templates/donations.html:98
-msgid "Why Donate?"
-msgstr ""
-
-#: templates/donations.html:101
-msgid ""
-"\n"
-"                    Your generous donations help us:\n"
-"                    <ul>\n"
-"                        <li>Support our community outreach programs</li>\n"
-"                        <li>Maintain and improve our facilities</li>\n"
-"                        <li>Fund various ministry activities</li>\n"
-"                        <li>Assist those in need within our "
-"community</li>\n"
-"                    </ul>\n"
-"                    Thank you for your support!\n"
-"                    "
+#: templates/home.html:7
+msgid "Welcome to Covenant Connect"
 msgstr ""
 
 #: templates/home.html:8
-msgid "Welcome to Covenant Connect"
-msgstr "Bienvenido a Conexión del Pacto"
-
-#: templates/home.html:9
 msgid ""
 "Your spiritual journey starts here. Join our community in prayer, "
 "worship, and fellowship."
 msgstr ""
-"Tu viaje espiritual comienza aquí. Únete a nuestra comunidad en oración, "
-"adoración y hermandad."
 
-#: templates/admin/dashboard.html:28 templates/home.html:19
-#: templates/notifications/preferences.html:22
+#: templates/home.html:17
 msgid "Prayer Requests"
-msgstr "Peticiones de Oración"
+msgstr ""
 
-#: templates/home.html:20
+#: templates/home.html:18
 msgid "Share your prayer needs with our community or pray for others."
 msgstr ""
-"Comparte tus necesidades de oración con nuestra comunidad o reza por "
-"otros."
 
-#: templates/home.html:22
+#: templates/home.html:20
 msgid "View Prayers"
 msgstr ""
 
-#: templates/home.html:34
+#: templates/home.html:31
 msgid "Stay updated with our upcoming events and gatherings."
-msgstr "Mantente actualizado con nuestros próximos eventos y reuniones."
+msgstr ""
 
-#: templates/home.html:36
-#, fuzzy
+#: templates/home.html:33
 msgid "View Events"
-msgstr "Eventos"
+msgstr ""
 
-#: templates/home.html:47
+#: templates/home.html:43
 msgid "Support Us"
-msgstr "Apóyanos"
+msgstr ""
 
-#: templates/home.html:48
+#: templates/home.html:44
 msgid "Support our ministry through secure online donations."
-msgstr "Apoya nuestro ministerio a través de donaciones en línea seguras."
+msgstr ""
 
-#: templates/home.html:50
+#: templates/home.html:46
 msgid "Donate Now"
 msgstr ""
 
-#: templates/home.html:60
+#: templates/home.html:56
 msgid "Latest Sermons"
 msgstr ""
 
-#: templates/home.html:69
+#: templates/home.html:65
 #, python-format
 msgid "By %(preacher)s"
 msgstr ""
 
-#: templates/home.html:75
+#: templates/home.html:71
 msgid "Watch/Listen"
 msgstr ""
 
-#: templates/home.html:89
+#: templates/home.html:85
 msgid "Upcoming Events"
 msgstr ""
 
-#: templates/home.html:104
+#: templates/home.html:100
 msgid "Learn More"
 msgstr ""
 
-#: templates/admin/base.html:13 templates/admin/dashboard.html:5
+#: templates/admin/base.html:13
 msgid "Dashboard"
 msgstr ""
 
@@ -302,65 +204,17 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: templates/admin/base.html:49 templates/admin/dashboard.html:118
-#: templates/notifications/preferences.html:49
+#: templates/admin/base.html:49
 msgid "Donations"
 msgstr ""
 
-#: templates/admin/base.html:55 templates/admin/dashboard.html:157
+#: templates/admin/base.html:55
 msgid "Settings"
 msgstr ""
 
-#: templates/admin/dashboard.html:35
-msgid "Public"
-msgstr ""
-
-#: templates/admin/dashboard.html:39
-msgid "Private"
-msgstr ""
-
-#: templates/admin/dashboard.html:65 templates/admin/events.html:53
-msgid "Upcoming"
-msgstr ""
-
-#: templates/admin/dashboard.html:69 templates/admin/events.html:49
-msgid "Past"
-msgstr ""
-
-#: templates/admin/dashboard.html:95
-msgid "Video"
-msgstr ""
-
-#: templates/admin/dashboard.html:99
-msgid "Audio"
-msgstr ""
-
-#: templates/admin/dashboard.html:124
-msgid "Total Amount"
-msgstr ""
-
-#: templates/admin/dashboard.html:136
-msgid "Quick Actions"
-msgstr ""
-
-#: templates/admin/dashboard.html:142
-msgid "Manage Gallery"
-msgstr ""
-
-#: templates/admin/dashboard.html:147 templates/admin/events.html:8
-#: templates/admin/events.html:83
-#, fuzzy
-msgid "Add Event"
-msgstr "Eventos"
-
-#: templates/admin/dashboard.html:152
-msgid "Upload Sermon"
-msgstr ""
-
 #: templates/admin/event_form.html:5
-#, fuzzy
 msgid "Edit Event"
-msgstr "Eventos"
+msgstr ""
 
 #: templates/admin/event_form.html:5 templates/admin/event_form.html:98
 msgid "Create Event"
@@ -427,12 +281,15 @@ msgid "Update Event"
 msgstr ""
 
 #: templates/admin/event_form.html:101
-#, fuzzy
 msgid "Back to Events"
-msgstr "Eventos"
+msgstr ""
 
 #: templates/admin/events.html:5
 msgid "Event Management"
+msgstr ""
+
+#: templates/admin/events.html:8 templates/admin/events.html:83
+msgid "Add Event"
 msgstr ""
 
 #: templates/admin/events.html:32
@@ -447,8 +304,16 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
+#: templates/admin/events.html:49
+msgid "Past"
+msgstr ""
+
 #: templates/admin/events.html:51
 msgid "Ongoing"
+msgstr ""
+
+#: templates/admin/events.html:53
+msgid "Upcoming"
 msgstr ""
 
 #: templates/admin/events.html:59 templates/admin/users.html:55
@@ -535,6 +400,10 @@ msgstr ""
 msgid "Phone Number"
 msgstr ""
 
+#: templates/admin/settings.html:99
+msgid "Email Address"
+msgstr ""
+
 #: templates/admin/settings.html:104
 msgid "Contact Hours"
 msgstr ""
@@ -568,9 +437,8 @@ msgid "Add User"
 msgstr ""
 
 #: templates/admin/users.html:13 templates/admin/users.html:92
-#, fuzzy
 msgid "Import Users"
-msgstr "Apóyanos"
+msgstr ""
 
 #: templates/admin/users.html:36
 msgid "Username"
@@ -614,38 +482,5 @@ msgstr ""
 
 #: templates/admin/users.html:110
 msgid "Import"
-msgstr ""
-
-#: templates/notifications/preferences.html:3
-#: templates/notifications/preferences.html:11
-msgid "Notification Preferences"
-msgstr ""
-
-#: templates/notifications/preferences.html:15
-msgid "Notification Categories"
-msgstr ""
-
-#: templates/notifications/preferences.html:58
-msgid "News & Updates"
-msgstr ""
-
-#: templates/notifications/preferences.html:64
-msgid "Notification Methods"
-msgstr ""
-
-#: templates/notifications/preferences.html:71
-msgid "Desktop Notifications"
-msgstr ""
-
-#: templates/notifications/preferences.html:80
-msgid "Email Notifications"
-msgstr ""
-
-#: templates/notifications/preferences.html:88
-msgid "Save Preferences"
-msgstr ""
-
-#: templates/notifications/preferences.html:91
-msgid "Back to Profile"
 msgstr ""
 
