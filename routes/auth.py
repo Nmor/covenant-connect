@@ -14,14 +14,23 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
+        logger.info(f"Login attempt for email: {email}")
+        
         try:
             user = User.query.filter_by(email=email).first()
             
-            if user and user.check_password(password):
-                login_user(user)
-                flash('Successfully logged in!', 'success')
-                return redirect(url_for('home.home'))
+            if user:
+                logger.info(f"User found with email: {email}")
+                if user.check_password(password):
+                    login_user(user)
+                    logger.info(f"Successful login for user: {email}")
+                    flash('Successfully logged in!', 'success')
+                    return redirect(url_for('home.home'))
+                else:
+                    logger.warning(f"Invalid password for user: {email}")
+                    flash('Invalid email or password.', 'danger')
             else:
+                logger.warning(f"No user found with email: {email}")
                 flash('Invalid email or password.', 'danger')
                 
         except Exception as e:
@@ -62,6 +71,7 @@ def register():
             db.session.add(user)
             db.session.commit()
             
+            logger.info(f"New user registered: {email}")
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('auth.login'))
             
@@ -75,7 +85,9 @@ def register():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    email = current_user.email
     logout_user()
+    logger.info(f"User logged out: {email}")
     flash('Successfully logged out.', 'success')
     return redirect(url_for('home.home'))
 
