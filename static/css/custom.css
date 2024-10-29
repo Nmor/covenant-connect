@@ -9,6 +9,11 @@
     --bs-body-color: #212529;
 }
 
+/* Body padding for fixed navbar */
+body {
+    padding-top: 60px; /* Height of navbar */
+}
+
 /* Theme transition */
 body, .navbar, .footer, .card, .btn, .nav-link {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -32,6 +37,10 @@ body, .navbar, .footer, .card, .btn, .nav-link {
 }
 
 /* Navigation styles */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .navbar .nav-link.active {
     background-color: var(--bs-primary);
     color: white !important;
