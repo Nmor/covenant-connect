@@ -3,9 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_babel import Babel
-from flask_sse import sse
 import os
 from datetime import datetime
+import logging
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -13,27 +13,43 @@ mail = Mail()
 babel = Babel()
 
 def get_locale():
+    # Configure logging
+    logger = logging.getLogger('covenant_connect')
+    
     # First try to get locale from query parameter
     locale = request.args.get('lang')
     if locale in ['en', 'es', 'fr']:
         session['lang'] = locale
+        logger.info(f"Language set from query parameter: {locale}")
         return locale
     
     # Then try to get locale from user preferences if logged in
     if current_user.is_authenticated and current_user.locale:
+        logger.info(f"Language set from user preferences: {current_user.locale}")
         return current_user.locale
     
     # Then try to get locale from session
     if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
+        logger.info(f"Language retrieved from session: {session['lang']}")
         return session['lang']
     
     # Finally, fall back to browser's preferred language
     best_match = request.accept_languages.best_match(['en', 'es', 'fr'])
     session['lang'] = best_match  # Save the selected language in session
+    logger.info(f"Language set from browser preferences: {best_match}")
     return best_match
 
 def create_app():
     app = Flask(__name__)
+    
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('covenant_connect')
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    ))
+    logger.addHandler(handler)
     
     # Configure database
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
@@ -52,10 +68,6 @@ def create_app():
     app.config['BABEL_DEFAULT_LOCALE'] = 'en'
     app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
     app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
-
-    # SSE configuration
-    app.config["REDIS_URL"] = "redis://localhost:6379"
-    app.register_blueprint(sse, url_prefix='/stream')
 
     # Initialize extensions
     db.init_app(app)
@@ -84,6 +96,12 @@ def create_app():
     app.register_blueprint(gallery_bp)
     app.register_blueprint(donations_bp)
     app.register_blueprint(notifications_bp)
+
+    # Before request handler to set g.lang_code
+    @app.before_request
+    def before_request():
+        g.lang_code = get_locale()
+        logger.debug(f"Current language code set to: {g.lang_code}")
 
     # Context processors
     @app.context_processor

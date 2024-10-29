@@ -9,12 +9,9 @@ def reset_db():
     app = create_app()
     with app.app_context():
         try:
-            # Drop all tables if they exist
+            # Drop all existing tables
             print("Dropping all tables...")
-            db.session.execute(text('DROP SCHEMA public CASCADE;'))
-            db.session.execute(text('CREATE SCHEMA public;'))
-            db.session.execute(text('GRANT ALL ON SCHEMA public TO postgres;'))
-            db.session.execute(text('GRANT ALL ON SCHEMA public TO public;'))
+            db.drop_all()
             db.session.commit()
             print("All tables dropped successfully")
             

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 07:47+0000\n"
+"POT-Creation-Date: 2024-10-29 09:15+0000\n"
 "PO-Revision-Date: 2024-10-28 10:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -17,261 +17,117 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: routes/notifications.py:33
-msgid "Notification preferences updated successfully."
-msgstr ""
-
-#: routes/notifications.py:50
-msgid "An error occurred while managing notification preferences."
-msgstr ""
-
-#: templates/base.html:6 templates/base.html:21 templates/base.html:202
-#: templates/notifications/preferences.html:3
-msgid "Covenant Connect"
-msgstr ""
-
-#: templates/base.html:17 templates/base.html:19
-msgid "Logo"
-msgstr ""
-
-#: templates/base.html:24
-msgid "Toggle navigation"
-msgstr ""
-
-#: templates/base.html:32 templates/base.html:184
-#: templates/notifications/preferences.html:31
-msgid "Events"
-msgstr ""
-
-#: templates/base.html:38 templates/base.html:185
-msgid "Prayers"
-msgstr ""
-
-#: templates/base.html:44 templates/base.html:186
-#: templates/notifications/preferences.html:40
-msgid "Sermons"
-msgstr ""
-
-#: templates/base.html:50
-msgid "Gallery"
-msgstr ""
-
-#: templates/base.html:56
-msgid "Donate"
-msgstr ""
-
-#: templates/base.html:65
-msgid "Language"
-msgstr ""
-
-#: templates/base.html:83
-msgid "Toggle theme"
-msgstr ""
-
-#: templates/base.html:96
-msgid "unread notifications"
-msgstr ""
-
-#: templates/base.html:103
-msgid "Notifications"
-msgstr ""
-
-#: templates/base.html:105
-msgid "Mark all as read"
-msgstr ""
-
-#: templates/base.html:112
-msgid "No new notifications"
-msgstr ""
-
-#: templates/base.html:124
-msgid "Admin"
-msgstr ""
-
-#: templates/base.html:131
-msgid "Profile"
-msgstr ""
-
-#: templates/base.html:136
-msgid "Logout"
-msgstr ""
-
-#: templates/base.html:143
-msgid "Login"
-msgstr ""
-
-#: templates/base.html:149
-msgid "Register"
-msgstr ""
-
-#: templates/base.html:165
-msgid "Close"
-msgstr ""
-
-#: templates/base.html:178
-msgid "About Us"
-msgstr ""
-
-#: templates/base.html:179
-msgid "A community of believers growing together in faith."
-msgstr ""
-
-#: templates/base.html:182
-msgid "Quick Links"
-msgstr ""
-
-#: templates/base.html:190
-msgid "Contact Us"
-msgstr ""
-
-#: templates/base.html:203
-msgid "All rights reserved."
-msgstr ""
-
-#: templates/base.html:253
-msgid "New"
-msgstr ""
-
-#: templates/notifications/preferences.html:3
-#: templates/notifications/preferences.html:11
-msgid "Notification Preferences"
-msgstr ""
-
-#: templates/notifications/preferences.html:15
-msgid "Notification Categories"
-msgstr ""
-
-#: templates/notifications/preferences.html:22
-msgid "Prayer Requests"
-msgstr ""
-
-#: templates/notifications/preferences.html:49
-msgid "Donations"
-msgstr ""
-
-#: templates/notifications/preferences.html:58
-msgid "News & Updates"
-msgstr ""
-
-#: templates/notifications/preferences.html:64
-msgid "Notification Methods"
-msgstr ""
-
-#: templates/notifications/preferences.html:71
-msgid "Desktop Notifications"
-msgstr ""
-
-#: templates/notifications/preferences.html:80
-msgid "Email Notifications"
-msgstr ""
-
-#: templates/notifications/preferences.html:88
-msgid "Save Preferences"
-msgstr ""
-
-#: templates/notifications/preferences.html:91
-msgid "Back to Profile"
-msgstr ""
-
 #~ msgid "Covenant Connect"
-#~ msgstr "Conexión del Pacto"
+#~ msgstr ""
 
 #~ msgid "Events"
-#~ msgstr "Eventos"
+#~ msgstr ""
 
 #~ msgid "Prayers"
-#~ msgstr "Oraciones"
+#~ msgstr ""
 
 #~ msgid "Sermons"
-#~ msgstr "Sermones"
+#~ msgstr ""
 
 #~ msgid "Gallery"
-#~ msgstr "Galería"
+#~ msgstr ""
 
 #~ msgid "Donate"
-#~ msgstr "Donar"
+#~ msgstr ""
 
 #~ msgid "Language"
-#~ msgstr "Idioma"
+#~ msgstr ""
 
 #~ msgid "Admin"
-#~ msgstr "Administrador"
+#~ msgstr ""
 
 #~ msgid "Profile"
-#~ msgstr "Perfil"
+#~ msgstr ""
 
 #~ msgid "Logout"
-#~ msgstr "Cerrar Sesión"
+#~ msgstr ""
 
 #~ msgid "Login"
-#~ msgstr "Iniciar Sesión"
+#~ msgstr ""
 
 #~ msgid "Register"
-#~ msgstr "Registrarse"
+#~ msgstr ""
 
 #~ msgid "No new notifications"
-#~ msgstr "No hay nuevas notificaciones"
+#~ msgstr ""
 
 #~ msgid "Toggle navigation"
-#~ msgstr "Alternar navegación"
+#~ msgstr ""
 
 #~ msgid "Toggle theme"
-#~ msgstr "Alternar tema"
+#~ msgstr ""
 
 #~ msgid "unread notifications"
-#~ msgstr "notificaciones no leídas"
+#~ msgstr ""
 
 #~ msgid "Notifications"
-#~ msgstr "Notificaciones"
+#~ msgstr ""
 
 #~ msgid "Mark all as read"
-#~ msgstr "Marcar todo como leído"
+#~ msgstr ""
 
 #~ msgid "New"
-#~ msgstr "Nuevo"
+#~ msgstr ""
 
 #~ msgid "About Us"
-#~ msgstr "Sobre Nosotros"
+#~ msgstr ""
 
 #~ msgid "A community of believers growing together in faith."
-#~ msgstr "Una comunidad de creyentes creciendo juntos en la fe."
+#~ msgstr ""
 
 #~ msgid "Quick Links"
-#~ msgstr "Enlaces Rápidos"
+#~ msgstr ""
 
 #~ msgid "Contact Us"
-#~ msgstr "Contáctenos"
+#~ msgstr ""
 
 #~ msgid "All rights reserved."
-#~ msgstr "Todos los derechos reservados."
+#~ msgstr ""
 
 #~ msgid "Close"
-#~ msgstr "Cerrar"
+#~ msgstr ""
 
 #~ msgid "Notification Preferences"
-#~ msgstr "Preferencias de Notificación"
+#~ msgstr ""
 
 #~ msgid "Notification Categories"
-#~ msgstr "Categorías de Notificación"
+#~ msgstr ""
 
 #~ msgid "Prayer Requests"
-#~ msgstr "Peticiones de Oración"
+#~ msgstr ""
 
 #~ msgid "News & Updates"
-#~ msgstr "Noticias y Actualizaciones"
+#~ msgstr ""
 
 #~ msgid "Notification Methods"
-#~ msgstr "Métodos de Notificación"
+#~ msgstr ""
 
 #~ msgid "Desktop Notifications"
-#~ msgstr "Notificaciones de Escritorio"
+#~ msgstr ""
 
 #~ msgid "Email Notifications"
-#~ msgstr "Notificaciones por Correo"
+#~ msgstr ""
 
 #~ msgid "Save Preferences"
-#~ msgstr "Guardar Preferencias"
+#~ msgstr ""
 
 #~ msgid "Back to Profile"
-#~ msgstr "Volver al Perfil"
+#~ msgstr ""
+
+#~ msgid "Notification preferences updated successfully."
+#~ msgstr ""
+
+#~ msgid "An error occurred while managing notification preferences."
+#~ msgstr ""
+
+#~ msgid "Logo"
+#~ msgstr ""
+
+#~ msgid "Donations"
+#~ msgstr ""
 
