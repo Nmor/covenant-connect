@@ -16,28 +16,33 @@ def get_locale():
     # Configure logging
     logger = logging.getLogger('covenant_connect')
     
-    # First try to get locale from query parameter
-    locale = request.args.get('lang')
-    if locale in ['en', 'es', 'fr']:
-        session['lang'] = locale
-        logger.info(f"Language set from query parameter: {locale}")
-        return locale
-    
-    # Then try to get locale from user preferences if logged in
-    if current_user.is_authenticated and current_user.locale:
-        logger.info(f"Language set from user preferences: {current_user.locale}")
-        return current_user.locale
-    
-    # Then try to get locale from session
-    if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
-        logger.info(f"Language retrieved from session: {session['lang']}")
-        return session['lang']
-    
-    # Finally, fall back to browser's preferred language
-    best_match = request.accept_languages.best_match(['en', 'es', 'fr'])
-    session['lang'] = best_match  # Save the selected language in session
-    logger.info(f"Language set from browser preferences: {best_match}")
-    return best_match
+    try:
+        # First try to get locale from query parameter
+        locale = request.args.get('lang')
+        if locale in ['en', 'es', 'fr']:
+            session['lang'] = locale
+            logger.info(f"Language set from query parameter: {locale}")
+            return locale
+        
+        # Then try to get locale from user preferences if logged in
+        if current_user.is_authenticated and current_user.locale:
+            logger.info(f"Language set from user preferences: {current_user.locale}")
+            return current_user.locale
+        
+        # Then try to get locale from session
+        if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
+            logger.info(f"Language retrieved from session: {session['lang']}")
+            return session['lang']
+        
+        # Finally, fall back to browser's preferred language
+        best_match = request.accept_languages.best_match(['en', 'es', 'fr'])
+        session['lang'] = best_match  # Save the selected language in session
+        logger.info(f"Language set from browser preferences: {best_match}")
+        return best_match
+
+    except Exception as e:
+        logger.error(f"Error determining locale: {str(e)}")
+        return 'en'  # Default to English in case of errors
 
 def create_app():
     app = Flask(__name__)
