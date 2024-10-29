@@ -18,9 +18,15 @@ def get_locale():
     if locale in ['en', 'es', 'fr']:
         session['lang'] = locale
         return locale
+        
+    # Then try to get locale from user preferences if logged in
+    if hasattr(g, 'user') and g.user and g.user.locale:
+        return g.user.locale
+        
     # Then try to get locale from session
     if 'lang' in session:
         return session['lang']
+        
     # Finally, fall back to browser's preferred language
     return request.accept_languages.best_match(['en', 'es', 'fr'])
 

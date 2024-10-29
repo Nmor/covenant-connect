@@ -1,11 +1,12 @@
 # French translations for Covenant Connect.
 # Copyright (C) 2024 Covenant Connect
-# This file is distributed under the same license as the Covenant Connect project.
+# This file is distributed under the same license as the Covenant Connect
+# project.
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-28 10:00+0000\n"
+"POT-Creation-Date: 2024-10-29 07:44+0000\n"
 "PO-Revision-Date: 2024-10-28 10:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -14,106 +15,107 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.16.0\n"
 
-msgid "Covenant Connect"
-msgstr "Alliance Connect"
+#~ msgid "Covenant Connect"
+#~ msgstr "Alliance Connect"
 
-msgid "Events"
-msgstr "Événements"
+#~ msgid "Events"
+#~ msgstr "Événements"
 
-msgid "Prayers"
-msgstr "Prières"
+#~ msgid "Prayers"
+#~ msgstr "Prières"
 
-msgid "Sermons"
-msgstr "Sermons"
+#~ msgid "Sermons"
+#~ msgstr "Sermons"
 
-msgid "Gallery"
-msgstr "Galerie"
+#~ msgid "Gallery"
+#~ msgstr "Galerie"
 
-msgid "Donate"
-msgstr "Faire un Don"
+#~ msgid "Donate"
+#~ msgstr "Faire un Don"
 
-msgid "Language"
-msgstr "Langue"
+#~ msgid "Language"
+#~ msgstr "Langue"
 
-msgid "Admin"
-msgstr "Admin"
+#~ msgid "Admin"
+#~ msgstr "Admin"
 
-msgid "Profile"
-msgstr "Profil"
+#~ msgid "Profile"
+#~ msgstr "Profil"
 
-msgid "Logout"
-msgstr "Déconnexion"
+#~ msgid "Logout"
+#~ msgstr "Déconnexion"
 
-msgid "Login"
-msgstr "Connexion"
+#~ msgid "Login"
+#~ msgstr "Connexion"
 
-msgid "Register"
-msgstr "S'inscrire"
+#~ msgid "Register"
+#~ msgstr "S'inscrire"
 
-msgid "No new notifications"
-msgstr "Pas de nouvelles notifications"
+#~ msgid "No new notifications"
+#~ msgstr "Pas de nouvelles notifications"
 
-msgid "Toggle navigation"
-msgstr "Basculer la navigation"
+#~ msgid "Toggle navigation"
+#~ msgstr "Basculer la navigation"
 
-msgid "Toggle theme"
-msgstr "Basculer le thème"
+#~ msgid "Toggle theme"
+#~ msgstr "Basculer le thème"
 
-msgid "unread notifications"
-msgstr "notifications non lues"
+#~ msgid "unread notifications"
+#~ msgstr "notifications non lues"
 
-msgid "Notifications"
-msgstr "Notifications"
+#~ msgid "Notifications"
+#~ msgstr "Notifications"
 
-msgid "Mark all as read"
-msgstr "Tout marquer comme lu"
+#~ msgid "Mark all as read"
+#~ msgstr "Tout marquer comme lu"
 
-msgid "New"
-msgstr "Nouveau"
+#~ msgid "New"
+#~ msgstr "Nouveau"
 
-msgid "About Us"
-msgstr "À Propos"
+#~ msgid "About Us"
+#~ msgstr "À Propos"
 
-msgid "A community of believers growing together in faith."
-msgstr "Une communauté de croyants grandissant ensemble dans la foi."
+#~ msgid "A community of believers growing together in faith."
+#~ msgstr "Une communauté de croyants grandissant ensemble dans la foi."
 
-msgid "Quick Links"
-msgstr "Liens Rapides"
+#~ msgid "Quick Links"
+#~ msgstr "Liens Rapides"
 
-msgid "Contact Us"
-msgstr "Contactez-nous"
+#~ msgid "Contact Us"
+#~ msgstr "Contactez-nous"
 
-msgid "All rights reserved."
-msgstr "Tous droits réservés."
+#~ msgid "All rights reserved."
+#~ msgstr "Tous droits réservés."
 
-msgid "Close"
-msgstr "Fermer"
+#~ msgid "Close"
+#~ msgstr "Fermer"
 
-msgid "Notification Preferences"
-msgstr "Préférences de Notification"
+#~ msgid "Notification Preferences"
+#~ msgstr "Préférences de Notification"
 
-msgid "Notification Categories"
-msgstr "Catégories de Notification"
+#~ msgid "Notification Categories"
+#~ msgstr "Catégories de Notification"
 
-msgid "Prayer Requests"
-msgstr "Demandes de Prière"
+#~ msgid "Prayer Requests"
+#~ msgstr "Demandes de Prière"
 
-msgid "News & Updates"
-msgstr "Actualités et Mises à jour"
+#~ msgid "News & Updates"
+#~ msgstr "Actualités et Mises à jour"
 
-msgid "Notification Methods"
-msgstr "Méthodes de Notification"
+#~ msgid "Notification Methods"
+#~ msgstr "Méthodes de Notification"
 
-msgid "Desktop Notifications"
-msgstr "Notifications Bureau"
+#~ msgid "Desktop Notifications"
+#~ msgstr "Notifications Bureau"
 
-msgid "Email Notifications"
-msgstr "Notifications Email"
+#~ msgid "Email Notifications"
+#~ msgstr "Notifications Email"
 
-msgid "Save Preferences"
-msgstr "Enregistrer les Préférences"
+#~ msgid "Save Preferences"
+#~ msgstr "Enregistrer les Préférences"
 
-msgid "Back to Profile"
-msgstr "Retour au Profil"
+#~ msgid "Back to Profile"
+#~ msgstr "Retour au Profil"
+
