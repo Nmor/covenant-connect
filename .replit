@@ -55,6 +55,10 @@ args = "Init Spanish"
 task = "workflow.run"
 args = "Init French"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Init DB"
+
 [[workflows.workflow]]
 name = "Reset DB"
 author = "agent"
@@ -77,8 +81,11 @@ author = "agent"
 agentRequireRestartOnSave = false
 
 [[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python create_admin.py"
+args = "python scripts/create_admin.py"
 
 [[workflows.workflow]]
 name = "Insert Test Data"
@@ -197,6 +204,20 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pybabel init -i messages.pot -d translations -l fr"
+
+[[workflows.workflow]]
+name = "Init DB"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python scripts/init_db.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]
