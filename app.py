@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, g, session
+from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_babel import Babel
 from flask_sse import sse
@@ -18,17 +18,19 @@ def get_locale():
     if locale in ['en', 'es', 'fr']:
         session['lang'] = locale
         return locale
-        
+    
     # Then try to get locale from user preferences if logged in
-    if hasattr(g, 'user') and g.user and g.user.locale:
-        return g.user.locale
-        
+    if current_user.is_authenticated and current_user.locale:
+        return current_user.locale
+    
     # Then try to get locale from session
-    if 'lang' in session:
+    if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
         return session['lang']
-        
+    
     # Finally, fall back to browser's preferred language
-    return request.accept_languages.best_match(['en', 'es', 'fr'])
+    best_match = request.accept_languages.best_match(['en', 'es', 'fr'])
+    session['lang'] = best_match  # Save the selected language in session
+    return best_match
 
 def create_app():
     app = Flask(__name__)
@@ -49,9 +51,10 @@ def create_app():
     # Babel configuration
     app.config['BABEL_DEFAULT_LOCALE'] = 'en'
     app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
+    app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 
     # SSE configuration
-    app.config["REDIS_URL"] = "memory://"
+    app.config["REDIS_URL"] = "redis://localhost:6379"
     app.register_blueprint(sse, url_prefix='/stream')
 
     # Initialize extensions
@@ -86,6 +89,16 @@ def create_app():
     @app.context_processor
     def inject_year():
         return {'current_year': datetime.utcnow().year}
+
+    @app.context_processor
+    def inject_languages():
+        return {
+            'languages': [
+                ('en', 'English'),
+                ('es', 'Español'),
+                ('fr', 'Français')
+            ]
+        }
 
     # Load user
     from models import User
