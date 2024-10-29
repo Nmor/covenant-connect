@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-29 16:14+0000\n"
+"POT-Creation-Date: 2024-10-29 16:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,7 +40,7 @@ msgid "Toggle navigation"
 msgstr ""
 
 #: templates/admin/base.html:25 templates/admin/dashboard.html:58
-#: templates/base.html:31 templates/base.html:181 templates/home.html:32
+#: templates/base.html:31 templates/base.html:181 templates/home.html:33
 #: templates/notifications/preferences.html:31
 msgid "Events"
 msgstr ""
@@ -223,67 +223,67 @@ msgid ""
 "                    "
 msgstr ""
 
-#: templates/home.html:7
+#: templates/home.html:8
 msgid "Welcome to Covenant Connect"
 msgstr ""
 
-#: templates/home.html:8
+#: templates/home.html:9
 msgid ""
 "Your spiritual journey starts here. Join our community in prayer, "
 "worship, and fellowship."
 msgstr ""
 
-#: templates/admin/dashboard.html:28 templates/home.html:18
+#: templates/admin/dashboard.html:28 templates/home.html:19
 #: templates/notifications/preferences.html:22
 msgid "Prayer Requests"
 msgstr ""
 
-#: templates/home.html:19
+#: templates/home.html:20
 msgid "Share your prayer needs with our community or pray for others."
 msgstr ""
 
-#: templates/home.html:21
+#: templates/home.html:22
 msgid "View Prayers"
 msgstr ""
 
-#: templates/home.html:33
+#: templates/home.html:34
 msgid "Stay updated with our upcoming events and gatherings."
 msgstr ""
 
-#: templates/home.html:35
+#: templates/home.html:36
 msgid "View Events"
 msgstr ""
 
-#: templates/home.html:46
+#: templates/home.html:47
 msgid "Support Us"
 msgstr ""
 
-#: templates/home.html:47
+#: templates/home.html:48
 msgid "Support our ministry through secure online donations."
 msgstr ""
 
-#: templates/home.html:49
+#: templates/home.html:50
 msgid "Donate Now"
 msgstr ""
 
-#: templates/home.html:59
+#: templates/home.html:60
 msgid "Latest Sermons"
 msgstr ""
 
-#: templates/home.html:68
+#: templates/home.html:69
 #, python-format
 msgid "By %(preacher)s"
 msgstr ""
 
-#: templates/home.html:74
+#: templates/home.html:75
 msgid "Watch/Listen"
 msgstr ""
 
-#: templates/home.html:88
+#: templates/home.html:89
 msgid "Upcoming Events"
 msgstr ""
 
-#: templates/home.html:103
+#: templates/home.html:104
 msgid "Learn More"
 msgstr ""
 
