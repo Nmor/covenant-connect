@@ -2,7 +2,7 @@
 
 {% block admin_content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1>{{ _('Business Settings') }}</h1>
+    <h1>Business Settings</h1>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,37 +17,37 @@
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ _('Basic Information') }}</h5>
+                <h5 class="card-title mb-0">Basic Information</h5>
             </div>
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data" id="settingsForm">
                     <div class="mb-3">
-                        <label for="business_name" class="form-label">{{ _('Business Name') }}</label>
+                        <label for="business_name" class="form-label">Business Name</label>
                         <input type="text" class="form-control" id="business_name" name="business_name" 
                                value="{{ settings.business_name }}" required>
-                        <div class="form-text">{{ _('This name will appear in the header and footer of the website.') }}</div>
+                        <div class="form-text">This name will appear in the header and footer of the website.</div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="logo" class="form-label">{{ _('Logo') }}</label>
+                        <label for="logo" class="form-label">Logo</label>
                         {% if settings.logo_url %}
                             <div class="mb-2">
-                                <img src="{{ settings.logo_url }}" alt="{{ _('Current Logo') }}" class="img-thumbnail" style="max-height: 100px;">
+                                <img src="{{ settings.logo_url }}" alt="Current Logo" class="img-thumbnail" style="max-height: 100px;">
                             </div>
                         {% endif %}
                         <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
-                        <div class="form-text">{{ _('Recommended size: 30x30 pixels. Leave empty to keep current logo.') }}</div>
+                        <div class="form-text">Recommended size: 30x30 pixels. Leave empty to keep current logo.</div>
                     </div>
 
                     <div class="mb-4">
-                        <h5>{{ _('Addresses') }}</h5>
+                        <h5>Addresses</h5>
                         <div id="addressContainer">
                             {% if settings.addresses %}
                                 {% for address in settings.addresses %}
                                     <div class="address-entry mb-3">
                                         <div class="input-group">
                                             <input type="text" class="form-control" name="addresses[]" 
-                                                   value="{{ address }}" placeholder="{{ _('Enter address') }}">
+                                                   value="{{ address }}" placeholder="Enter address">
                                             <button type="button" class="btn btn-outline-danger remove-address">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -57,30 +57,30 @@
                             {% endif %}
                         </div>
                         <button type="button" class="btn btn-outline-primary" id="addAddress">
-                            <i class="bi bi-plus-circle"></i> {{ _('Add Address') }}
+                            <i class="bi bi-plus-circle"></i> Add Address
                         </button>
                     </div>
 
                     <div class="mb-4">
-                        <h5>{{ _('Social Media Links') }}</h5>
+                        <h5>Social Media Links</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="facebook" class="form-label">{{ _('Facebook') }}</label>
+                                <label for="facebook" class="form-label">Facebook</label>
                                 <input type="url" class="form-control" id="facebook" name="social_media[facebook]"
                                        value="{{ settings.social_media_links.facebook if settings.social_media_links }}">
                             </div>
                             <div class="col-md-6">
-                                <label for="twitter" class="form-label">{{ _('Twitter') }}</label>
+                                <label for="twitter" class="form-label">Twitter</label>
                                 <input type="url" class="form-control" id="twitter" name="social_media[twitter]"
                                        value="{{ settings.social_media_links.twitter if settings.social_media_links }}">
                             </div>
                             <div class="col-md-6">
-                                <label for="instagram" class="form-label">{{ _('Instagram') }}</label>
+                                <label for="instagram" class="form-label">Instagram</label>
                                 <input type="url" class="form-control" id="instagram" name="social_media[instagram]"
                                        value="{{ settings.social_media_links.instagram if settings.social_media_links }}">
                             </div>
                             <div class="col-md-6">
-                                <label for="youtube" class="form-label">{{ _('YouTube') }}</label>
+                                <label for="youtube" class="form-label">YouTube</label>
                                 <input type="url" class="form-control" id="youtube" name="social_media[youtube]"
                                        value="{{ settings.social_media_links.youtube if settings.social_media_links }}">
                             </div>
@@ -88,28 +88,28 @@
                     </div>
 
                     <div class="mb-4">
-                        <h5>{{ _('Contact Information') }}</h5>
+                        <h5>Contact Information</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="phone" class="form-label">{{ _('Phone Number') }}</label>
+                                <label for="phone" class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control" id="phone" name="contact_info[phone]"
                                        value="{{ settings.contact_info.phone if settings.contact_info }}">
                             </div>
                             <div class="col-md-6">
-                                <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                                <label for="email" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="email" name="contact_info[email]"
                                        value="{{ settings.contact_info.email if settings.contact_info }}">
                             </div>
                             <div class="col-12">
-                                <label for="contact_hours" class="form-label">{{ _('Contact Hours') }}</label>
+                                <label for="contact_hours" class="form-label">Contact Hours</label>
                                 <input type="text" class="form-control" id="contact_hours" name="contact_info[hours]"
                                        value="{{ settings.contact_info.hours if settings.contact_info }}"
-                                       placeholder="{{ _('e.g., Mon-Fri: 9 AM - 5 PM') }}">
+                                       placeholder="e.g., Mon-Fri: 9 AM - 5 PM">
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">{{ _('Save Settings') }}</button>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
                 </form>
             </div>
         </div>
@@ -118,13 +118,13 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ _('Preview') }}</h5>
+                <h5 class="card-title mb-0">Preview</h5>
             </div>
             <div class="card-body">
                 <div class="preview-header p-3 bg-dark rounded">
                     <div class="d-flex align-items-center">
                         <img src="{{ settings.logo_url if settings.logo_url else url_for('static', filename='img/logo.svg') }}" 
-                             alt="{{ _('Logo Preview') }}" width="30" height="30" class="me-2">
+                             alt="Logo Preview" width="30" height="30" class="me-2">
                         <span class="h5 mb-0">{{ settings.business_name }}</span>
                     </div>
                 </div>
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addressEntry.className = 'address-entry mb-3';
         addressEntry.innerHTML = `
             <div class="input-group">
-                <input type="text" class="form-control" name="addresses[]" placeholder="{{ _('Enter address')|escape('js') }}">
+                <input type="text" class="form-control" name="addresses[]" placeholder="Enter address">
                 <button type="button" class="btn btn-outline-danger remove-address">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (hasError) {
-            alert("{{ _('Please enter valid URLs for social media links')|escape('js') }}");
+            alert("Please enter valid URLs for social media links");
         }
     });
 

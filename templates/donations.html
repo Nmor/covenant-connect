@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Donate') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Donate - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,7 +8,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="h5 mb-0">{{ _('Make a Donation') }}</h2>
+                    <h2 class="h5 mb-0">Make a Donation</h2>
                 </div>
                 <div class="card-body">
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,7 +17,7 @@
                                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                                            aria-label="{{ _('Close') }}"></button>
+                                            aria-label="Close"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
@@ -25,69 +25,69 @@
 
                     <form method="POST" action="{{ url_for('donations.process_donation') }}" class="needs-validation" novalidate>
                         <div class="mb-3">
-                            <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                            <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                             <div class="invalid-feedback">
-                                {{ _('Please enter a valid email address.') }}
+                                Please enter a valid email address.
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="amount" class="form-label">{{ _('Amount') }}</label>
+                            <label for="amount" class="form-label">Amount</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
                                 <input type="number" class="form-control" id="amount" name="amount" 
                                        min="1" step="0.01" required>
                                 <select class="form-select" name="currency" id="currency">
-                                    <option value="USD">{{ _('USD') }}</option>
-                                    <option value="EUR">{{ _('EUR') }}</option>
-                                    <option value="GBP">{{ _('GBP') }}</option>
-                                    <option value="NGN">{{ _('NGN') }}</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="NGN">NGN</option>
                                 </select>
                             </div>
                             <div class="invalid-feedback">
-                                {{ _('Please enter a valid amount.') }}
+                                Please enter a valid amount.
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">{{ _('Payment Method') }}</label>
+                            <label class="form-label">Payment Method</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="payment_method" 
                                        id="paystack" value="paystack" required>
                                 <label class="form-check-label" for="paystack">
-                                    {{ _('Paystack (NGN only)') }}
+                                    Paystack (NGN only)
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="payment_method" 
                                        id="fincra" value="fincra" required>
                                 <label class="form-check-label" for="fincra">
-                                    {{ _('International Payment (Fincra)') }}
+                                    International Payment (Fincra)
                                 </label>
                             </div>
                             <div class="invalid-feedback">
-                                {{ _('Please select a payment method.') }}
+                                Please select a payment method.
                             </div>
                         </div>
 
                         <div id="fincra_fields" style="display: none;">
                             <div class="mb-3">
-                                <label for="first_name" class="form-label">{{ _('First Name') }}</label>
+                                <label for="first_name" class="form-label">First Name</label>
                                 <input type="text" class="form-control" id="first_name" name="first_name">
                             </div>
                             <div class="mb-3">
-                                <label for="last_name" class="form-label">{{ _('Last Name') }}</label>
+                                <label for="last_name" class="form-label">Last Name</label>
                                 <input type="text" class="form-control" id="last_name" name="last_name">
                             </div>
                             <div class="mb-3">
-                                <label for="country" class="form-label">{{ _('Country') }}</label>
+                                <label for="country" class="form-label">Country</label>
                                 <input type="text" class="form-control" id="country" name="country">
                             </div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">{{ _('Proceed to Payment') }}</button>
+                            <button type="submit" class="btn btn-primary">Proceed to Payment</button>
                         </div>
                     </form>
                 </div>
@@ -95,17 +95,17 @@
 
             <div class="card mt-4">
                 <div class="card-header">
-                    <h3 class="h5 mb-0">{{ _('Why Donate?') }}</h3>
+                    <h3 class="h5 mb-0">Why Donate?</h3>
                 </div>
                 <div class="card-body">
-                    {{ _('Your generous donations help us:') }}
+                    Your generous donations help us:
                     <ul>
-                        <li>{{ _('Support our community outreach programs') }}</li>
-                        <li>{{ _('Maintain and improve our facilities') }}</li>
-                        <li>{{ _('Fund various ministry activities') }}</li>
-                        <li>{{ _('Assist those in need within our community') }}</li>
+                        <li>Support our community outreach programs</li>
+                        <li>Maintain and improve our facilities</li>
+                        <li>Fund various ministry activities</li>
+                        <li>Assist those in need within our community</li>
                     </ul>
-                    {{ _('Thank you for your support!') }}
+                    Thank you for your support!
                 </div>
             </div>
         </div>

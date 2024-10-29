@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Register') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Register - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,7 +8,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="h5 mb-0">{{ _('Register') }}</h2>
+                    <h2 class="h5 mb-0">Register</h2>
                 </div>
                 <div class="card-body">
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -17,7 +17,7 @@
                                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                                            aria-label="{{ _('Close') }}"></button>
+                                            aria-label="Close"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
@@ -25,44 +25,44 @@
 
                     <form method="POST" class="needs-validation" novalidate>
                         <div class="mb-3">
-                            <label for="username" class="form-label">{{ _('Username') }}</label>
+                            <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
                             <div class="invalid-feedback">
-                                {{ _('Please enter a username.') }}
+                                Please enter a username.
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                            <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                             <div class="invalid-feedback">
-                                {{ _('Please enter a valid email address.') }}
+                                Please enter a valid email address.
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="password" class="form-label">{{ _('Password') }}</label>
+                            <label for="password" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" name="password" 
                                    minlength="8" required>
                             <div class="invalid-feedback">
-                                {{ _('Password must be at least 8 characters long.') }}
+                                Password must be at least 8 characters long.
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label for="confirm_password" class="form-label">{{ _('Confirm Password') }}</label>
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
                             <input type="password" class="form-control" id="confirm_password" 
                                    name="confirm_password" required>
                             <div class="invalid-feedback">
-                                {{ _('Passwords do not match.') }}
+                                Passwords do not match.
                             </div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">{{ _('Register') }}</button>
+                            <button type="submit" class="btn btn-primary">Register</button>
                             <p class="text-center mb-0">
-                                {{ _('Already have an account?') }}
-                                <a href="{{ url_for('auth.login') }}">{{ _('Login here') }}</a>
+                                Already have an account?
+                                <a href="{{ url_for('auth.login') }}">Login here</a>
                             </p>
                         </div>
                     </form>
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (password.value !== confirmPassword.value) {
             event.preventDefault();
-            confirmPassword.setCustomValidity('{{ _('Passwords do not match.')|escape('js') }}');
+            confirmPassword.setCustomValidity('Passwords do not match.');
         } else {
             confirmPassword.setCustomValidity('');
         }
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (password.value === confirmPassword.value) {
             confirmPassword.setCustomValidity('');
         } else {
-            confirmPassword.setCustomValidity('{{ _('Passwords do not match.')|escape('js') }}');
+            confirmPassword.setCustomValidity('Passwords do not match.');
         }
     });
 });

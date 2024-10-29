@@ -4,8 +4,8 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">{{ _('Welcome to Covenant Connect') }}</h1>
-            <p class="lead mb-4">{{ _('Your spiritual journey starts here. Join our community in prayer, worship, and fellowship.') }}</p>
+            <h1 class="display-4 mb-3">Welcome to Covenant Connect</h1>
+            <p class="lead mb-4">Your spiritual journey starts here. Join our community in prayer, worship, and fellowship.</p>
         </div>
     </div>
 
@@ -14,10 +14,10 @@
             <div class="card h-100">
                 <div class="card-body text-center">
                     <i class="bi bi-pray display-4 mb-3 text-primary"></i>
-                    <h3 class="card-title">{{ _('Prayer Requests') }}</h3>
-                    <p class="card-text">{{ _('Share your prayer needs with our community or pray for others.') }}</p>
+                    <h3 class="card-title">Prayer Requests</h3>
+                    <p class="card-text">Share your prayer needs with our community or pray for others.</p>
                     <a href="{{ url_for('prayers.prayers') }}" class="btn btn-outline-primary">
-                        {{ _('View Prayers') }}
+                        View Prayers
                     </a>
                 </div>
             </div>
@@ -27,10 +27,10 @@
             <div class="card h-100">
                 <div class="card-body text-center">
                     <i class="bi bi-calendar-event display-4 mb-3 text-success"></i>
-                    <h3 class="card-title">{{ _('Events') }}</h3>
-                    <p class="card-text">{{ _('Stay updated with our upcoming events and gatherings.') }}</p>
+                    <h3 class="card-title">Events</h3>
+                    <p class="card-text">Stay updated with our upcoming events and gatherings.</p>
                     <a href="{{ url_for('events.events') }}" class="btn btn-outline-success">
-                        {{ _('View Events') }}
+                        View Events
                     </a>
                 </div>
             </div>
@@ -40,10 +40,10 @@
             <div class="card h-100">
                 <div class="card-body text-center">
                     <i class="bi bi-heart display-4 mb-3 text-danger"></i>
-                    <h3 class="card-title">{{ _('Support Us') }}</h3>
-                    <p class="card-text">{{ _('Support our ministry through secure online donations.') }}</p>
+                    <h3 class="card-title">Support Us</h3>
+                    <p class="card-text">Support our ministry through secure online donations.</p>
                     <a href="{{ url_for('donations.donate') }}" class="btn btn-outline-danger">
-                        {{ _('Donate Now') }}
+                        Donate Now
                     </a>
                 </div>
             </div>
@@ -53,7 +53,7 @@
     {% if latest_sermons %}
     <div class="row mt-5">
         <div class="col-12">
-            <h2 class="text-center mb-4">{{ _('Latest Sermons') }}</h2>
+            <h2 class="text-center mb-4">Latest Sermons</h2>
             <div class="row g-4">
                 {% for sermon in latest_sermons %}
                 <div class="col-md-4">
@@ -62,13 +62,13 @@
                             <h5 class="card-title">{{ sermon.title }}</h5>
                             <p class="card-text">
                                 <small class="text-muted">
-                                    {{ _('By %(preacher)s', preacher=sermon.preacher) }} | 
+                                    By {{ sermon.preacher }} | 
                                     {{ sermon.date.strftime('%B %d, %Y') }}
                                 </small>
                             </p>
                             <a href="{{ url_for('sermons.sermon_detail', sermon_id=sermon.id) }}" 
                                class="btn btn-outline-primary btn-sm">
-                                {{ _('Watch/Listen') }}
+                                Watch/Listen
                             </a>
                         </div>
                     </div>
@@ -82,7 +82,7 @@
     {% if upcoming_events %}
     <div class="row mt-5">
         <div class="col-12">
-            <h2 class="text-center mb-4">{{ _('Upcoming Events') }}</h2>
+            <h2 class="text-center mb-4">Upcoming Events</h2>
             <div class="row g-4">
                 {% for event in upcoming_events %}
                 <div class="col-md-4">
@@ -97,7 +97,7 @@
                             </p>
                             <a href="{{ url_for('events.event_detail', event_id=event.id) }}" 
                                class="btn btn-outline-success btn-sm">
-                                {{ _('Learn More') }}
+                                Learn More
                             </a>
                         </div>
                     </div>

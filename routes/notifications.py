@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, current_app, render_template, request, flash, redirect, url_for, session
 from flask_login import login_required, current_user
-from flask_babel import gettext as _
 from app import db
 from models import User
 from datetime import datetime
@@ -22,7 +21,7 @@ def preferences():
                 'email': request.form.get('email') == 'on'
             }
             db.session.commit()
-            flash(_('Notification preferences updated successfully.'), 'success')
+            flash('Notification preferences updated successfully.', 'success')
             return redirect(url_for('notifications.preferences'))
             
         return render_template(
@@ -39,7 +38,7 @@ def preferences():
         )
     except Exception as e:
         current_app.logger.error(f"Error managing notification preferences: {str(e)}")
-        flash(_('An error occurred while managing notification preferences.'), 'danger')
+        flash('An error occurred while managing notification preferences.', 'danger')
         return redirect(url_for('auth.profile'))
 
 def add_notification(user_id, message, type="info"):

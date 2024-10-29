@@ -1,149 +1,112 @@
 <!DOCTYPE html>
-<html lang="{{ g.get('lang_code', 'en') }}" data-bs-theme="dark">
+<html data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ _('Covenant Connect') }}{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <title>{% block title %}Covenant Connect{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg sticky-top">
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home.home') }}">
-                {% if settings and settings.logo_url %}
-                    <img src="{{ settings.logo_url }}" alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
-                {% else %}
-                    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="{{ _('Logo') }}" width="30" height="30" class="me-2">
-                {% endif %}
-                <span>{% if settings %}{{ settings.business_name }}{% else %}{{ _('Covenant Connect') }}{% endif %}</span>
+            <a class="navbar-brand" href="{{ url_for('home.home') }}">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="30" height="30" class="d-inline-block align-text-top me-2">
+                Covenant Connect
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="{{ _('Toggle navigation') }}">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'events.events' %}active{% endif %}" 
-                           href="{{ url_for('events.events') }}">
-                           <i class="bi bi-calendar-event d-lg-none me-2"></i>{{ _('Events') }}
+                        <a class="nav-link" href="{{ url_for('prayers.prayers') }}">
+                            <i class="bi bi-book me-1"></i>Prayers
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'prayers.prayers' %}active{% endif %}" 
-                           href="{{ url_for('prayers.prayers') }}">
-                           <i class="bi bi-book d-lg-none me-2"></i>{{ _('Prayers') }}
+                        <a class="nav-link" href="{{ url_for('events.events') }}">
+                            <i class="bi bi-calendar-event me-1"></i>Events
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'sermons.sermons' %}active{% endif %}" 
-                           href="{{ url_for('sermons.sermons') }}">
-                           <i class="bi bi-mic d-lg-none me-2"></i>{{ _('Sermons') }}
+                        <a class="nav-link" href="{{ url_for('sermons.sermons') }}">
+                            <i class="bi bi-mic me-1"></i>Sermons
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'gallery.gallery' %}active{% endif %}" 
-                           href="{{ url_for('gallery.gallery') }}">
-                           <i class="bi bi-images d-lg-none me-2"></i>{{ _('Gallery') }}
+                        <a class="nav-link" href="{{ url_for('gallery.gallery') }}">
+                            <i class="bi bi-images me-1"></i>Gallery
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'donations.donate' %}active{% endif %}" 
-                           href="{{ url_for('donations.donate') }}">
-                           <i class="bi bi-heart d-lg-none me-2"></i>{{ _('Donate') }}
+                        <a class="nav-link" href="{{ url_for('donations.donate') }}">
+                            <i class="bi bi-heart me-1"></i>Donate
                         </a>
                     </li>
                 </ul>
+                
                 <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" 
-                           aria-expanded="false">
-                            <i class="bi bi-globe"></i> {{ _('Language') }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for code, name in languages %}
-                                {% set args = dict(request.args) %}
-                                {% set _ = args.update({'lang': code}) %}
-                                <li>
-                                    <a class="dropdown-item{% if g.get('lang_code', 'en') == code %} active{% endif %}"
-                                       href="{{ request.path }}?{{ args|urlencode }}"
-                                       hreflang="{{ code }}"
-                                       aria-current="{{ 'true' if g.get('lang_code', 'en') == code else 'false' }}">
-                                        {{ name }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </li>
                     <li class="nav-item">
-                        <button class="btn btn-link nav-link" id="themeToggle" aria-label="{{ _('Toggle theme') }}">
+                        <button class="btn btn-link nav-link" id="themeToggle">
                             <i class="bi bi-moon-fill" id="themeIcon"></i>
                         </button>
                     </li>
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" 
-                                  id="notificationBadge">
-                                0
-                                <span class="visually-hidden">{{ _('unread notifications') }}</span>
-                            </span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end notification-menu" id="notificationList" 
-                            style="width: 300px; max-height: 400px; overflow-y: auto;">
-                            <li>
-                                <div class="dropdown-header d-flex justify-content-between align-items-center">
-                                    <span>{{ _('Notifications') }}</span>
-                                    <button class="btn btn-sm btn-link text-decoration-none" id="markAllRead">
-                                        {{ _('Mark all as read') }}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-bell"></i>
+                                <span class="badge bg-primary d-none" id="notificationBadge">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" id="notificationList">
+                                <li><h6 class="dropdown-header">Notifications</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="dropdown-item text-muted text-center">No new notifications</li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item text-center" id="markAllRead">
+                                        Mark all as read
                                     </button>
-                                </div>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <div class="dropdown-item text-muted text-center py-3">
-                                    <i class="bi bi-bell-slash me-2"></i>{{ _('No new notifications') }}
-                                </div>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
-
-                    {% if current_user.is_authenticated %}
-                        {% if current_user.is_admin %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" 
-                                   href="{{ url_for('admin.dashboard') }}">
-                                   <i class="bi bi-gear d-lg-none me-2"></i>{{ _('Admin') }}
-                                </a>
-                            </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'auth.profile' %}active{% endif %}" 
-                               href="{{ url_for('auth.profile') }}">
-                               <i class="bi bi-person d-lg-none me-2"></i>{{ _('Profile') }}
-                            </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                                <i class="bi bi-box-arrow-right d-lg-none me-2"></i>{{ _('Logout') }}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i>
                             </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if current_user.is_admin %}
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                                            <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                        <i class="bi bi-person me-2"></i>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('notifications.preferences') }}">
+                                        <i class="bi bi-bell me-2"></i>Notifications
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" 
-                               href="{{ url_for('auth.login') }}">
-                               <i class="bi bi-box-arrow-in-right d-lg-none me-2"></i>{{ _('Login') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'auth.register' %}active{% endif %}" 
-                               href="{{ url_for('auth.register') }}">
-                               <i class="bi bi-person-plus d-lg-none me-2"></i>{{ _('Register') }}
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
                             </a>
                         </li>
                     {% endif %}
@@ -152,58 +115,45 @@
         </div>
     </nav>
 
-    <main class="container my-4 flex-grow-1">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                                aria-label="{{ _('Close') }}"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
-    </main>
+    <!-- Content -->
+    {% block content %}{% endblock %}
 
-    <footer class="footer mt-auto py-5">
+    <!-- Footer -->
+    <footer class="footer mt-5 py-4">
         <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <h5 class="footer-heading">{{ _('About Us') }}</h5>
-                    <p class="footer-text">{{ _('A community of believers growing together in faith.') }}</p>
+            <div class="row">
+                <div class="col-lg-4">
+                    <h5 class="footer-heading mb-3">About Us</h5>
+                    <p class="footer-text">Covenant Connect - Building a stronger community through faith and fellowship.</p>
                 </div>
-                <div class="col-md-4">
-                    <h5 class="footer-heading">{{ _('Quick Links') }}</h5>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="{{ url_for('events.events') }}" class="footer-link">{{ _('Events') }}</a></li>
-                        <li><a href="{{ url_for('prayers.prayers') }}" class="footer-link">{{ _('Prayers') }}</a></li>
-                        <li><a href="{{ url_for('sermons.sermons') }}" class="footer-link">{{ _('Sermons') }}</a></li>
+                <div class="col-lg-4">
+                    <h5 class="footer-heading mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('prayers.prayers') }}" class="footer-link">Prayer Requests</a></li>
+                        <li><a href="{{ url_for('events.events') }}" class="footer-link">Events</a></li>
+                        <li><a href="{{ url_for('sermons.sermons') }}" class="footer-link">Sermons</a></li>
+                        <li><a href="{{ url_for('donations.donate') }}" class="footer-link">Support Us</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4">
-                    <h5 class="footer-heading">{{ _('Contact Us') }}</h5>
-                    <address class="footer-text">
-                        {% if settings and settings.contact_info %}
-                            <i class="bi bi-envelope me-2"></i>{{ settings.contact_info.email }}<br>
-                            <i class="bi bi-telephone me-2"></i>{{ settings.contact_info.phone }}
-                        {% endif %}
-                    </address>
+                <div class="col-lg-4">
+                    <h5 class="footer-heading mb-3">Connect With Us</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="footer-link"><i class="bi bi-facebook me-2"></i>Facebook</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-twitter me-2"></i>Twitter</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-instagram me-2"></i>Instagram</a></li>
+                        <li><a href="#" class="footer-link"><i class="bi bi-youtube me-2"></i>YouTube</a></li>
+                    </ul>
                 </div>
             </div>
             <hr class="footer-divider">
-            <div class="text-center">
-                <p class="footer-text mb-0">
-                    © {{ current_year }} {{ settings.business_name if settings else _('Covenant Connect') }}. 
-                    {{ _('All rights reserved.') }}
-                </p>
+            <div class="text-center footer-text">
+                <small>&copy; {{ current_year }} Covenant Connect. All rights reserved.</small>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     
     {% if current_user.is_authenticated %}
     <script>
@@ -249,7 +199,7 @@
                         <p class="mb-0">${data.message}</p>
                         <small class="text-muted">${new Date().toLocaleTimeString()}</small>
                     </div>
-                    <span class="notification-status badge bg-primary ms-2">{{ _('New')|escape('js') }}</span>
+                    <span class="notification-status badge bg-primary ms-2">New</span>
                 </div>
             `;
             
@@ -273,55 +223,6 @@
     });
     </script>
     {% endif %}
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        const html = document.documentElement;
-        const footer = document.querySelector('.footer');
-        
-        function updateTheme(theme) {
-            html.setAttribute('data-bs-theme', theme);
-            localStorage.setItem('theme', theme);
-            themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-            
-            footer.classList.toggle('bg-dark', theme === 'dark');
-            footer.classList.toggle('bg-light', theme === 'light');
-            
-            const footerTexts = footer.querySelectorAll('.footer-text');
-            footerTexts.forEach(text => {
-                text.classList.toggle('text-light', theme === 'dark');
-                text.classList.toggle('text-dark', theme === 'light');
-            });
-            
-            const footerHeadings = footer.querySelectorAll('.footer-heading');
-            footerHeadings.forEach(heading => {
-                heading.classList.toggle('text-light', theme === 'dark');
-                heading.classList.toggle('text-dark', theme === 'light');
-            });
-            
-            const footerLinks = footer.querySelectorAll('.footer-link');
-            footerLinks.forEach(link => {
-                link.classList.toggle('text-light', theme === 'dark');
-                text.classList.toggle('text-dark', theme === 'light');
-            });
-            
-            const footerDivider = footer.querySelector('.footer-divider');
-            footerDivider.classList.toggle('border-light', theme === 'dark');
-            footerDivider.classList.toggle('border-dark', theme === 'light');
-        }
-        
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        updateTheme(savedTheme);
-        
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = html.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            updateTheme(newTheme);
-        });
-    });
-    </script>
 
     {% block scripts %}{% endblock %}
 </body>

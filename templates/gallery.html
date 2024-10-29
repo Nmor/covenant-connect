@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Gallery') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Gallery - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">{{ _('Photo Gallery') }}</h1>
-            <p class="lead">{{ _('Capturing moments of fellowship, worship, and community.') }}</p>
+            <h1 class="display-4 mb-3">Photo Gallery</h1>
+            <p class="lead">Capturing moments of fellowship, worship, and community.</p>
         </div>
     </div>
 
@@ -40,7 +40,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">{{ item.title }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" 
-                                            aria-label="{{ _('Close') }}"></button>
+                                            aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <img src="{{ item.image_url }}" class="img-fluid" alt="{{ item.title }}">
@@ -57,8 +57,8 @@
     {% else %}
         <div class="text-center py-5">
             <i class="bi bi-images display-1 text-muted mb-3"></i>
-            <h5 class="text-muted">{{ _('No images found') }}</h5>
-            <p class="text-muted">{{ _('Check back soon for updates to our gallery!') }}</p>
+            <h5 class="text-muted">No images found</h5>
+            <p class="text-muted">Check back soon for updates to our gallery!</p>
         </div>
     {% endif %}
 </div>

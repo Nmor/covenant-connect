@@ -2,7 +2,7 @@
 
 {% block admin_content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1>{{ _('Dashboard') }}</h1>
+    <h1>Dashboard</h1>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -25,18 +25,18 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
-                        <h6 class="card-subtitle mb-2 text-muted">{{ _('Prayer Requests') }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Prayer Requests</h6>
                         <h3 class="card-title mb-0">{{ prayer_stats.total }}</h3>
                     </div>
                 </div>
                 <hr>
                 <div class="row text-center">
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Public') }}</small>
+                        <small class="text-muted d-block">Public</small>
                         <span class="h5">{{ prayer_stats.public }}</span>
                     </div>
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Private') }}</small>
+                        <small class="text-muted d-block">Private</small>
                         <span class="h5">{{ prayer_stats.private }}</span>
                     </div>
                 </div>
@@ -55,18 +55,18 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
-                        <h6 class="card-subtitle mb-2 text-muted">{{ _('Events') }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Events</h6>
                         <h3 class="card-title mb-0">{{ event_stats.total }}</h3>
                     </div>
                 </div>
                 <hr>
                 <div class="row text-center">
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Upcoming') }}</small>
+                        <small class="text-muted d-block">Upcoming</small>
                         <span class="h5">{{ event_stats.upcoming }}</span>
                     </div>
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Past') }}</small>
+                        <small class="text-muted d-block">Past</small>
                         <span class="h5">{{ event_stats.past }}</span>
                     </div>
                 </div>
@@ -85,18 +85,18 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
-                        <h6 class="card-subtitle mb-2 text-muted">{{ _('Sermons') }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Sermons</h6>
                         <h3 class="card-title mb-0">{{ sermon_stats.total }}</h3>
                     </div>
                 </div>
                 <hr>
                 <div class="row text-center">
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Video') }}</small>
+                        <small class="text-muted d-block">Video</small>
                         <span class="h5">{{ sermon_stats.video }}</span>
                     </div>
                     <div class="col">
-                        <small class="text-muted d-block">{{ _('Audio') }}</small>
+                        <small class="text-muted d-block">Audio</small>
                         <span class="h5">{{ sermon_stats.audio }}</span>
                     </div>
                 </div>
@@ -115,13 +115,13 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 ms-3">
-                        <h6 class="card-subtitle mb-2 text-muted">{{ _('Donations') }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Donations</h6>
                         <h3 class="card-title mb-0">{{ donation_stats.total }}</h3>
                     </div>
                 </div>
                 <hr>
                 <div class="text-center">
-                    <small class="text-muted d-block">{{ _('Total Amount') }}</small>
+                    <small class="text-muted d-block">Total Amount</small>
                     <span class="h5">${{ "%.2f"|format(donation_stats.amount) }}</span>
                 </div>
             </div>
@@ -133,28 +133,28 @@
     <div class="col-12">
         <div class="card dashboard-card">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ _('Quick Actions') }}</h5>
+                <h5 class="card-title mb-0">Quick Actions</h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <a href="{{ url_for('admin.gallery') }}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-images me-2"></i>{{ _('Manage Gallery') }}
+                            <i class="bi bi-images me-2"></i>Manage Gallery
                         </a>
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('admin.events') }}" class="btn btn-outline-success w-100">
-                            <i class="bi bi-calendar-plus me-2"></i>{{ _('Add Event') }}
+                            <i class="bi bi-calendar-plus me-2"></i>Add Event
                         </a>
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('admin.sermons') }}" class="btn btn-outline-info w-100">
-                            <i class="bi bi-mic me-2"></i>{{ _('Upload Sermon') }}
+                            <i class="bi bi-mic me-2"></i>Upload Sermon
                         </a>
                     </div>
                     <div class="col-md-3">
                         <a href="{{ url_for('admin.settings') }}" class="btn btn-outline-secondary w-100">
-                            <i class="bi bi-gear me-2"></i>{{ _('Settings') }}
+                            <i class="bi bi-gear me-2"></i>Settings
                         </a>
                     </div>
                 </div>

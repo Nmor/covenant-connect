@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Notification Preferences') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Notification Preferences - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -8,18 +8,18 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="h5 mb-0">{{ _('Notification Preferences') }}</h2>
+                    <h2 class="h5 mb-0">Notification Preferences</h2>
                 </div>
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
-                        <h5 class="mb-3">{{ _('Notification Categories') }}</h5>
+                        <h5 class="mb-3">Notification Categories</h5>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <div class="form-check form-switch">
                                     <input type="checkbox" class="form-check-input" id="prayer_requests"
                                            name="prayer_requests" {{ 'checked' if preferences.prayer_requests }}>
                                     <label class="form-check-label" for="prayer_requests">
-                                        {{ _('Prayer Requests') }}
+                                        Prayer Requests
                                     </label>
                                 </div>
                             </div>
@@ -28,7 +28,7 @@
                                     <input type="checkbox" class="form-check-input" id="events"
                                            name="events" {{ 'checked' if preferences.events }}>
                                     <label class="form-check-label" for="events">
-                                        {{ _('Events') }}
+                                        Events
                                     </label>
                                 </div>
                             </div>
@@ -37,7 +37,7 @@
                                     <input type="checkbox" class="form-check-input" id="sermons"
                                            name="sermons" {{ 'checked' if preferences.sermons }}>
                                     <label class="form-check-label" for="sermons">
-                                        {{ _('Sermons') }}
+                                        Sermons
                                     </label>
                                 </div>
                             </div>
@@ -46,7 +46,7 @@
                                     <input type="checkbox" class="form-check-input" id="donations"
                                            name="donations" {{ 'checked' if preferences.donations }}>
                                     <label class="form-check-label" for="donations">
-                                        {{ _('Donations') }}
+                                        Donations
                                     </label>
                                 </div>
                             </div>
@@ -55,20 +55,20 @@
                                     <input type="checkbox" class="form-check-input" id="news"
                                            name="news" {{ 'checked' if preferences.news }}>
                                     <label class="form-check-label" for="news">
-                                        {{ _('News & Updates') }}
+                                        News & Updates
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <h5 class="mb-3">{{ _('Notification Methods') }}</h5>
+                        <h5 class="mb-3">Notification Methods</h5>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <div class="form-check form-switch">
                                     <input type="checkbox" class="form-check-input" id="desktop"
                                            name="desktop" {{ 'checked' if preferences.desktop }}>
                                     <label class="form-check-label" for="desktop">
-                                        {{ _('Desktop Notifications') }}
+                                        Desktop Notifications
                                     </label>
                                 </div>
                             </div>
@@ -77,7 +77,7 @@
                                     <input type="checkbox" class="form-check-input" id="email"
                                            name="email" {{ 'checked' if preferences.email }}>
                                     <label class="form-check-label" for="email">
-                                        {{ _('Email Notifications') }}
+                                        Email Notifications
                                     </label>
                                 </div>
                             </div>
@@ -85,10 +85,10 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
-                                {{ _('Save Preferences') }}
+                                Save Preferences
                             </button>
                             <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
-                                {{ _('Back to Profile') }}
+                                Back to Profile
                             </a>
                         </div>
                     </form>

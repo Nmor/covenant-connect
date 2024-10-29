@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Prayer Requests') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Prayer Requests - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">{{ _('Prayer Requests') }}</h1>
-            <p class="lead">{{ _('Share your prayer needs with our community and join us in prayer for others.') }}</p>
+            <h1 class="display-4 mb-3">Prayer Requests</h1>
+            <p class="lead">Share your prayer needs with our community and join us in prayer for others.</p>
         </div>
     </div>
 
@@ -15,7 +15,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{{ _('Submit Prayer Request') }}</h5>
+                    <h5 class="card-title mb-0">Submit Prayer Request</h5>
                 </div>
                 <div class="card-body">
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -24,7 +24,7 @@
                                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                                            aria-label="{{ _('Close') }}"></button>
+                                            aria-label="Close"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
@@ -32,26 +32,26 @@
 
                     <form method="POST" class="needs-validation" novalidate>
                         <div class="mb-3">
-                            <label for="name" class="form-label">{{ _('Your Name') }}</label>
+                            <label for="name" class="form-label">Your Name</label>
                             <input type="text" class="form-control" id="name" name="name" required>
                             <div class="invalid-feedback">
-                                {{ _('Please enter your name.') }}
+                                Please enter your name.
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                            <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                             <div class="invalid-feedback">
-                                {{ _('Please enter a valid email address.') }}
+                                Please enter a valid email address.
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="request" class="form-label">{{ _('Prayer Request') }}</label>
+                            <label for="request" class="form-label">Prayer Request</label>
                             <textarea class="form-control" id="request" name="request" rows="4" required></textarea>
                             <div class="invalid-feedback">
-                                {{ _('Please share your prayer request.') }}
+                                Please share your prayer request.
                             </div>
                         </div>
 
@@ -59,15 +59,15 @@
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
                                 <label class="form-check-label" for="is_public">
-                                    {{ _('Make this prayer request public') }}
+                                    Make this prayer request public
                                 </label>
                             </div>
                             <small class="text-muted">
-                                {{ _('Public prayers will be shared with the community. Private prayers will only be seen by our prayer team.') }}
+                                Public prayers will be shared with the community. Private prayers will only be seen by our prayer team.
                             </small>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">{{ _('Submit Request') }}</button>
+                        <button type="submit" class="btn btn-primary">Submit Request</button>
                     </form>
                 </div>
             </div>
@@ -77,13 +77,13 @@
     {% if public_prayers %}
         <div class="row g-4">
             <div class="col-12">
-                <h2 class="text-center mb-4">{{ _('Community Prayer Requests') }}</h2>
+                <h2 class="text-center mb-4">Community Prayer Requests</h2>
             </div>
             {% for prayer in public_prayers %}
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">{{ _('From') }}: {{ prayer.name }}</h5>
+                            <h5 class="card-title">From: {{ prayer.name }}</h5>
                             <p class="card-text">{{ prayer.request }}</p>
                             <p class="card-text">
                                 <small class="text-muted">
@@ -92,7 +92,7 @@
                                 </small>
                             </p>
                             <button class="btn btn-outline-primary btn-sm" onclick="prayFor('{{ prayer.id }}')">
-                                <i class="bi bi-heart me-1"></i>{{ _('Pray for This') }}
+                                <i class="bi bi-heart me-1"></i>Pray for This
                             </button>
                         </div>
                     </div>
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function prayFor(prayerId) {
-    alert("{{ _('Thank you for praying!')|escape('js') }}");
+    alert('Thank you for praying!');
 }
 </script>
 {% endblock %}

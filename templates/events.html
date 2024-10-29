@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Events') }} - {{ _('Covenant Connect') }}{% endblock %}
+{% block title %}Events - Covenant Connect{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">{{ _('Church Events') }}</h1>
-            <p class="lead">{{ _('Stay connected with our community through various events and gatherings.') }}</p>
+            <h1 class="display-4 mb-3">Church Events</h1>
+            <p class="lead">Stay connected with our community through various events and gatherings.</p>
         </div>
     </div>
 
@@ -21,25 +21,25 @@
                             <p class="card-text">{{ event.description[:150] }}...</p>
                             <p class="card-text">
                                 <small class="text-muted">
-                                    <i class="bi bi-calendar me-2"></i>{{ _('Date') }}: 
+                                    <i class="bi bi-calendar me-2"></i>Date: 
                                     {{ event.start_date.strftime('%B %d, %Y') }}
                                 </small>
                             </p>
                             <p class="card-text">
                                 <small class="text-muted">
-                                    <i class="bi bi-clock me-2"></i>{{ _('Time') }}: 
+                                    <i class="bi bi-clock me-2"></i>Time: 
                                     {{ event.start_date.strftime('%I:%M %p') }}
                                 </small>
                             </p>
                             <p class="card-text">
                                 <small class="text-muted">
-                                    <i class="bi bi-geo-alt me-2"></i>{{ _('Location') }}: 
+                                    <i class="bi bi-geo-alt me-2"></i>Location: 
                                     {{ event.location }}
                                 </small>
                             </p>
                             <a href="{{ url_for('events.event_detail', event_id=event.id) }}" 
                                class="btn btn-outline-primary">
-                                {{ _('Learn More') }}
+                                Learn More
                             </a>
                         </div>
                     </div>
@@ -49,8 +49,8 @@
     {% else %}
         <div class="text-center py-5">
             <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
-            <h5 class="text-muted">{{ _('No events found') }}</h5>
-            <p class="text-muted">{{ _('Check back soon for upcoming events!') }}</p>
+            <h5 class="text-muted">No events found</h5>
+            <p class="text-muted">Check back soon for upcoming events!</p>
         </div>
     {% endif %}
 </div>

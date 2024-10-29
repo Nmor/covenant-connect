@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
-from flask_babel import Babel
 import os
 from datetime import datetime
 import logging
@@ -10,21 +9,6 @@ import logging
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
-babel = Babel()
-
-def get_locale():
-    # First try to get locale from query parameter
-    locale = request.args.get('lang')
-    if locale in ['en', 'es', 'fr']:
-        session['lang'] = locale
-        return locale
-    
-    # Then try to get locale from session
-    if 'lang' in session and session['lang'] in ['en', 'es', 'fr']:
-        return session['lang']
-    
-    # Finally, use browser's preferred language    
-    return request.accept_languages.best_match(['en', 'es', 'fr'])
 
 def create_app():
     app = Flask(__name__)
@@ -51,16 +35,10 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 
-    # Babel configuration
-    app.config['BABEL_DEFAULT_LOCALE'] = 'en'
-    app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
-    app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
-
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    babel.init_app(app, locale_selector=get_locale)
     login_manager.login_view = 'auth.login'
 
     # Register blueprints
@@ -84,25 +62,10 @@ def create_app():
     app.register_blueprint(donations_bp)
     app.register_blueprint(notifications_bp)
 
-    # Before request handler to set g.lang_code
-    @app.before_request
-    def before_request():
-        g.lang_code = get_locale()
-
     # Context processors
     @app.context_processor
     def inject_year():
         return {'current_year': datetime.utcnow().year}
-
-    @app.context_processor
-    def inject_languages():
-        return {
-            'languages': [
-                ('en', 'English'),
-                ('es', 'Español'),
-                ('fr', 'Français')
-            ]
-        }
 
     # Load user
     from models import User

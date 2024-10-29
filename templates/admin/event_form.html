@@ -2,7 +2,7 @@
 
 {% block admin_content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1>{{ event.id|default(false) and _('Edit Event') or _('Create Event') }}</h1>
+    <h1>{{ event.id|default(false) and 'Edit Event' or 'Create Event' }}</h1>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -11,7 +11,7 @@
             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                        aria-label="{{ _('Close') }}"></button>
+                        aria-label="Close"></button>
             </div>
         {% endfor %}
     {% endif %}
@@ -21,41 +21,41 @@
     <div class="card-body">
         <form method="POST" class="needs-validation" novalidate>
             <div class="mb-3">
-                <label for="title" class="form-label">{{ _('Event Title') }}</label>
+                <label for="title" class="form-label">Event Title</label>
                 <input type="text" class="form-control" id="title" name="title" 
                        value="{{ event.title if event }}" required>
                 <div class="invalid-feedback">
-                    {{ _('Please enter an event title.') }}
+                    Please enter an event title.
                 </div>
             </div>
 
             <div class="mb-3">
-                <label for="description" class="form-label">{{ _('Description') }}</label>
+                <label for="description" class="form-label">Description</label>
                 <textarea class="form-control" id="description" name="description" 
                           rows="4" required>{{ event.description if event }}</textarea>
                 <div class="invalid-feedback">
-                    {{ _('Please enter an event description.') }}
+                    Please enter an event description.
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="start_date" class="form-label">{{ _('Start Date') }}</label>
+                        <label for="start_date" class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="start_date" name="start_date"
                                value="{{ event.start_date.strftime('%Y-%m-%d') if event }}" required>
                         <div class="invalid-feedback">
-                            {{ _('Please select a start date.') }}
+                            Please select a start date.
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="start_time" class="form-label">{{ _('Start Time') }}</label>
+                        <label for="start_time" class="form-label">Start Time</label>
                         <input type="time" class="form-control" id="start_time" name="start_time"
                                value="{{ event.start_date.strftime('%H:%M') if event }}" required>
                         <div class="invalid-feedback">
-                            {{ _('Please select a start time.') }}
+                            Please select a start time.
                         </div>
                     </div>
                 </div>
@@ -64,41 +64,41 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="end_date" class="form-label">{{ _('End Date') }}</label>
+                        <label for="end_date" class="form-label">End Date</label>
                         <input type="date" class="form-control" id="end_date" name="end_date"
                                value="{{ event.end_date.strftime('%Y-%m-%d') if event }}" required>
                         <div class="invalid-feedback">
-                            {{ _('Please select an end date.') }}
+                            Please select an end date.
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="end_time" class="form-label">{{ _('End Time') }}</label>
+                        <label for="end_time" class="form-label">End Time</label>
                         <input type="time" class="form-control" id="end_time" name="end_time"
                                value="{{ event.end_date.strftime('%H:%M') if event }}" required>
                         <div class="invalid-feedback">
-                            {{ _('Please select an end time.') }}
+                            Please select an end time.
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label for="location" class="form-label">{{ _('Location') }}</label>
+                <label for="location" class="form-label">Location</label>
                 <input type="text" class="form-control" id="location" name="location"
                        value="{{ event.location if event }}" required>
                 <div class="invalid-feedback">
-                    {{ _('Please enter an event location.') }}
+                    Please enter an event location.
                 </div>
             </div>
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">
-                    {{ event.id|default(false) and _('Update Event') or _('Create Event') }}
+                    {{ event.id|default(false) and 'Update Event' or 'Create Event' }}
                 </button>
                 <a href="{{ url_for('admin.events') }}" class="btn btn-secondary">
-                    {{ _('Back to Events') }}
+                    Back to Events
                 </a>
             </div>
         </form>
