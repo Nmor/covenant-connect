@@ -17,3 +17,5 @@ class Config:
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER')
     REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*')
+    PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
+    FINCRA_SECRET_KEY = os.getenv('FINCRA_SECRET_KEY')

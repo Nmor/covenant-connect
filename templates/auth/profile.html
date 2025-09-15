@@ -18,7 +18,7 @@
                     {% endif %}
                 {% endwith %}
                 <form method="POST" action="{{ url_for('auth.update_profile') }}">
-    {{ csrf_token() }}
+    <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>

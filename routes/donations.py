@@ -6,7 +6,6 @@ from decimal import Decimal, InvalidOperation
 import uuid
 import json
 from datetime import datetime
-import os
 
 donations_bp = Blueprint('donations', __name__)
 
@@ -75,13 +74,14 @@ def process_donation():
         if payment_method == 'paystack' and currency == 'NGN':
             try:
                 # Initialize Paystack payment
-                if 'PAYSTACK_SECRET_KEY' not in os.environ:
+                secret_key = current_app.config.get('PAYSTACK_SECRET_KEY')
+                if not secret_key:
                     flash('Payment processing is temporarily unavailable.', 'danger')
                     current_app.logger.error("Paystack secret key not configured")
                     return redirect(url_for('donations.donate'))
 
                 headers = {
-                    'Authorization': f"Bearer {os.environ['PAYSTACK_SECRET_KEY']}",
+                    'Authorization': f"Bearer {secret_key}",
                     'Content-Type': 'application/json'
                 }
                 
@@ -105,8 +105,14 @@ def process_donation():
 
         elif payment_method == 'fincra':
             try:
+                secret_key = current_app.config.get('FINCRA_SECRET_KEY')
+                if not secret_key:
+                    flash('Payment processing is temporarily unavailable.', 'danger')
+                    current_app.logger.error("Fincra secret key not configured")
+                    return redirect(url_for('donations.donate'))
+
                 headers = {
-                    'api-key': os.environ['FINCRA_SECRET_KEY'],
+                    'api-key': secret_key,
                     'Content-Type': 'application/json'
                 }
                 

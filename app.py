@@ -15,8 +15,6 @@ login_manager = LoginManager()
 mail = Mail()
 csrf = CSRFProtect()
 cors = CORS()
-redis_conn = Redis.from_url(Config.REDIS_URL)
-task_queue = Queue(connection=redis_conn)
 
 def create_app():
     app = Flask(__name__)
@@ -41,7 +39,10 @@ def create_app():
     csrf.init_app(app)
     cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}})
     login_manager.login_view = 'auth.login'
-    app.task_queue = task_queue
+
+    # Initialize task queue lazily
+    redis_conn = Redis.from_url(app.config['REDIS_URL'])
+    app.task_queue = Queue(connection=redis_conn)
 
     # Register blueprints
     from routes.home import home_bp

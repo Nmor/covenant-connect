@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
-from app import db, task_queue
+from app import db
 from models import PrayerRequest, User
 from tasks import send_prayer_notification
 
@@ -34,7 +34,7 @@ def submit_prayer():
         db.session.commit()
         
         # Send email notification to admins
-        task_queue.enqueue(send_prayer_notification, new_prayer.id)
+        current_app.task_queue.enqueue(send_prayer_notification, new_prayer.id)
         
         flash('Prayer request submitted successfully', 'success')
         return redirect(url_for('prayers.prayers'))
