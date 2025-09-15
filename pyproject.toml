@@ -14,4 +14,6 @@ dependencies = [
     "werkzeug>=3.0.6",
     "flask-sse>=1.0.0",
     "redis>=5.2.0",
+    "flask-wtf>=1.2.1",
+    "rq>=1.16.2",
 ]

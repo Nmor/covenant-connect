@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 from flask_mail import Mail
+from flask_wtf import CSRFProtect
+from redis import Redis
+from rq import Queue
 import os
 from datetime import datetime
 import logging
@@ -9,6 +12,9 @@ import logging
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+csrf = CSRFProtect()
+redis_conn = Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+task_queue = Queue(connection=redis_conn)
 
 def create_app():
     app = Flask(__name__)
@@ -23,23 +29,34 @@ def create_app():
     logger.addHandler(handler)
     
     # Configure database
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+    database_url = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+    if not database_url:
+        raise RuntimeError('DATABASE_URL is not set')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.urandom(24)
+
+    # Configure secret key
+    secret_key = os.getenv('SECRET_KEY')
+    if not secret_key:
+        secret_key = 'dev-secret-key'
+        logger.warning('SECRET_KEY is not set. Using development key.')
+    app.config['SECRET_KEY'] = secret_key
 
     # Email configuration
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'true').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
     login_manager.login_view = 'auth.login'
+    app.task_queue = task_queue
 
     # Register blueprints
     from routes.home import home_bp
