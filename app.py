@@ -1,18 +1,27 @@
 from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 from flask_mail import Mail
-import os
+from flask_wtf import CSRFProtect
+from flask_cors import CORS
+from redis import Redis
+from rq import Queue
 from datetime import datetime
 import logging
+from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+csrf = CSRFProtect()
+cors = CORS()
+redis_conn = Redis.from_url(Config.REDIS_URL)
+task_queue = Queue(connection=redis_conn)
 
 def create_app():
     app = Flask(__name__)
-    
+    app.config.from_object(Config)
+
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('covenant_connect')
@@ -21,25 +30,18 @@ def create_app():
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     ))
     logger.addHandler(handler)
-    
-    # Configure database
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.urandom(24)
 
-    # Email configuration
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+    if Config.SECRET_KEY == 'dev-secret-key':
+        logger.warning('SECRET_KEY is not set. Using development key.')
 
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
+    cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}})
     login_manager.login_view = 'auth.login'
+    app.task_queue = task_queue
 
     # Register blueprints
     from routes.home import home_bp

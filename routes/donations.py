@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from models import Donation
 from app import db
 from sqlalchemy.exc import SQLAlchemyError
+from decimal import Decimal, InvalidOperation
 import uuid
 import json
 from datetime import datetime
@@ -32,10 +33,10 @@ def process_donation():
 
         # Validate amount
         try:
-            amount = float(amount)
+            amount = Decimal(amount)
             if amount <= 0:
-                raise ValueError("Amount must be positive")
-        except ValueError:
+                raise InvalidOperation("Amount must be positive")
+        except (InvalidOperation, ValueError):
             flash('Please enter a valid donation amount.', 'danger')
             return redirect(url_for('donations.donate'))
 
@@ -85,7 +86,7 @@ def process_donation():
                 }
                 
                 payload = {
-                    'amount': int(amount * 100),  # Paystack expects amount in kobo
+                    'amount': int((amount * 100).to_integral_value()),  # Paystack expects amount in kobo
                     'currency': 'NGN',
                     'email': email,
                     'reference': reference,

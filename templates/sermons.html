@@ -12,6 +12,7 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ url_for('sermons.search_sermons') }}" class="row g-3">
+    {{ csrf_token() }}
                         <div class="col-md-3">
                             <label for="title" class="form-label">Title</label>
                             <input type="text" class="form-control" id="title" name="title" value="{{ request.args.get('title', '') }}">
