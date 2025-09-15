@@ -54,6 +54,7 @@ def create_app():
     from routes.gallery import gallery_bp
     from routes.donations import donations_bp
     from routes.notifications import notifications_bp
+    from routes.internal import internal_bp
 
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
@@ -64,6 +65,7 @@ def create_app():
     app.register_blueprint(gallery_bp)
     app.register_blueprint(donations_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(internal_bp)
 
     # Context processors
     @app.context_processor

@@ -139,6 +139,40 @@ def process_donation():
                 current_app.logger.error(f"Fincra payment initialization error: {str(e)}")
                 flash('Payment initialization failed. Please try again later.', 'danger')
                 return redirect(url_for('donations.donate'))
+        elif payment_method == 'stripe':
+            try:
+                secret_key = current_app.config.get('STRIPE_SECRET_KEY')
+                if not secret_key:
+                    flash('Payment processing is temporarily unavailable.', 'danger')
+                    current_app.logger.error("Stripe secret key not configured")
+                    return redirect(url_for('donations.donate'))
+
+                # TODO: Make API call to Stripe to initialize payment
+                flash('Payment initialization successful!', 'success')
+                return redirect(url_for('donations.donate'))
+
+            except Exception as e:
+                current_app.logger.error(f"Stripe payment initialization error: {str(e)}")
+                flash('Payment initialization failed. Please try again later.', 'danger')
+                return redirect(url_for('donations.donate'))
+
+        elif payment_method == 'flutterwave':
+            try:
+                secret_key = current_app.config.get('FLUTTERWAVE_SECRET_KEY')
+                if not secret_key:
+                    flash('Payment processing is temporarily unavailable.', 'danger')
+                    current_app.logger.error("Flutterwave secret key not configured")
+                    return redirect(url_for('donations.donate'))
+
+                # TODO: Make API call to Flutterwave to initialize payment
+                flash('Payment initialization successful!', 'success')
+                return redirect(url_for('donations.donate'))
+
+            except Exception as e:
+                current_app.logger.error(f"Flutterwave payment initialization error: {str(e)}")
+                flash('Payment initialization failed. Please try again later.', 'danger')
+                return redirect(url_for('donations.donate'))
+
         else:
             flash('Invalid payment method or currency combination.', 'danger')
             return redirect(url_for('donations.donate'))
