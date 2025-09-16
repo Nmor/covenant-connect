@@ -16,6 +16,8 @@ dependencies = [
     "redis>=5.2.0",
     "flask-wtf>=1.2.1",
     "rq>=1.16.2",
+codex/explain-requested-code-functionality-dxdu2u
     "flask-cors>=4.0.0",
     "python-dotenv>=1.0.1",
+main
 ]
