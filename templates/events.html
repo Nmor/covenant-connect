@@ -18,7 +18,9 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">{{ event.title }}</h5>
-                            <p class="card-text">{{ event.description[:150] }}...</p>
+                            <p class="card-text">
+                                {{ event.description | default('No description available.', true) | truncate(150, True, '...') }}
+                            </p>
                             <p class="card-text">
                                 <small class="text-muted">
                                     <i class="bi bi-calendar me-2"></i>Date: 
