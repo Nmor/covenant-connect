@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('events.events') }}">Events</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ event.title }}</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title h2 mb-3">{{ event.title }}</h1>
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        {{ event.start_date.strftime('%B %d, %Y') }}
+                        {% if event.end_date and event.end_date.date() != event.start_date.date() %}
+                            &ndash; {{ event.end_date.strftime('%B %d, %Y') }}
+                        {% endif %}
+                    </p>
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-clock me-2"></i>
+                        {{ event.start_date.strftime('%I:%M %p') }}
+                        {% if event.end_date %}
+                            &ndash; {{ event.end_date.strftime('%I:%M %p') }}
+                        {% endif %}
+                    </p>
+                    {% if event.location %}
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-geo-alt me-2"></i>{{ event.location }}
+                    </p>
+                    {% endif %}
+                    <hr>
+                    <p class="lead mb-0">{{ event.description or 'Details will be announced soon.' }}</p>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-5">
+                <a href="{{ url_for('events.events') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Events
+                </a>
+                <a
+                    href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ event.title|urlencode }}&dates={{ event.start_date.strftime('%Y%m%dT%H%M%S') }}{% if event.end_date %}/{{ event.end_date.strftime('%Y%m%dT%H%M%S') }}{% endif %}&details={{ (event.description or '')|urlencode }}&location={{ (event.location or '')|urlencode }}"
+                    class="btn btn-primary"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <i class="bi bi-calendar-plus"></i> Add to Calendar
+                </a>
+            </div>
+
+            {% if upcoming_events %}
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">More Upcoming Events</h2>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for upcoming in upcoming_events %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="me-3">
+                            <h3 class="h6 mb-1">
+                                <a href="{{ url_for('events.event_detail', event_id=upcoming.id) }}" class="text-decoration-none">
+                                    {{ upcoming.title }}
+                                </a>
+                            </h3>
+                            <small class="text-muted d-block">
+                                <i class="bi bi-calendar-event me-1"></i>{{ upcoming.start_date.strftime('%B %d, %Y') }}
+                            </small>
+                            {% if upcoming.location %}
+                            <small class="text-muted d-block">
+                                <i class="bi bi-geo-alt me-1"></i>{{ upcoming.location }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <a href="{{ url_for('events.event_detail', event_id=upcoming.id) }}" class="btn btn-outline-primary btn-sm">
+                            View
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
