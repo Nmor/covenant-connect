@@ -1,9 +1,11 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app import create_app, db
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+
+from app import create_app, db
+
 
 def reset_db():
     app = create_app()

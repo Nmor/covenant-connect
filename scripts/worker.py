@@ -1,5 +1,6 @@
 from redis import Redis
-from rq import Worker, Connection
+from rq import Connection, Worker
+
 from app import create_app
 
 

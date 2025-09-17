@@ -1,8 +1,19 @@
-from flask import Blueprint, jsonify, current_app, render_template, request, flash, redirect, url_for, session
-from flask_login import login_required, current_user
-from app import db
-from models import User
 from datetime import datetime
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_login import current_user, login_required
+
+from app import db
 
 notifications_bp = Blueprint('notifications', __name__)
 

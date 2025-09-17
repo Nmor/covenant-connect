@@ -1,11 +1,21 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
-from models import Donation
-from app import db
-from sqlalchemy.exc import SQLAlchemyError
-from decimal import Decimal, InvalidOperation
 import uuid
-import json
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from sqlalchemy.exc import SQLAlchemyError
+
+from app import db
+from models import Donation
 
 donations_bp = Blueprint('donations', __name__)
 
@@ -80,11 +90,6 @@ def process_donation():
                     current_app.logger.error("Paystack secret key not configured")
                     return redirect(url_for('donations.donate'))
 
-                headers = {
-                    'Authorization': f"Bearer {secret_key}",
-                    'Content-Type': 'application/json'
-                }
-                
                 payload = {
                     'amount': int((amount * 100).to_integral_value()),  # Paystack expects amount in kobo
                     'currency': 'NGN',
@@ -92,6 +97,8 @@ def process_donation():
                     'reference': reference,
                     'callback_url': url_for('donations.payment_callback', _external=True)
                 }
+
+                current_app.logger.debug('Prepared Paystack payload: %s', payload)
 
                 # TODO: Make API call to Paystack to initialize payment
                 # For now, we'll simulate success
@@ -111,12 +118,9 @@ def process_donation():
                     current_app.logger.error("Fincra secret key not configured")
                     return redirect(url_for('donations.donate'))
 
-                headers = {
-                    'api-key': secret_key,
-                    'Content-Type': 'application/json'
-                }
-                
-                payload = {
+                # Compose a structured request payload when the integration is activated.
+                redirect_url = url_for('donations.payment_callback', _external=True)
+                fincra_payload = {
                     'amount': str(amount),
                     'currency': currency,
                     'email': email,
@@ -124,11 +128,12 @@ def process_donation():
                     'customer': {
                         'firstName': payment_info['first_name'],
                         'lastName': payment_info['last_name'],
-                        'email': email
+                        'email': email,
                     },
-                    'redirectUrl': url_for('donations.payment_callback', _external=True),
-                    'paymentType': 'card'
+                    'redirectUrl': redirect_url,
+                    'paymentType': 'card',
                 }
+                current_app.logger.debug('Prepared Fincra payload: %s', fincra_payload)
 
                 # TODO: Make API call to Fincra to initialize payment
                 # For now, we'll simulate success

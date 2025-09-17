@@ -4,28 +4,61 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Admin Sidebar -->
+        {% set endpoint = request.endpoint or '' %}
         <nav class="col-md-2 d-md-block sidebar collapse">
             <div class="sidebar-sticky">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
                            href="{{ url_for('admin.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.users' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.users' %}active{% endif %}"
                            href="{{ url_for('admin.users') }}">
                             <i class="bi bi-people"></i>
                             <span>Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint and request.endpoint.startswith('admin.automation') %}active{% endif %}"
+                           href="{{ url_for('admin.automations') }}">
+                            <i class="bi bi-diagram-3"></i>
+                            <span>Automations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.members', 'admin.member_profile', 'admin.log_member_follow_up'] %}active{% endif %}"
+                           href="{{ url_for('admin.members') }}">
+                            <i class="bi bi-person-heart"></i>
+                            <span>Members</span>
+                        <a class="nav-link d-flex align-items-center {% if 'department' in endpoint %}active{% endif %}"
+                           href="{{ url_for('admin.departments') }}">
+                            <i class="bi bi-diagram-3"></i>
+                            <span>Departments</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if 'volunteer' in endpoint %}active{% endif %}"
+                           href="{{ url_for('admin.volunteers') }}">
+                            <i class="bi bi-person-heart"></i>
+                            <span>Volunteers</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}"
                            href="{{ url_for('admin.events') }}">
                             <i class="bi bi-calendar-event"></i>
                             <span>Events</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.facilities', 'admin.update_reservation_status'] %}active{% endif %}"
+                           href="{{ url_for('admin.facilities') }}">
+                            <i class="bi bi-building"></i>
+                            <span>Facilities</span>
                         </a>
                     </li>
                     <li class="nav-item">

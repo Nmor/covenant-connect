@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, current_app
-from models import Gallery
+from flask import Blueprint, current_app, render_template
 from sqlalchemy.exc import SQLAlchemyError
+
+from models import Gallery
 
 gallery_bp = Blueprint('gallery', __name__)
 

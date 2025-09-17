@@ -16,8 +16,25 @@ dependencies = [
     "redis>=5.2.0",
     "flask-wtf>=1.2.1",
     "rq>=1.16.2",
-codex/explain-requested-code-functionality-dxdu2u
     "flask-cors>=4.0.0",
     "python-dotenv>=1.0.1",
-main
 ]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6.9",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["templates"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"routes/events.py" = ["F401", "F811", "F841"]
+"routes/sermons.py" = ["F401", "F811", "F841"]
+"routes/solutions.py" = ["F401", "F811", "F841"]

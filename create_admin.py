@@ -1,7 +1,8 @@
-import os
 import sys
+
 from app import create_app, db
 from models import User
+
 
 def create_admin_user():
     app = create_app()

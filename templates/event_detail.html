@@ -35,14 +35,246 @@
                         <i class="bi bi-geo-alt me-2"></i>{{ event.location }}
                     </p>
                     {% endif %}
+                    {% if event.recurrence_rule %}
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-repeat me-2"></i>
+                        Recurs: {{ event.recurrence_rule }}{% if event.recurrence_end_date %} (until {{ event.recurrence_end_date.strftime('%B %d, %Y') }}){% endif %}
+                    </p>
+                    {% endif %}
+                    {% if event.ministry_tags %}
+                    <div class="mb-3">
+                        {% for tag in event.ministry_tags %}
+                            <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <hr>
                     <p class="lead mb-0">{{ event.description or 'Details will be announced soon.' }}</p>
                 </div>
             </div>
 
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="text-uppercase small text-muted fw-semibold mb-2">Facility capacity</div>
+                            <div class="display-6 fw-bold">{{ total_capacity if total_capacity else '&mdash;'|safe }}</div>
+                            {% if total_capacity %}
+                            <p class="mb-0 text-muted">Combined seating across all confirmed rooms.</p>
+                            {% else %}
+                            <p class="mb-0 text-muted">No rooms reserved yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="text-uppercase small text-muted fw-semibold mb-2">Expected attendance</div>
+                            <div class="display-6 fw-bold">{{ expected_attendance if expected_attendance else '&mdash;'|safe }}</div>
+                            {% if expected_attendance %}
+                            <p class="mb-0 text-muted">Based on ministry estimates and RSVP forms.</p>
+                            {% else %}
+                            <p class="mb-0 text-muted">Capture a forecast to track preparation needs.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="text-uppercase small text-muted fw-semibold mb-2">Checked in</div>
+                            <div class="display-6 fw-bold">{{ total_checked_in if total_checked_in else '&mdash;'|safe }}</div>
+                            {% if last_check_in %}
+                            <p class="mb-0 text-muted">Last check-in {{ last_check_in.strftime('%b %d, %Y %I:%M %p') }}</p>
+                            {% else %}
+                            <p class="mb-0 text-muted">Attendance will appear once check-ins begin.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h2 class="h5 mb-0">Facility assignments</h2>
+                            <span class="badge bg-secondary">{{ facility_reservations|length }} reservations</span>
+                        </div>
+                        <div class="card-body">
+                            {% if facility_reservations %}
+                                <div class="vstack gap-3">
+                                    {% for reservation in facility_reservations %}
+                                        <div class="border rounded p-3">
+                                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                                <div>
+                                                    <div class="fw-semibold">{{ reservation.facility.name if reservation.facility else 'Facility removed' }}</div>
+                                                    <div class="small text-muted">{{ reservation.start_time.strftime('%b %d, %Y %I:%M %p') }} &ndash; {{ reservation.end_time.strftime('%b %d, %Y %I:%M %p') }}</div>
+                                                </div>
+                                                <div>
+                                                    <span class="badge bg-primary text-uppercase">{{ reservation.status }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="small text-muted mb-1">Requested by {{ reservation.ministry_name }}</div>
+                                                {% if reservation.resource_requests %}
+                                                    <ul class="list-unstyled mb-0 small">
+                                                        {% for allocation in reservation.resource_requests %}
+                                                            <li>
+                                                                <i class="bi bi-box-seam me-1"></i>
+                                                                <span class="fw-semibold">{{ allocation.resource.name }}</span>
+                                                                &middot; {{ allocation.quantity_requested }} requested{% if allocation.quantity_approved is not none %}, {{ allocation.quantity_approved }} approved{% endif %}
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <p class="small text-muted mb-0">No additional equipment requested.</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">Rooms have not been reserved for this event yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h2 class="h5 mb-0">Resource summary</h2>
+                            <span class="badge bg-light text-dark">{{ resource_totals|length }} items</span>
+                        </div>
+                        <div class="card-body">
+                            {% if resource_totals %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Resource</th>
+                                                <th scope="col" class="text-end">Total assigned</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for entry in resource_totals.values() %}
+                                                <tr>
+                                                    <td>{{ entry.resource.name }}</td>
+                                                    <td class="text-end">{{ entry.quantity }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No shared resources have been linked to this event.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h2 class="h5 mb-0">Attendance tracking</h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ url_for('events.export_attendance_csv', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-download"></i> CSV export
+                        </a>
+                        <a href="{{ url_for('events.export_attendance_excel', event_id=event.id) }}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Excel follow-up
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if attendance_records %}
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Check-in time</th>
+                                    <th scope="col">Expected attendees</th>
+                                    <th scope="col">Checked in</th>
+                                    <th scope="col">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.check_in_time.strftime('%b %d, %Y %I:%M %p') if record.check_in_time else '—' }}</td>
+                                    <td>{{ record.expected_attendees or '—' }}</td>
+                                    <td>{{ record.checked_in_count }}</td>
+                                    <td>{{ record.notes or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-4">
+                        <p class="text-muted mb-0">No attendance has been recorded yet. Log check-ins from the admin dashboard to monitor engagement.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if event.department or event.volunteer_role %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="bi bi-people me-2"></i>Serving Team</h2>
+                    {% if event.department %}
+                        <p class="mb-2"><strong>Department:</strong> {{ event.department.name }}</p>
+                        {% if event.department.lead %}
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-person-badge me-2"></i>Staff Lead: {{ event.department.lead.username }}
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                    {% if event.volunteer_role %}
+                        <p class="mb-2"><strong>Serving Role:</strong> {{ event.volunteer_role.name }}</p>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-person-lines-fill me-2"></i>
+                            Coordinator:
+                            {% if event.volunteer_role.coordinator %}
+                                {{ event.volunteer_role.coordinator.username }}
+                            {% elif event.department and event.department.lead %}
+                                {{ event.department.lead.username }}
+                            {% else %}
+                                To be announced
+                            {% endif %}
+                        </p>
+                        {% if event.volunteer_role.assignments %}
+                            <div class="mt-3">
+                                <h3 class="h6 text-uppercase text-muted">Serving Volunteers</h3>
+                                <ul class="list-unstyled mb-0">
+                                    {% for assignment in event.volunteer_role.assignments %}
+                                        <li class="d-flex align-items-center py-1">
+                                            <i class="bi bi-person-circle me-2"></i>
+                                            <span>{{ assignment.volunteer.username }}</span>
+                                            {% if assignment.start_date %}
+                                                <small class="text-muted ms-2">since {{ assignment.start_date.strftime('%b %Y') }}</small>
+                                            {% endif %}
+                                            {% if assignment.notes %}
+                                                <small class="text-muted ms-2">&mdash; {{ assignment.notes }}</small>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">Volunteers are being scheduled for this role.</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="d-flex flex-wrap gap-2 mb-5">
                 <a href="{{ url_for('events.events') }}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Back to Events
+                </a>
+                <a href="{{ url_for('events.plan_event', event_id=event.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-journal-text"></i> Plan &amp; Run Sheet
                 </a>
                 <a
                     href="https://www.google.com/calendar/render?action=TEMPLATE&text={{ event.title|urlencode }}&dates={{ event.start_date.strftime('%Y%m%dT%H%M%S') }}{% if event.end_date %}/{{ event.end_date.strftime('%Y%m%dT%H%M%S') }}{% endif %}&details={{ (event.description or '')|urlencode }}&location={{ (event.location or '')|urlencode }}"
@@ -52,7 +284,50 @@
                 >
                     <i class="bi bi-calendar-plus"></i> Add to Calendar
                 </a>
+                <a href="{{ url_for('events.export_attendance_csv', event_id=event.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-download"></i> Attendance CSV
+                </a>
+                <a href="{{ url_for('events.export_attendance_excel', event_id=event.id) }}" class="btn btn-outline-success">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Attendance &amp; Resources Excel
+                </a>
             </div>
+
+            {% if event.service_segments %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Service Run Sheet</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Segment</th>
+                                <th scope="col">Lead</th>
+                                <th scope="col">Duration</th>
+                                <th scope="col">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for segment in event.service_segments %}
+                                {% if segment.title or segment.leader or segment.duration or segment.notes %}
+                                <tr>
+                                    <td>{{ segment.title or 'Segment' }}</td>
+                                    <td>{{ segment.leader or '—' }}</td>
+                                    <td>{{ segment.duration or '—' }}</td>
+                                    <td>{{ segment.notes or '' }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{{ url_for('events.plan_event', event_id=event.id, format='print') }}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-printer"></i> Printable Run Sheet
+                    </a>
+                </div>
+            </div>
+            {% endif %}
 
             {% if upcoming_events %}
             <div class="card shadow-sm">

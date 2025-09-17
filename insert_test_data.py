@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+
 from app import create_app, db
-from models import PrayerRequest, Event, Sermon
+from models import Event, PrayerRequest, Sermon
+
 
 def insert_test_data():
     app = create_app()

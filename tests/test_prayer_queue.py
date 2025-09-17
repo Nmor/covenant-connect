@@ -1,5 +1,6 @@
-from tasks import send_prayer_notification
 import re
+
+from tasks import send_prayer_notification
 
 
 def get_token(client, path):
@@ -19,7 +20,7 @@ def test_prayer_enqueue(monkeypatch, client, app):
         app.task_queue = DummyQueue()
 
     token = get_token(client, '/prayers')
-    resp = client.post('/prayers/submit', data={
+    client.post('/prayers/submit', data={
         'csrf_token': token,
         'name': 'John',
         'email': 'john@example.com',

@@ -226,7 +226,7 @@ def resolve_reporting_window(period: Optional[str] = None,
             start_dt = datetime.fromisoformat(start)
             end_dt = datetime.fromisoformat(end)
             normalized_period = 'custom'
-            label = f"Custom Range"
+            label = "Custom Range"
         except ValueError:
             if logger:
                 logger.warning('Invalid custom date range provided for reports; defaulting to 90 days.')

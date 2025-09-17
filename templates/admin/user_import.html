@@ -21,10 +21,8 @@
             </div>
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data">
-codex/explain-requested-code-functionality-dxdu2u
     <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
     {{ csrf_token() }}
-main
                     <div class="mb-3">
                         <label for="file" class="form-label">Choose CSV File</label>
                         <input type="file" class="form-control" id="file" name="file" accept=".csv" required>

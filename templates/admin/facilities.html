@@ -1,0 +1,387 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h3 mb-1">Facilities &amp; Reservations</h1>
+        <p class="text-muted mb-0">Coordinate room usage, shared equipment, and attendance logistics for every ministry event.</p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+{% if conflicts or resource_conflicts %}
+<div class="alert alert-warning" role="alert">
+    <h5 class="alert-heading">Conflicts detected</h5>
+    <p class="mb-3">Another reservation overlaps with the requested schedule or exceeds available resources. Review the details below and adjust the request.</p>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <h6 class="fw-bold mb-2">Facility overlaps</h6>
+            {% if conflicts %}
+                <ul class="list-group list-group-flush">
+                    {% for reservation in conflicts %}
+                        <li class="list-group-item">
+                            <div class="fw-semibold">{{ reservation.event.title if reservation.event else 'Event removed' }}</div>
+                            <div class="small text-muted">{{ reservation.facility.name }} &middot; {{ reservation.start_time.strftime('%b %d, %Y %I:%M %p') }} &ndash; {{ reservation.end_time.strftime('%b %d, %Y %I:%M %p') }}</div>
+                            <div class="small"><span class="badge bg-secondary text-uppercase">{{ reservation.status }}</span></div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">No overlapping facility bookings.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h6 class="fw-bold mb-2">Resource limits</h6>
+            {% if resource_conflicts %}
+                <ul class="list-group list-group-flush">
+                    {% for conflict in resource_conflicts %}
+                        <li class="list-group-item">
+                            <div class="fw-semibold">{{ conflict.resource.name }}</div>
+                            <div class="small text-muted">Requested {{ conflict.requested }} &middot; Available {{ conflict.available }} &middot; Already committed {{ conflict.allocated }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">No capacity conflicts for shared equipment.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Add Facility</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" class="vstack gap-3">
+                    <input type="hidden" name="form_type" value="create_facility">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div>
+                        <label for="facility-name" class="form-label">Facility name</label>
+                        <input type="text" class="form-control" id="facility-name" name="name" placeholder="e.g., Main Sanctuary" required>
+                    </div>
+                    <div>
+                        <label for="facility-location" class="form-label">Location details</label>
+                        <input type="text" class="form-control" id="facility-location" name="location" placeholder="Floor, building, etc.">
+                    </div>
+                    <div>
+                        <label for="facility-capacity" class="form-label">Capacity</label>
+                        <input type="number" min="0" class="form-control" id="facility-capacity" name="capacity" placeholder="0">
+                        <div class="form-text">Maximum comfortable capacity for this room.</div>
+                    </div>
+                    <div>
+                        <label for="facility-description" class="form-label">Notes</label>
+                        <textarea class="form-control" id="facility-description" name="description" rows="3" placeholder="Available layouts, tech specs, etc."></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save facility</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Add Shared Resource</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" class="vstack gap-3">
+                    <input type="hidden" name="form_type" value="create_resource">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div>
+                        <label for="resource-name" class="form-label">Resource name</label>
+                        <input type="text" class="form-control" id="resource-name" name="name" placeholder="e.g., Projector" required>
+                    </div>
+                    <div>
+                        <label for="resource-category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="resource-category" name="category" placeholder="Tech, hospitality, etc.">
+                    </div>
+                    <div>
+                        <label for="resource-quantity" class="form-label">Quantity available</label>
+                        <input type="number" min="0" class="form-control" id="resource-quantity" name="quantity_available" value="1" required>
+                    </div>
+                    <div>
+                        <label for="resource-facility" class="form-label">Stored in</label>
+                        <select id="resource-facility" name="facility_id" class="form-select">
+                            <option value="">Not linked to a facility</option>
+                            {% for facility in facilities %}
+                                <option value="{{ facility.id }}">{{ facility.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="resource-description" class="form-label">Notes</label>
+                        <textarea class="form-control" id="resource-description" name="description" rows="3" placeholder="Setup instructions, storage location, etc."></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary">Save resource</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="h6 mb-0">Request a Reservation</h2>
+                <span class="text-muted small">Coordinate one event at a time to avoid conflicts.</span>
+            </div>
+            <div class="card-body">
+                <form method="post" class="row g-3">
+                    <input type="hidden" name="form_type" value="create_reservation">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="col-12">
+                        <label for="reservation-event" class="form-label">Event</label>
+                        <select class="form-select" id="reservation-event" name="event_id" required>
+                            <option value="">Select an event</option>
+                            {% for event in events %}
+                                <option value="{{ event.id }}" {% if form_data.get('event_id', 0)|int == event.id %}selected{% endif %}>
+                                    {{ event.title }} ({{ event.start_date.strftime('%b %d, %Y %I:%M %p') }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-facility" class="form-label">Facility</label>
+                        <select class="form-select" id="reservation-facility" name="facility_id" required>
+                            <option value="">Select a room or venue</option>
+                            {% for facility in facilities %}
+                                <option value="{{ facility.id }}" {% if form_data.get('facility_id', 0)|int == facility.id %}selected{% endif %}>
+                                    {{ facility.name }}{% if facility.capacity %} (Capacity {{ facility.capacity }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-ministry" class="form-label">Requesting ministry/team</label>
+                        <input type="text" class="form-control" id="reservation-ministry" name="ministry_name" value="{{ form_data.get('ministry_name', '') }}" placeholder="e.g., Youth Ministry" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-start-date" class="form-label">Start date</label>
+                        <input type="date" class="form-control" id="reservation-start-date" name="start_date" value="{{ form_data.get('start_date', '') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-start-time" class="form-label">Start time</label>
+                        <input type="time" class="form-control" id="reservation-start-time" name="start_time" value="{{ form_data.get('start_time', '') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-end-date" class="form-label">End date</label>
+                        <input type="date" class="form-control" id="reservation-end-date" name="end_date" value="{{ form_data.get('end_date', '') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="reservation-end-time" class="form-label">End time</label>
+                        <input type="time" class="form-control" id="reservation-end-time" name="end_time" value="{{ form_data.get('end_time', '') }}" required>
+                    </div>
+                    <div class="col-12">
+                        <label for="reservation-notes" class="form-label">Additional notes</label>
+                        <textarea class="form-control" id="reservation-notes" name="notes" rows="3" placeholder="Setup needs, access instructions, hospitality requests.">{{ form_data.get('notes', '') }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <h6 class="fw-bold">Equipment and support</h6>
+                        {% if resources %}
+                            <div class="vstack gap-2">
+                                {% for resource in resources %}
+                                    {% set usage = resource_availability.get(resource.id, {}) %}
+                                    <div class="border rounded p-2 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                        <div>
+                                            <div class="fw-semibold">{{ resource.name }}</div>
+                                            <div class="small text-muted">
+                                                {% if resource.category %}{{ resource.category }} &middot; {% endif %}
+                                                Total {{ resource.quantity_available }}
+                                                {% if usage %}
+                                                    &middot; Allocated {{ usage.allocated }} &middot; Remaining {{ usage.remaining }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <label for="resource-{{ resource.id }}" class="form-label small mb-0">Request</label>
+                                            <input type="number" min="0" class="form-control" style="width: 110px;" id="resource-{{ resource.id }}" name="resource_quantity_{{ resource.id }}" value="{{ form_data.get('resource_quantity_' ~ resource.id, '') }}" placeholder="0">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">Add shared resources to track setup needs alongside room bookings.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <div class="d-grid d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success">Submit reservation request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Active Facilities</h2>
+            </div>
+            <div class="card-body">
+                {% if facilities %}
+                    <div class="vstack gap-3">
+                        {% for facility in facilities %}
+                            <div class="border rounded p-3">
+                                <div class="fw-semibold">{{ facility.name }}</div>
+                                <div class="small text-muted">{{ facility.location or 'Location not specified' }}</div>
+                                <div class="small">Capacity: {{ facility.capacity }}</div>
+                                {% if facility.description %}
+                                    <div class="small mt-1 text-muted">{{ facility.description }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No facilities have been added yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Shared Resource Inventory</h2>
+            </div>
+            <div class="card-body p-0">
+                {% if resources %}
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Resource</th>
+                                    <th scope="col" class="text-center">Total</th>
+                                    <th scope="col" class="text-center">Allocated</th>
+                                    <th scope="col" class="text-center">Remaining</th>
+                                    <th scope="col">Stored in</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for resource in resources %}
+                                    {% set usage = resource_availability.get(resource.id, {'allocated': 0, 'remaining': resource.quantity_available}) %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ resource.name }}</div>
+                                            <div class="small text-muted">{{ resource.category or 'Uncategorized' }}</div>
+                                        </td>
+                                        <td class="text-center">{{ resource.quantity_available }}</td>
+                                        <td class="text-center">{{ usage.allocated }}</td>
+                                        <td class="text-center">{{ usage.remaining }}</td>
+                                        <td>{{ resource.facility.name if resource.facility else 'Standalone' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="p-3">
+                        <p class="text-muted mb-0">Add shared equipment to manage alongside room bookings.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h2 class="h6 mb-0">Upcoming Reservations</h2>
+    </div>
+    <div class="card-body p-0">
+        {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Event</th>
+                            <th scope="col">Facility</th>
+                            <th scope="col">Ministry</th>
+                            <th scope="col">Schedule</th>
+                            <th scope="col">Resources</th>
+                            <th scope="col" class="text-end">Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set status_options = ['requested', 'approved', 'scheduled', 'completed', 'declined', 'cancelled'] %}
+                        {% for reservation in reservations %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ reservation.event.title if reservation.event else 'Event removed' }}</div>
+                                    <div class="small text-muted">Created {{ reservation.created_at.strftime('%b %d, %Y') }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ reservation.facility.name }}</div>
+                                    <div class="small text-muted">Capacity {{ reservation.facility.capacity }}</div>
+                                </td>
+                                <td>{{ reservation.ministry_name }}</td>
+                                <td>
+                                    <div>{{ reservation.start_time.strftime('%b %d, %Y %I:%M %p') }}</div>
+                                    <div class="small text-muted">to {{ reservation.end_time.strftime('%b %d, %Y %I:%M %p') }}</div>
+                                    <div class="mt-1"><span class="badge bg-secondary text-uppercase">{{ reservation.status }}</span></div>
+                                </td>
+                                <td>
+                                    {% if reservation.resource_requests %}
+                                        <ul class="list-unstyled mb-0">
+                                            {% for allocation in reservation.resource_requests %}
+                                                <li>
+                                                    <span class="fw-semibold">{{ allocation.resource.name }}</span>
+                                                    <small class="text-muted">requested {{ allocation.quantity_requested }}{% if allocation.quantity_approved is not none %}, approved {{ allocation.quantity_approved }}{% endif %}</small>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <span class="text-muted">No resources</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" action="{{ url_for('admin.update_reservation_status', reservation_id=reservation.id) }}" class="vstack gap-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="input-group input-group-sm">
+                                            <label class="input-group-text" for="status-{{ reservation.id }}">Status</label>
+                                            <select class="form-select" id="status-{{ reservation.id }}" name="status">
+                                                {% for status_option in status_options %}
+                                                    <option value="{{ status_option }}" {% if reservation.status == status_option %}selected{% endif %}>{{ status_option|capitalize }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        {% for allocation in reservation.resource_requests %}
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">{{ allocation.resource.name }}</span>
+                                                <input type="number" min="0" class="form-control" name="approved_{{ allocation.id }}" value="{{ allocation.quantity_approved if allocation.quantity_approved is not none else allocation.quantity_requested }}">
+                                            </div>
+                                        {% endfor %}
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                        </div>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-4">
+                <p class="text-muted mb-0">No reservations scheduled yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

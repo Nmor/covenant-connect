@@ -1,5 +1,6 @@
-from decimal import Decimal
 import re
+from decimal import Decimal
+
 from models import Donation
 
 
@@ -11,18 +12,18 @@ def get_token(client, path):
 
 def test_donation_rejects_invalid_amount(client):
     token = get_token(client, '/donate')
-    resp = client.post('/donate/process', data={
+    response = client.post('/donate/process', data={
         'csrf_token': token,
         'email': 'test@example.com',
         'amount': 'abc',
         'payment_method': 'paystack'
     }, follow_redirects=True)
-    assert b'valid donation amount' in resp.data.lower()
+    assert b'valid donation amount' in response.data.lower()
 
 
 def test_donation_stores_decimal(client, app):
     token = get_token(client, '/donate')
-    resp = client.post('/donate/process', data={
+    client.post('/donate/process', data={
         'csrf_token': token,
         'email': 'user@example.com',
         'amount': '10.50',

@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import login_required
-from models import User, Donation, PrayerRequest, Event, Church
+
 from app import db
+from models import Church, Donation, Event, PrayerRequest, User
 
 internal_bp = Blueprint('internal', __name__)
 

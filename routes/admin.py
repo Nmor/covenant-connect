@@ -1,16 +1,57 @@
-from flask import Blueprint, render_template, current_app, flash, redirect, url_for, request
-from flask_login import login_required, current_user
-from models import PrayerRequest, Event, Sermon, Donation, User, Gallery, Settings
-from app import db
-from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
-from functools import wraps
 import csv
 import io
+import json
 import os
+from datetime import datetime
+from functools import wraps
+
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+from sqlalchemy import func, or_
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
+from app import db
+from models import (
+    Automation,
+    AutomationStep,
+    CareInteraction,
+    Donation,
+    Event,
+    Facility,
+    FacilityReservation,
+    Gallery,
+    Member,
+    MinistryDepartment,
+    PrayerRequest,
+    Resource,
+    ResourceAllocation,
+    Sermon,
+    Settings,
+    User,
+    VolunteerAssignment,
+    VolunteerRole,
+)
 from routes.admin_reports import collect_dashboard_metrics, resolve_reporting_window
+from tasks import trigger_automation
+
+AUTOMATION_TRIGGER_CHOICES = [
+    ('prayer_request_created', 'Prayer request submitted'),
+    ('event_created', 'Event created'),
+    ('event_viewed', 'Event viewed'),
+    ('sermon_published', 'Sermon published'),
+    ('sermon_viewed', 'Sermon viewed'),
+    ('member_status_changed', 'Member status changed'),
+]
+
+AUTOMATION_ACTION_TYPES = [
+    ('email', 'Send Email'),
+    ('sms', 'Send SMS'),
+    ('assignment', 'Assignment / Task'),
+]
+
+DEFAULT_CHANNEL_OPTIONS = ['email', 'sms', 'app']
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -22,6 +63,39 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def _safe_json_loads(value: str | None, default: dict | None = None) -> dict:
+    """Parse a JSON string from form input, providing helpful errors."""
+
+    if value is None or not value.strip():
+        return {} if default is None else default
+
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, dict):
+            return parsed
+        raise ValueError('JSON value must be an object')
+    except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+        raise ValueError(f'Invalid JSON: {exc.msg}') from exc
+
+
+def _update_automation_from_form(automation: Automation) -> None:
+    """Populate an automation model instance from posted form data."""
+
+    automation.name = request.form.get('name', '').strip()
+    if not automation.name:
+        raise ValueError('Automation name is required.')
+
+    automation.trigger = request.form.get('trigger') or automation.trigger
+    automation.description = request.form.get('description') or None
+    automation.is_active = bool(request.form.get('is_active'))
+    automation.default_channel = request.form.get('default_channel') or None
+    automation.target_department = request.form.get('target_department') or None
+    automation.trigger_filters = _safe_json_loads(
+        request.form.get('trigger_filters'),
+        automation.trigger_filters or {},
+    )
 
 @admin_bp.route('/admin')
 @admin_bp.route('/admin/dashboard')
@@ -57,7 +131,6 @@ def dashboard():
             filters=filters,
             export_args=export_args,
         )
-
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in dashboard route: {str(e)}")
         db.session.rollback()
@@ -125,6 +198,7 @@ def create_user():
 def edit_user(user_id):
     try:
         user = User.query.get_or_404(user_id)
+        original_admin_state = user.is_admin
         if request.method == 'POST':
             user.username = request.form['username']
             user.email = request.form['email']
@@ -132,6 +206,17 @@ def edit_user(user_id):
             if request.form.get('password'):
                 user.set_password(request.form['password'])
             db.session.commit()
+            status_changes = {}
+            if original_admin_state != user.is_admin:
+                status_changes['is_admin'] = {
+                    'previous': original_admin_state,
+                    'current': user.is_admin,
+                }
+            if status_changes:
+                trigger_automation(
+                    'member_status_changed',
+                    {'user_id': user.id, 'changes': status_changes},
+                )
             flash('User updated successfully.', 'success')
             return redirect(url_for('admin.users'))
         return render_template('admin/user_form.html', user=user)
@@ -166,6 +251,175 @@ def delete_user(user_id):
         current_app.logger.error(f"Error deleting user: {str(e)}")
         flash('An error occurred while deleting user.', 'danger')
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/admin/members')
+@login_required
+@admin_required
+def members():
+    try:
+        status_filter = (request.args.get('status') or '').strip()
+        search = (request.args.get('q') or '').strip()
+
+        query = Member.query
+
+        if status_filter:
+            query = query.filter(func.lower(Member.membership_status) == status_filter.lower())
+
+        if search:
+            like_pattern = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Member.first_name.ilike(like_pattern),
+                    Member.last_name.ilike(like_pattern),
+                    Member.email.ilike(like_pattern),
+                )
+            )
+
+        members = query.order_by(Member.last_name.asc(), Member.first_name.asc()).all()
+        statuses = [
+            value[0]
+            for value in (
+                db.session.query(Member.membership_status)
+                .distinct()
+                .order_by(Member.membership_status.asc())
+                .all()
+            )
+            if value[0]
+        ]
+
+        return render_template(
+            'admin/members/index.html',
+            members=members,
+            statuses=statuses,
+            status_filter=status_filter,
+            search=search,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in members route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading members.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in members route: {str(e)}")
+        flash('An error occurred while loading members.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/members/<int:member_id>')
+@login_required
+@admin_required
+def member_profile(member_id):
+    try:
+        member = (
+            Member.query.options(
+                joinedload(Member.household),
+                joinedload(Member.care_interactions).joinedload(CareInteraction.created_by),
+            )
+            .get_or_404(member_id)
+        )
+        interactions = sorted(
+            member.care_interactions,
+            key=lambda interaction: interaction.interaction_date,
+            reverse=True,
+        )
+        milestone_data = member.milestones or {}
+        default_keys = {key for key, _ in Member.DEFAULT_MILESTONES}
+        extra_milestones = [
+            (key, value)
+            for key, value in milestone_data.items()
+            if key not in default_keys
+        ]
+        return render_template(
+            'admin/members/detail.html',
+            member=member,
+            interactions=interactions,
+            milestone_catalog=Member.DEFAULT_MILESTONES,
+            extra_milestones=extra_milestones,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error loading member {member_id}: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading the member profile.', 'danger')
+        return redirect(url_for('admin.members'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error loading member {member_id}: {str(e)}")
+        flash('An error occurred while loading the member profile.', 'danger')
+        return redirect(url_for('admin.members'))
+
+
+@admin_bp.route('/admin/members/<int:member_id>/follow-ups', methods=['POST'])
+@login_required
+@admin_required
+def log_member_follow_up(member_id):
+    try:
+        member = Member.query.get_or_404(member_id)
+
+        interaction_type = (request.form.get('interaction_type') or 'follow_up').strip() or 'follow_up'
+        notes = (request.form.get('notes') or '').strip()
+        interaction_date_raw = (request.form.get('interaction_date') or '').strip()
+        follow_up_required = bool(request.form.get('follow_up_required'))
+        follow_up_date_raw = (request.form.get('follow_up_date') or '').strip()
+        assimilation_stage = (request.form.get('assimilation_stage') or '').strip()
+        membership_status = (request.form.get('membership_status') or '').strip()
+        milestone_key = (request.form.get('milestone_key') or '').strip()
+        milestone_completed = bool(request.form.get('milestone_completed'))
+
+        interaction_date = datetime.utcnow()
+        if interaction_date_raw:
+            try:
+                interaction_date = datetime.strptime(interaction_date_raw, '%Y-%m-%d')
+            except ValueError:
+                flash('Invalid interaction date format. Using today instead.', 'warning')
+
+        follow_up_date = None
+        if follow_up_date_raw:
+            try:
+                follow_up_date = datetime.strptime(follow_up_date_raw, '%Y-%m-%d')
+            except ValueError:
+                flash('Invalid follow-up date format. Ignoring provided date.', 'warning')
+
+        interaction = CareInteraction(
+            member=member,
+            interaction_type=interaction_type,
+            interaction_date=interaction_date,
+            notes=notes or None,
+            follow_up_required=follow_up_required,
+            follow_up_date=follow_up_date,
+            created_by_id=current_user.id if current_user.is_authenticated else None,
+            source='admin_follow_up',
+            metadata_json={'recorded_via': 'admin_portal'},
+        )
+
+        member.last_interaction_at = interaction_date
+        if follow_up_required and follow_up_date:
+            member.next_follow_up_date = follow_up_date
+        elif not follow_up_required:
+            member.next_follow_up_date = None
+
+        if assimilation_stage:
+            member.assimilation_stage = assimilation_stage
+
+        if membership_status:
+            member.membership_status = membership_status
+
+        if milestone_key:
+            member.record_milestone(milestone_key, completed=milestone_completed)
+
+        db.session.add(interaction)
+        db.session.commit()
+
+        flash('Follow-up recorded successfully.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error logging follow-up for member {member_id}: {str(e)}")
+        flash('An error occurred while saving the follow-up.', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Unexpected error logging follow-up for member {member_id}: {str(e)}")
+        flash('An unexpected error occurred while saving the follow-up.', 'danger')
+
+    return redirect(url_for('admin.member_profile', member_id=member_id))
 
 @admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
 @login_required
@@ -213,14 +467,281 @@ def user_import():
         flash('An error occurred while importing users.', 'danger')
         return redirect(url_for('admin.users'))
 
+
+# Automation Workflow Routes
+@admin_bp.route('/admin/automations')
+@login_required
+@admin_required
+def automations():
+    automations_list = (
+        Automation.query.order_by(Automation.created_at.desc()).all()
+    )
+    return render_template(
+        'admin/automations/index.html',
+        automations=automations_list,
+    )
+
+
+@admin_bp.route('/admin/automations/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_automation():
+    automation = Automation(
+        trigger=AUTOMATION_TRIGGER_CHOICES[0][0],
+        is_active=True,
+    )
+
+    if request.method == 'POST':
+        try:
+            _update_automation_from_form(automation)
+            db.session.add(automation)
+            db.session.commit()
+            flash('Automation created successfully.', 'success')
+            return redirect(
+                url_for('admin.automation_detail', automation_id=automation.id)
+            )
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), 'danger')
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error creating automation: {exc}"
+            )
+            flash('An error occurred while creating the automation.', 'danger')
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Unexpected error creating automation: {exc}"
+            )
+            flash(
+                'An unexpected error occurred while creating the automation.',
+                'danger',
+            )
+
+    trigger_filters_value = (
+        request.form.get('trigger_filters')
+        if request.method == 'POST'
+        else json.dumps(automation.trigger_filters or {}, indent=2)
+    )
+
+    return render_template(
+        'admin/automations/form.html',
+        automation=automation,
+        trigger_choices=AUTOMATION_TRIGGER_CHOICES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        trigger_filters=trigger_filters_value,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_automation(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+
+    if request.method == 'POST':
+        try:
+            _update_automation_from_form(automation)
+            db.session.commit()
+            flash('Automation updated successfully.', 'success')
+            return redirect(
+                url_for('admin.automation_detail', automation_id=automation.id)
+            )
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), 'danger')
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error updating automation {automation_id}: {exc}"
+            )
+            flash('An error occurred while updating the automation.', 'danger')
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Unexpected error updating automation {automation_id}: {exc}"
+            )
+            flash(
+                'An unexpected error occurred while updating the automation.',
+                'danger',
+            )
+
+    trigger_filters_value = (
+        request.form.get('trigger_filters')
+        if request.method == 'POST'
+        else json.dumps(automation.trigger_filters or {}, indent=2)
+    )
+
+    return render_template(
+        'admin/automations/form.html',
+        automation=automation,
+        trigger_choices=AUTOMATION_TRIGGER_CHOICES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        trigger_filters=trigger_filters_value,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>')
+@login_required
+@admin_required
+def automation_detail(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+
+    step_configs = {
+        step.id: json.dumps(step.config or {}, indent=2)
+        for step in automation.steps
+    }
+
+    default_step_config = json.dumps(
+        {
+            'recipient_mode': 'admins',
+            'subject': 'New notification from {{ automation.name }}',
+            'body': 'Update details can use values in {{ context }}.',
+        },
+        indent=2,
+    )
+
+    return render_template(
+        'admin/automations/detail.html',
+        automation=automation,
+        action_types=AUTOMATION_ACTION_TYPES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        step_configs=step_configs,
+        default_step_config=default_step_config,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_automation(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    try:
+        db.session.delete(automation)
+        db.session.commit()
+        flash('Automation deleted successfully.', 'success')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error deleting automation {automation_id}: {exc}"
+        )
+        flash('An error occurred while deleting the automation.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error deleting automation {automation_id}: {exc}"
+        )
+        flash('An unexpected error occurred while deleting the automation.', 'danger')
+
+    return redirect(url_for('admin.automations'))
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/steps/save', methods=['POST'])
+@login_required
+@admin_required
+def save_automation_step(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    step_id_raw = request.form.get('step_id')
+
+    try:
+        if step_id_raw:
+            step_id = int(step_id_raw)
+            step = AutomationStep.query.filter_by(
+                id=step_id, automation_id=automation.id
+            ).first_or_404()
+        else:
+            step = AutomationStep(automation=automation)
+
+        step.title = request.form.get('title') or None
+        step.action_type = request.form.get('action_type') or 'email'
+        if step.action_type not in {choice[0] for choice in AUTOMATION_ACTION_TYPES}:
+            raise ValueError('Invalid action type selected.')
+
+        step.channel = request.form.get('channel') or None
+        step.department = request.form.get('department') or None
+
+        order_value = request.form.get('order')
+        delay_value = request.form.get('delay_minutes')
+
+        step.order = int(order_value) if order_value else len(automation.steps) + 1
+        step.delay_minutes = int(delay_value) if delay_value else 0
+
+        config_value = request.form.get('config')
+        step.config = _safe_json_loads(config_value, step.config or {})
+
+        db.session.add(step)
+        db.session.commit()
+        flash('Automation step saved successfully.', 'success')
+    except ValueError as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error saving automation step for automation {automation_id}: {exc}"
+        )
+        flash('An error occurred while saving the automation step.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error saving automation step for automation {automation_id}: {exc}"
+        )
+        flash(
+            'An unexpected error occurred while saving the automation step.',
+            'danger',
+        )
+
+    return redirect(url_for('admin.automation_detail', automation_id=automation.id))
+
+
+@admin_bp.route(
+    '/admin/automations/<int:automation_id>/steps/<int:step_id>/delete',
+    methods=['POST'],
+)
+@login_required
+@admin_required
+def delete_automation_step(automation_id: int, step_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    try:
+        step = AutomationStep.query.filter_by(
+            id=step_id, automation_id=automation.id
+        ).first_or_404()
+        db.session.delete(step)
+        db.session.commit()
+        flash('Automation step deleted successfully.', 'success')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error deleting automation step {step_id}: {exc}"
+        )
+        flash('An error occurred while deleting the automation step.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error deleting automation step {step_id}: {exc}"
+        )
+        flash('An unexpected error occurred while deleting the automation step.', 'danger')
+
+    return redirect(url_for('admin.automation_detail', automation_id=automation.id))
+
+
 # Event Management Routes
 @admin_bp.route('/admin/events')
 @login_required
 @admin_required
 def events():
     try:
-        events = Event.query.order_by(Event.start_date.desc()).all()
-        return render_template('admin/events.html', events=events)
+        events = (
+            Event.query.options(
+                joinedload(Event.department),
+                joinedload(Event.volunteer_role).joinedload(VolunteerRole.department),
+                joinedload(Event.volunteer_role).joinedload(VolunteerRole.coordinator),
+            )
+            .order_by(Event.start_date.desc())
+            .all()
+        )
+        return render_template('admin/events.html', events=events, now=datetime.now())
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in events route: {str(e)}")
         db.session.rollback()
@@ -236,6 +757,12 @@ def events():
 @admin_required
 def create_event():
     try:
+        departments = MinistryDepartment.query.order_by(MinistryDepartment.name).all()
+        roles = (
+            VolunteerRole.query.options(joinedload(VolunteerRole.department))
+            .order_by(VolunteerRole.name)
+            .all()
+        )
         if request.method == 'POST':
             event = Event()
             event.title = request.form['title']
@@ -243,11 +770,48 @@ def create_event():
             event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
             event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
             event.location = request.form['location']
+            department_id = request.form.get('department_id')
+            role_id = request.form.get('volunteer_role_id')
+            event.department_id = int(department_id) if department_id else None
+            event.volunteer_role_id = int(role_id) if role_id else None
+
+            if event.department_id and not db.session.get(MinistryDepartment, event.department_id):
+                flash('Selected department could not be found.', 'danger')
+                return render_template(
+                    'admin/event_form.html',
+                    event=event,
+                    departments=departments,
+                    roles=roles,
+                )
+
+            if event.volunteer_role_id:
+                role = db.session.get(VolunteerRole, event.volunteer_role_id)
+                if not role:
+                    flash('Selected serving role could not be found.', 'danger')
+                    return render_template(
+                        'admin/event_form.html',
+                        event=event,
+                        departments=departments,
+                        roles=roles,
+                    )
+                if event.department_id and role.department_id != event.department_id:
+                    flash('Selected role does not belong to the chosen department.', 'danger')
+                    return render_template(
+                        'admin/event_form.html',
+                        event=event,
+                        departments=departments,
+                        roles=roles,
+                    )
             db.session.add(event)
             db.session.commit()
+            trigger_automation('event_created', {'event_id': event.id})
             flash('Event created successfully.', 'success')
             return redirect(url_for('admin.events'))
-        return render_template('admin/event_form.html')
+        return render_template(
+            'admin/event_form.html',
+            departments=departments,
+            roles=roles,
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error creating event: {str(e)}")
         db.session.rollback()
@@ -264,16 +828,59 @@ def create_event():
 def edit_event(event_id):
     try:
         event = Event.query.get_or_404(event_id)
+        departments = MinistryDepartment.query.order_by(MinistryDepartment.name).all()
+        roles = (
+            VolunteerRole.query.options(joinedload(VolunteerRole.department))
+            .order_by(VolunteerRole.name)
+            .all()
+        )
         if request.method == 'POST':
             event.title = request.form['title']
             event.description = request.form['description']
             event.start_date = datetime.strptime(f"{request.form['start_date']} {request.form['start_time']}", '%Y-%m-%d %H:%M')
             event.end_date = datetime.strptime(f"{request.form['end_date']} {request.form['end_time']}", '%Y-%m-%d %H:%M')
             event.location = request.form['location']
+            department_id = request.form.get('department_id')
+            role_id = request.form.get('volunteer_role_id')
+            event.department_id = int(department_id) if department_id else None
+            event.volunteer_role_id = int(role_id) if role_id else None
+
+            if event.department_id and not db.session.get(MinistryDepartment, event.department_id):
+                flash('Selected department could not be found.', 'danger')
+                return render_template(
+                    'admin/event_form.html',
+                    event=event,
+                    departments=departments,
+                    roles=roles,
+                )
+
+            if event.volunteer_role_id:
+                role = db.session.get(VolunteerRole, event.volunteer_role_id)
+                if not role:
+                    flash('Selected serving role could not be found.', 'danger')
+                    return render_template(
+                        'admin/event_form.html',
+                        event=event,
+                        departments=departments,
+                        roles=roles,
+                    )
+                if event.department_id and role.department_id != event.department_id:
+                    flash('Selected role does not belong to the chosen department.', 'danger')
+                    return render_template(
+                        'admin/event_form.html',
+                        event=event,
+                        departments=departments,
+                        roles=roles,
+                    )
             db.session.commit()
             flash('Event updated successfully.', 'success')
             return redirect(url_for('admin.events'))
-        return render_template('admin/event_form.html', event=event)
+        return render_template(
+            'admin/event_form.html',
+            event=event,
+            departments=departments,
+            roles=roles,
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error editing event: {str(e)}")
         db.session.rollback()
@@ -301,6 +908,718 @@ def delete_event(event_id):
         current_app.logger.error(f"Error deleting event: {str(e)}")
         flash('An error occurred while deleting event.', 'danger')
     return redirect(url_for('admin.events'))
+
+
+# Facility and Resource Reservation Routes
+@admin_bp.route('/admin/facilities', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def facilities():
+    try:
+        now = datetime.utcnow()
+        facilities = (
+            Facility.query.filter_by(is_active=True)
+            .order_by(Facility.name)
+            .all()
+        )
+        resources = (
+            Resource.query.filter_by(is_active=True)
+            .order_by(Resource.name)
+            .all()
+        )
+        events = Event.query.order_by(Event.start_date.desc()).all()
+        reservations = (
+            FacilityReservation.query
+            .order_by(FacilityReservation.start_time.desc())
+            .limit(25)
+            .all()
+        )
+
+        resource_availability = {}
+        for resource in resources:
+            overlapping_allocations = (
+                ResourceAllocation.query.join(FacilityReservation)
+                .filter(
+                    ResourceAllocation.resource_id == resource.id,
+                    FacilityReservation.end_time >= now,
+                    FacilityReservation.status != 'cancelled'
+                )
+                .all()
+            )
+            allocated = sum(
+                allocation.quantity_approved
+                if allocation.quantity_approved is not None
+                else allocation.quantity_requested
+                for allocation in overlapping_allocations
+            )
+            resource_availability[resource.id] = {
+                'allocated': allocated,
+                'remaining': max(resource.quantity_available - allocated, 0)
+            }
+
+        conflicts = []
+        resource_conflicts = []
+        form_data = {}
+
+        if request.method == 'POST':
+            form_type = request.form.get('form_type')
+
+            if form_type == 'create_facility':
+                name = request.form.get('name')
+                capacity_value = request.form.get('capacity', '').strip()
+                location = request.form.get('location')
+                description = request.form.get('description')
+
+                if not name:
+                    flash('Facility name is required.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    capacity = int(capacity_value) if capacity_value else 0
+                except ValueError:
+                    flash('Capacity must be a numeric value.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                facility = Facility(
+                    name=name,
+                    location=location,
+                    capacity=max(capacity, 0),
+                    description=description
+                )
+                db.session.add(facility)
+                db.session.commit()
+                flash('Facility added successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+            if form_type == 'create_resource':
+                name = request.form.get('name')
+                category = request.form.get('category')
+                quantity_value = request.form.get('quantity_available', '').strip()
+                description = request.form.get('description')
+                facility_id = request.form.get('facility_id')
+
+                if not name:
+                    flash('Resource name is required.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    quantity = int(quantity_value) if quantity_value else 1
+                except ValueError:
+                    flash('Quantity must be a numeric value.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                resource = Resource(
+                    name=name,
+                    category=category or None,
+                    quantity_available=max(quantity, 0),
+                    description=description or None,
+                    facility_id=int(facility_id) if facility_id else None
+                )
+                db.session.add(resource)
+                db.session.commit()
+                flash('Resource added successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+            if form_type == 'create_reservation':
+                event_id = request.form.get('event_id')
+                facility_id = request.form.get('facility_id')
+                ministry_name = request.form.get('ministry_name')
+                start_date = request.form.get('start_date')
+                start_time = request.form.get('start_time')
+                end_date = request.form.get('end_date')
+                end_time = request.form.get('end_time')
+                notes = request.form.get('notes')
+
+                required_fields = [event_id, facility_id, ministry_name, start_date, start_time, end_date, end_time]
+                if not all(required_fields):
+                    flash('Please complete all required fields for the reservation.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    start_dt = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
+                    end_dt = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
+                except ValueError:
+                    flash('Invalid date or time format provided.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                if end_dt <= start_dt:
+                    flash('End time must be after the start time.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                conflicts = FacilityReservation.query.filter(
+                    FacilityReservation.facility_id == int(facility_id),
+                    FacilityReservation.start_time < end_dt,
+                    FacilityReservation.end_time > start_dt,
+                    FacilityReservation.status != 'cancelled'
+                ).all()
+
+                requested_allocations = []
+                resource_conflicts = []
+
+                for resource in resources:
+                    quantity_raw = request.form.get(f'resource_quantity_{resource.id}', '').strip()
+                    if not quantity_raw:
+                        continue
+
+                    try:
+                        quantity_requested = int(quantity_raw)
+                    except ValueError:
+                        quantity_requested = 0
+
+                    if quantity_requested <= 0:
+                        continue
+
+                    overlapping_allocations = (
+                        ResourceAllocation.query.join(FacilityReservation)
+                        .filter(
+                            ResourceAllocation.resource_id == resource.id,
+                            FacilityReservation.start_time < end_dt,
+                            FacilityReservation.end_time > start_dt,
+                            FacilityReservation.status != 'cancelled'
+                        )
+                        .all()
+                    )
+
+                    allocated = sum(
+                        allocation.quantity_approved
+                        if allocation.quantity_approved is not None
+                        else allocation.quantity_requested
+                        for allocation in overlapping_allocations
+                    )
+
+                    if allocated + quantity_requested > resource.quantity_available:
+                        resource_conflicts.append({
+                            'resource': resource,
+                            'requested': quantity_requested,
+                            'available': resource.quantity_available,
+                            'allocated': allocated
+                        })
+
+                    requested_allocations.append((resource, quantity_requested))
+
+                if conflicts or resource_conflicts:
+                    flash('We detected scheduling conflicts. Review the details below.', 'warning')
+                    form_data = request.form.to_dict()
+                    context = {
+                        'facilities': facilities,
+                        'resources': resources,
+                        'reservations': reservations,
+                        'events': events,
+                        'resource_availability': resource_availability,
+                        'conflicts': conflicts,
+                        'resource_conflicts': resource_conflicts,
+                        'form_data': form_data,
+                    }
+                    return render_template('admin/facilities.html', **context)
+
+                reservation = FacilityReservation(
+                    event_id=int(event_id),
+                    facility_id=int(facility_id),
+                    ministry_name=ministry_name,
+                    start_time=start_dt,
+                    end_time=end_dt,
+                    notes=notes
+                )
+                db.session.add(reservation)
+                db.session.flush()
+
+                for resource, quantity in requested_allocations:
+                    allocation = ResourceAllocation(
+                        reservation_id=reservation.id,
+                        resource_id=resource.id,
+                        quantity_requested=quantity
+                    )
+                    db.session.add(allocation)
+
+                db.session.commit()
+                flash('Reservation request submitted successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+        context = {
+            'facilities': facilities,
+            'resources': resources,
+            'reservations': reservations,
+            'events': events,
+            'resource_availability': resource_availability,
+            'conflicts': conflicts,
+            'resource_conflicts': resource_conflicts,
+            'form_data': form_data,
+        }
+        return render_template('admin/facilities.html', **context)
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in facilities route: {str(e)}")
+        flash('An error occurred while managing facilities.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in facilities route: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/facilities/reservations/<int:reservation_id>/status', methods=['POST'])
+@login_required
+@admin_required
+def update_reservation_status(reservation_id):
+    try:
+        reservation = FacilityReservation.query.get_or_404(reservation_id)
+        status = request.form.get('status')
+        if status:
+            reservation.status = status
+
+        for allocation in reservation.resource_requests:
+            approved_value = request.form.get(f'approved_{allocation.id}')
+            if approved_value is None or approved_value == '':
+                continue
+            try:
+                allocation.quantity_approved = int(approved_value)
+            except ValueError:
+                allocation.quantity_approved = allocation.quantity_requested
+
+        db.session.commit()
+        flash('Reservation updated successfully.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error updating reservation {reservation_id}: {str(e)}")
+        flash('An error occurred while updating the reservation.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error updating reservation {reservation_id}: {str(e)}")
+        flash('An unexpected error occurred while updating the reservation.', 'danger')
+    return redirect(url_for('admin.facilities'))
+
+# Department Management Routes
+@admin_bp.route('/admin/departments')
+@login_required
+@admin_required
+def departments():
+    try:
+        departments = (
+            MinistryDepartment.query.options(
+                joinedload(MinistryDepartment.lead),
+                joinedload(MinistryDepartment.roles).joinedload(VolunteerRole.coordinator),
+            )
+            .order_by(MinistryDepartment.name)
+            .all()
+        )
+        return render_template('admin/departments/index.html', departments=departments)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error loading departments: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading departments.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error loading departments: {str(e)}")
+        flash('An error occurred while loading departments.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/departments/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_department():
+    try:
+        users = User.query.order_by(User.username).all()
+        if request.method == 'POST':
+            department = MinistryDepartment()
+            department.name = request.form['name']
+            department.description = request.form.get('description')
+            lead_id = request.form.get('lead_id')
+            department.lead_id = int(lead_id) if lead_id else None
+            db.session.add(department)
+            db.session.commit()
+            flash('Department created successfully.', 'success')
+            return redirect(url_for('admin.departments'))
+        return render_template('admin/departments/form.html', users=users)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating department: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating department.', 'danger')
+        return redirect(url_for('admin.departments'))
+    except Exception as e:
+        current_app.logger.error(f"Error creating department: {str(e)}")
+        flash('An error occurred while creating department.', 'danger')
+        return redirect(url_for('admin.departments'))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_department(department_id):
+    try:
+        department = MinistryDepartment.query.get_or_404(department_id)
+        users = User.query.order_by(User.username).all()
+        if request.method == 'POST':
+            department.name = request.form['name']
+            department.description = request.form.get('description')
+            lead_id = request.form.get('lead_id')
+            department.lead_id = int(lead_id) if lead_id else None
+            db.session.commit()
+            flash('Department updated successfully.', 'success')
+            return redirect(url_for('admin.departments'))
+        return render_template(
+            'admin/departments/form.html', department=department, users=users
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error editing department: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while editing department.', 'danger')
+        return redirect(url_for('admin.departments'))
+    except Exception as e:
+        current_app.logger.error(f"Error editing department: {str(e)}")
+        flash('An error occurred while editing department.', 'danger')
+        return redirect(url_for('admin.departments'))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>')
+@login_required
+@admin_required
+def department_detail(department_id):
+    try:
+        department = (
+            MinistryDepartment.query.options(
+                joinedload(MinistryDepartment.lead),
+                joinedload(MinistryDepartment.roles)
+                .joinedload(VolunteerRole.coordinator),
+                joinedload(MinistryDepartment.roles)
+                .joinedload(VolunteerRole.assignments)
+                .joinedload(VolunteerAssignment.volunteer),
+                joinedload(MinistryDepartment.events),
+            )
+            .get_or_404(department_id)
+        )
+        upcoming_events = [
+            event for event in department.events if event.start_date >= datetime.now()
+        ]
+        upcoming_events.sort(key=lambda event: event.start_date)
+        return render_template(
+            'admin/departments/detail.html',
+            department=department,
+            upcoming_events=upcoming_events,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error loading department: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading the department.', 'danger')
+        return redirect(url_for('admin.departments'))
+    except Exception as e:
+        current_app.logger.error(f"Error loading department: {str(e)}")
+        flash('An error occurred while loading the department.', 'danger')
+        return redirect(url_for('admin.departments'))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_department(department_id):
+    try:
+        department = MinistryDepartment.query.get_or_404(department_id)
+        for event in list(department.events):
+            event.department_id = None
+            if event.volunteer_role and event.volunteer_role.department_id == department.id:
+                event.volunteer_role_id = None
+        for role in list(department.roles):
+            for event in list(role.events):
+                event.volunteer_role_id = None
+        db.session.delete(department)
+        db.session.commit()
+        flash('Department deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting department: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting department.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting department: {str(e)}")
+        flash('An error occurred while deleting department.', 'danger')
+    return redirect(url_for('admin.departments'))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>/roles/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_role(department_id):
+    try:
+        department = MinistryDepartment.query.get_or_404(department_id)
+        users = User.query.order_by(User.username).all()
+        if request.method == 'POST':
+            role = VolunteerRole()
+            role.department = department
+            role.name = request.form['name']
+            role.description = request.form.get('description')
+            coordinator_id = request.form.get('coordinator_id')
+            role.coordinator_id = int(coordinator_id) if coordinator_id else None
+            db.session.add(role)
+            db.session.commit()
+            flash('Volunteer role created successfully.', 'success')
+            return redirect(url_for('admin.department_detail', department_id=department.id))
+        return render_template(
+            'admin/departments/role_form.html',
+            department=department,
+            users=users,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating role: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating volunteer role.', 'danger')
+        return redirect(url_for('admin.department_detail', department_id=department_id))
+    except Exception as e:
+        current_app.logger.error(f"Error creating role: {str(e)}")
+        flash('An error occurred while creating volunteer role.', 'danger')
+        return redirect(url_for('admin.department_detail', department_id=department_id))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>/roles/<int:role_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_role(department_id, role_id):
+    try:
+        department = MinistryDepartment.query.get_or_404(department_id)
+        role = VolunteerRole.query.get_or_404(role_id)
+        if role.department_id != department.id:
+            flash('Volunteer role does not belong to this department.', 'danger')
+            return redirect(url_for('admin.department_detail', department_id=department.id))
+        users = User.query.order_by(User.username).all()
+        if request.method == 'POST':
+            role.name = request.form['name']
+            role.description = request.form.get('description')
+            coordinator_id = request.form.get('coordinator_id')
+            role.coordinator_id = int(coordinator_id) if coordinator_id else None
+            db.session.commit()
+            flash('Volunteer role updated successfully.', 'success')
+            return redirect(url_for('admin.department_detail', department_id=department.id))
+        return render_template(
+            'admin/departments/role_form.html',
+            department=department,
+            role=role,
+            users=users,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error updating role: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating volunteer role.', 'danger')
+        return redirect(url_for('admin.department_detail', department_id=department_id))
+    except Exception as e:
+        current_app.logger.error(f"Error updating role: {str(e)}")
+        flash('An error occurred while updating volunteer role.', 'danger')
+        return redirect(url_for('admin.department_detail', department_id=department_id))
+
+
+@admin_bp.route('/admin/departments/<int:department_id>/roles/<int:role_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_role(department_id, role_id):
+    try:
+        role = VolunteerRole.query.get_or_404(role_id)
+        if role.department_id != department_id:
+            flash('Volunteer role does not belong to the specified department.', 'danger')
+            return redirect(url_for('admin.department_detail', department_id=department_id))
+        for event in list(role.events):
+            event.volunteer_role_id = None
+        db.session.delete(role)
+        db.session.commit()
+        flash('Volunteer role deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting role: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting volunteer role.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting role: {str(e)}")
+        flash('An error occurred while deleting volunteer role.', 'danger')
+    return redirect(url_for('admin.department_detail', department_id=department_id))
+
+
+# Volunteer Assignment Routes
+@admin_bp.route('/admin/volunteers')
+@login_required
+@admin_required
+def volunteers():
+    try:
+        assignments = (
+            VolunteerAssignment.query.options(
+                joinedload(VolunteerAssignment.volunteer),
+                joinedload(VolunteerAssignment.role)
+                .joinedload(VolunteerRole.department),
+                joinedload(VolunteerAssignment.role)
+                .joinedload(VolunteerRole.coordinator),
+            )
+            .order_by(VolunteerAssignment.created_at.desc())
+            .all()
+        )
+        return render_template('admin/volunteers/index.html', assignments=assignments)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error loading volunteers: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading volunteer assignments.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Error loading volunteers: {str(e)}")
+        flash('An error occurred while loading volunteer assignments.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/volunteers/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_volunteer_assignment():
+    try:
+        volunteers = User.query.order_by(User.username).all()
+        roles = (
+            VolunteerRole.query.options(joinedload(VolunteerRole.department))
+            .order_by(VolunteerRole.name)
+            .all()
+        )
+        if request.method == 'POST':
+            role_id = request.form.get('role_id')
+            volunteer_id = request.form.get('volunteer_id')
+            if not role_id or not volunteer_id:
+                flash('Please select both a serving role and a volunteer.', 'danger')
+                return render_template(
+                    'admin/volunteers/form.html',
+                    roles=roles,
+                    volunteers=volunteers,
+                )
+            role = db.session.get(VolunteerRole, int(role_id))
+            volunteer = db.session.get(User, int(volunteer_id))
+            if not role or not volunteer:
+                flash('Invalid role or volunteer selection.', 'danger')
+                return render_template(
+                    'admin/volunteers/form.html',
+                    roles=roles,
+                    volunteers=volunteers,
+                )
+            existing = VolunteerAssignment.query.filter_by(
+                role_id=role.id, volunteer_id=volunteer.id
+            ).first()
+            if existing:
+                flash('This volunteer is already assigned to the selected role.', 'warning')
+                return redirect(
+                    url_for('admin.edit_volunteer_assignment', assignment_id=existing.id)
+                )
+
+            assignment = VolunteerAssignment()
+            assignment.role = role
+            assignment.volunteer = volunteer
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            if start_date:
+                assignment.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            if end_date:
+                assignment.end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            assignment.notes = request.form.get('notes')
+            db.session.add(assignment)
+            db.session.commit()
+            flash('Volunteer assignment created successfully.', 'success')
+            return redirect(url_for('admin.volunteers'))
+        return render_template(
+            'admin/volunteers/form.html',
+            roles=roles,
+            volunteers=volunteers,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error creating assignment: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while creating volunteer assignment.', 'danger')
+        return redirect(url_for('admin.volunteers'))
+    except Exception as e:
+        current_app.logger.error(f"Error creating assignment: {str(e)}")
+        flash('An error occurred while creating volunteer assignment.', 'danger')
+        return redirect(url_for('admin.volunteers'))
+
+
+@admin_bp.route('/admin/volunteers/<int:assignment_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_volunteer_assignment(assignment_id):
+    try:
+        assignment = VolunteerAssignment.query.get_or_404(assignment_id)
+        volunteers = User.query.order_by(User.username).all()
+        roles = (
+            VolunteerRole.query.options(joinedload(VolunteerRole.department))
+            .order_by(VolunteerRole.name)
+            .all()
+        )
+        if request.method == 'POST':
+            role_id = request.form.get('role_id')
+            volunteer_id = request.form.get('volunteer_id')
+            if not role_id or not volunteer_id:
+                flash('Please select both a serving role and a volunteer.', 'danger')
+                return render_template(
+                    'admin/volunteers/form.html',
+                    assignment=assignment,
+                    roles=roles,
+                    volunteers=volunteers,
+                )
+            role = db.session.get(VolunteerRole, int(role_id))
+            volunteer = db.session.get(User, int(volunteer_id))
+            if not role or not volunteer:
+                flash('Invalid role or volunteer selection.', 'danger')
+                return render_template(
+                    'admin/volunteers/form.html',
+                    assignment=assignment,
+                    roles=roles,
+                    volunteers=volunteers,
+                )
+            duplicate = (
+                VolunteerAssignment.query.filter(
+                    VolunteerAssignment.id != assignment.id,
+                    VolunteerAssignment.role_id == role.id,
+                    VolunteerAssignment.volunteer_id == volunteer.id,
+                )
+                .first()
+            )
+            if duplicate:
+                flash('Another assignment already uses this role and volunteer.', 'warning')
+                return redirect(
+                    url_for('admin.edit_volunteer_assignment', assignment_id=duplicate.id)
+                )
+            assignment.role = role
+            assignment.volunteer = volunteer
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            assignment.start_date = (
+                datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else None
+            )
+            assignment.end_date = (
+                datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None
+            )
+            assignment.notes = request.form.get('notes')
+            db.session.commit()
+            flash('Volunteer assignment updated successfully.', 'success')
+            return redirect(url_for('admin.volunteers'))
+        return render_template(
+            'admin/volunteers/form.html',
+            assignment=assignment,
+            roles=roles,
+            volunteers=volunteers,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error updating assignment: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while updating volunteer assignment.', 'danger')
+        return redirect(url_for('admin.volunteers'))
+    except Exception as e:
+        current_app.logger.error(f"Error updating assignment: {str(e)}")
+        flash('An error occurred while updating volunteer assignment.', 'danger')
+        return redirect(url_for('admin.volunteers'))
+
+
+@admin_bp.route('/admin/volunteers/<int:assignment_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_volunteer_assignment(assignment_id):
+    try:
+        assignment = VolunteerAssignment.query.get_or_404(assignment_id)
+        db.session.delete(assignment)
+        db.session.commit()
+        flash('Volunteer assignment deleted successfully.', 'success')
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error deleting assignment: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting volunteer assignment.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting assignment: {str(e)}")
+        flash('An error occurred while deleting volunteer assignment.', 'danger')
+    return redirect(url_for('admin.volunteers'))
 
 # Prayer Request Management Routes
 @admin_bp.route('/admin/prayers')
@@ -470,6 +1789,7 @@ def create_sermon():
             sermon.media_type = request.form['media_type']
             db.session.add(sermon)
             db.session.commit()
+            trigger_automation('sermon_published', {'sermon_id': sermon.id})
             flash('Sermon added successfully.', 'success')
             return redirect(url_for('admin.sermons'))
         return render_template('admin/sermon_form.html')

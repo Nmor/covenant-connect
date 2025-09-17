@@ -1,6 +1,7 @@
 import re
-from models import User
+
 from app import db
+from models import User
 
 
 def get_token(client, path):
