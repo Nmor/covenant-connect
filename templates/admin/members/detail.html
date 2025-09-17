@@ -1,0 +1,212 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2 mb-0">{{ member.full_name }}</h1>
+        <p class="text-muted mb-0">{{ member.membership_status|default('Guest', true)|title }} &middot; {{ member.email }}</p>
+    </div>
+    <div class="text-md-end mt-3 mt-md-0">
+        {% if member.follow_up_due %}
+            <span class="badge bg-warning text-dark">Follow-up Due</span>
+        {% endif %}
+        <a href="{{ url_for('admin.members') }}" class="btn btn-outline-secondary ms-2">Back to Members</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Profile Summary</h2>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-6 small text-muted">Assimilation Stage</dt>
+                    <dd class="col-6 fw-semibold">{{ member.assimilation_stage or 'New Connection' }}</dd>
+                    <dt class="col-6 small text-muted">Preferred Contact</dt>
+                    <dd class="col-6">{{ member.preferred_contact_method or 'Not set' }}</dd>
+                    <dt class="col-6 small text-muted">Phone</dt>
+                    <dd class="col-6">{{ member.phone or 'Not set' }}</dd>
+                    <dt class="col-6 small text-muted">Last Interaction</dt>
+                    <dd class="col-6">{% if member.last_interaction_at %}{{ member.last_interaction_at.strftime('%b %d, %Y') }}{% else %}None yet{% endif %}</dd>
+                    <dt class="col-6 small text-muted">Next Follow-up</dt>
+                    <dd class="col-6">{% if member.next_follow_up_date %}{{ member.next_follow_up_date.strftime('%b %d, %Y') }}{% else %}Not scheduled{% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Milestones</h2>
+            </div>
+            <div class="card-body">
+                {% set milestone_data = member.milestones or {} %}
+                <ul class="list-group list-group-flush">
+                    {% for key, label in milestone_catalog %}
+                        {% set record = milestone_data.get(key) %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ label }}</div>
+                                {% if record and record.completed_on %}
+                                    <div class="small text-muted">Completed {{ record.completed_on|replace('T', ' ') }}</div>
+                                {% endif %}
+                            </div>
+                            {% if record and record.completed %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-light text-muted">Pending</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                    {% for key, record in extra_milestones %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ member.milestone_label(key) }}</div>
+                                {% if record.completed_on %}
+                                    <div class="small text-muted">Completed {{ record.completed_on|replace('T', ' ') }}</div>
+                                {% endif %}
+                            </div>
+                            {% if record.completed %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-light text-muted">Pending</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% if member.household %}
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h6 mb-0">Household</h2>
+                </div>
+                <div class="card-body">
+                    <h3 class="h6">{{ member.household.name }}</h3>
+                    <p class="small mb-2 text-muted">{{ member.household.primary_email or 'No email on file' }}</p>
+                    {% if member.household.primary_phone %}
+                        <p class="small mb-2"><i class="bi bi-telephone me-2"></i>{{ member.household.primary_phone }}</p>
+                    {% endif %}
+                    {% if member.household.address_line1 %}
+                        <p class="small mb-0">{{ member.household.address_line1 }}<br>
+                        {% if member.household.address_line2 %}{{ member.household.address_line2 }}<br>{% endif %}
+                        {{ member.household.city }}, {{ member.household.state }} {{ member.household.postal_code }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Log a Follow-up</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('admin.log_member_follow_up', member_id=member.id) }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="interaction_type" class="form-label">Interaction Type</label>
+                            <select class="form-select" id="interaction_type" name="interaction_type">
+                                <option value="phone_call">Phone Call</option>
+                                <option value="text_message">Text Message</option>
+                                <option value="email">Email</option>
+                                <option value="meeting">In-person Meeting</option>
+                                <option value="prayer_follow_up">Prayer Follow-up</option>
+                                <option value="sermon_engagement">Sermon Engagement</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="interaction_date" class="form-label">Interaction Date</label>
+                            <input type="date" class="form-control" id="interaction_date" name="interaction_date">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Follow-up Required</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="follow_up_required" name="follow_up_required" {% if member.follow_up_due %}checked{% endif %}>
+                                <label class="form-check-label" for="follow_up_required">Yes</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="follow_up_date" class="form-label">Next Follow-up Date</label>
+                            <input type="date" class="form-control" id="follow_up_date" name="follow_up_date" value="{% if member.next_follow_up_date %}{{ member.next_follow_up_date.strftime('%Y-%m-%d') }}{% endif %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="membership_status" class="form-label">Membership Status</label>
+                            <select class="form-select" id="membership_status" name="membership_status">
+                                <option value="">Keep current</option>
+                                {% set current_status = member.membership_status or '' %}
+                                {% for option in ['guest', 'attender', 'regular', 'member', 'partner'] %}
+                                    <option value="{{ option }}" {% if current_status == option %}selected{% endif %}>{{ option|title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="assimilation_stage" class="form-label">Assimilation Stage</label>
+                            <input type="text" class="form-control" id="assimilation_stage" name="assimilation_stage" value="{{ member.assimilation_stage or '' }}" placeholder="e.g., Growth Track">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="milestone_key" class="form-label">Update Milestone</label>
+                            <select class="form-select" id="milestone_key" name="milestone_key">
+                                <option value="">No milestone update</option>
+                                {% for key, label in milestone_catalog %}
+                                    <option value="{{ key }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="milestone_completed" name="milestone_completed">
+                                <label class="form-check-label" for="milestone_completed">Mark milestone as completed</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Capture details from your interaction"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn btn-primary">Save Follow-up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h2 class="h6 mb-0">Interaction History</h2>
+            </div>
+            <div class="card-body p-0">
+                {% if interactions %}
+                    <ul class="list-group list-group-flush">
+                        {% for interaction in interactions %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-semibold">{{ interaction.interaction_type.replace('_', ' ')|title }}</div>
+                                        <div class="small text-muted">
+                                            {{ interaction.interaction_date.strftime('%B %d, %Y') }}
+                                            {% if interaction.created_by %}&middot; Logged by {{ interaction.created_by.username }}{% endif %}
+                                        </div>
+                                    </div>
+                                    {% if interaction.follow_up_required and interaction.follow_up_date %}
+                                        <span class="badge bg-warning text-dark">Follow up {{ interaction.follow_up_date.strftime('%b %d') }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if interaction.notes %}
+                                    <p class="small mb-0 mt-2">{{ interaction.notes }}</p>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">No follow-up activity recorded yet. Use the form above to log your first interaction.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,16 +1,28 @@
 from flask import Blueprint, render_template, current_app, flash, redirect, url_for, request
 from flask_login import login_required, current_user
-from models import PrayerRequest, Event, Sermon, Donation, User, Gallery, Settings
+from models import (
+    PrayerRequest,
+    Event,
+    Sermon,
+    Donation,
+    User,
+    Gallery,
+    Settings,
+    Member,
+    Household,
+    CareInteraction,
+)
 from app import db
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime, time
+from datetime import datetime
 from decimal import Decimal
 from functools import wraps
 import csv
 import io
 import os
 from werkzeug.utils import secure_filename
+from sqlalchemy.orm import joinedload
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -52,12 +64,42 @@ def dashboard():
             'total': Donation.query.filter_by(status='success').count(),
             'amount': db.session.query(func.sum(Donation.amount)).filter_by(status='success').scalar() or 0
         }
-        
+
+        members = Member.query.all()
+        connected_statuses = {'member', 'partner', 'regular', 'active'}
+        connected_members = sum(
+            1
+            for member in members
+            if (member.membership_status or '').strip().lower() in connected_statuses
+        )
+        followups_due = sum(1 for member in members if member.follow_up_due)
+        milestone_percentages = [member.milestone_completion_rate * 100 for member in members]
+        avg_milestone = round(sum(milestone_percentages) / len(milestone_percentages), 1) if milestone_percentages else 0.0
+
+        member_stats = {
+            'total': len(members),
+            'connected': connected_members,
+            'followups_due': followups_due,
+            'milestone_completion_rate': avg_milestone,
+        }
+
+        recent_followups = (
+            CareInteraction.query.options(
+                joinedload(CareInteraction.member),
+                joinedload(CareInteraction.created_by),
+            )
+            .order_by(CareInteraction.interaction_date.desc())
+            .limit(5)
+            .all()
+        )
+
         return render_template('admin/dashboard.html',
                              prayer_stats=prayer_stats,
                              event_stats=event_stats,
                              sermon_stats=sermon_stats,
-                             donation_stats=donation_stats)
+                             donation_stats=donation_stats,
+                             member_stats=member_stats,
+                             recent_followups=recent_followups)
                              
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in dashboard route: {str(e)}")
@@ -167,6 +209,175 @@ def delete_user(user_id):
         current_app.logger.error(f"Error deleting user: {str(e)}")
         flash('An error occurred while deleting user.', 'danger')
     return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/admin/members')
+@login_required
+@admin_required
+def members():
+    try:
+        status_filter = (request.args.get('status') or '').strip()
+        search = (request.args.get('q') or '').strip()
+
+        query = Member.query
+
+        if status_filter:
+            query = query.filter(func.lower(Member.membership_status) == status_filter.lower())
+
+        if search:
+            like_pattern = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Member.first_name.ilike(like_pattern),
+                    Member.last_name.ilike(like_pattern),
+                    Member.email.ilike(like_pattern),
+                )
+            )
+
+        members = query.order_by(Member.last_name.asc(), Member.first_name.asc()).all()
+        statuses = [
+            value[0]
+            for value in (
+                db.session.query(Member.membership_status)
+                .distinct()
+                .order_by(Member.membership_status.asc())
+                .all()
+            )
+            if value[0]
+        ]
+
+        return render_template(
+            'admin/members/index.html',
+            members=members,
+            statuses=statuses,
+            status_filter=status_filter,
+            search=search,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in members route: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading members.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in members route: {str(e)}")
+        flash('An error occurred while loading members.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/members/<int:member_id>')
+@login_required
+@admin_required
+def member_profile(member_id):
+    try:
+        member = (
+            Member.query.options(
+                joinedload(Member.household),
+                joinedload(Member.care_interactions).joinedload(CareInteraction.created_by),
+            )
+            .get_or_404(member_id)
+        )
+        interactions = sorted(
+            member.care_interactions,
+            key=lambda interaction: interaction.interaction_date,
+            reverse=True,
+        )
+        milestone_data = member.milestones or {}
+        default_keys = {key for key, _ in Member.DEFAULT_MILESTONES}
+        extra_milestones = [
+            (key, value)
+            for key, value in milestone_data.items()
+            if key not in default_keys
+        ]
+        return render_template(
+            'admin/members/detail.html',
+            member=member,
+            interactions=interactions,
+            milestone_catalog=Member.DEFAULT_MILESTONES,
+            extra_milestones=extra_milestones,
+        )
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error loading member {member_id}: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while loading the member profile.', 'danger')
+        return redirect(url_for('admin.members'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error loading member {member_id}: {str(e)}")
+        flash('An error occurred while loading the member profile.', 'danger')
+        return redirect(url_for('admin.members'))
+
+
+@admin_bp.route('/admin/members/<int:member_id>/follow-ups', methods=['POST'])
+@login_required
+@admin_required
+def log_member_follow_up(member_id):
+    try:
+        member = Member.query.get_or_404(member_id)
+
+        interaction_type = (request.form.get('interaction_type') or 'follow_up').strip() or 'follow_up'
+        notes = (request.form.get('notes') or '').strip()
+        interaction_date_raw = (request.form.get('interaction_date') or '').strip()
+        follow_up_required = bool(request.form.get('follow_up_required'))
+        follow_up_date_raw = (request.form.get('follow_up_date') or '').strip()
+        assimilation_stage = (request.form.get('assimilation_stage') or '').strip()
+        membership_status = (request.form.get('membership_status') or '').strip()
+        milestone_key = (request.form.get('milestone_key') or '').strip()
+        milestone_completed = bool(request.form.get('milestone_completed'))
+
+        interaction_date = datetime.utcnow()
+        if interaction_date_raw:
+            try:
+                interaction_date = datetime.strptime(interaction_date_raw, '%Y-%m-%d')
+            except ValueError:
+                flash('Invalid interaction date format. Using today instead.', 'warning')
+
+        follow_up_date = None
+        if follow_up_date_raw:
+            try:
+                follow_up_date = datetime.strptime(follow_up_date_raw, '%Y-%m-%d')
+            except ValueError:
+                flash('Invalid follow-up date format. Ignoring provided date.', 'warning')
+
+        interaction = CareInteraction(
+            member=member,
+            interaction_type=interaction_type,
+            interaction_date=interaction_date,
+            notes=notes or None,
+            follow_up_required=follow_up_required,
+            follow_up_date=follow_up_date,
+            created_by_id=current_user.id if current_user.is_authenticated else None,
+            source='admin_follow_up',
+            metadata={'recorded_via': 'admin_portal'},
+        )
+
+        member.last_interaction_at = interaction_date
+        if follow_up_required and follow_up_date:
+            member.next_follow_up_date = follow_up_date
+        elif not follow_up_required:
+            member.next_follow_up_date = None
+
+        if assimilation_stage:
+            member.assimilation_stage = assimilation_stage
+
+        if membership_status:
+            member.membership_status = membership_status
+
+        if milestone_key:
+            member.record_milestone(milestone_key, completed=milestone_completed)
+
+        db.session.add(interaction)
+        db.session.commit()
+
+        flash('Follow-up recorded successfully.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error logging follow-up for member {member_id}: {str(e)}")
+        flash('An error occurred while saving the follow-up.', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Unexpected error logging follow-up for member {member_id}: {str(e)}")
+        flash('An unexpected error occurred while saving the follow-up.', 'danger')
+
+    return redirect(url_for('admin.member_profile', member_id=member_id))
 
 @admin_bp.route('/admin/users/import', methods=['GET', 'POST'])
 @login_required

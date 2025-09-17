@@ -8,21 +8,28 @@
             <div class="sidebar-sticky">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
                            href="{{ url_for('admin.dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.users' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.users' %}active{% endif %}"
                            href="{{ url_for('admin.users') }}">
                             <i class="bi bi-people"></i>
                             <span>Users</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.members', 'admin.member_profile', 'admin.log_member_follow_up'] %}active{% endif %}"
+                           href="{{ url_for('admin.members') }}">
+                            <i class="bi bi-person-heart"></i>
+                            <span>Members</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}"
                            href="{{ url_for('admin.events') }}">
                             <i class="bi bi-calendar-event"></i>
                             <span>Events</span>
