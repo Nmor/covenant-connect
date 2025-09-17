@@ -22,7 +22,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and (request.endpoint == 'prayers.prayers' or request.endpoint.startswith('prayers.')) }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint and (request.endpoint == 'prayers.prayers' or request.endpoint.startswith('prayers.')) }}"
                            href="{{ url_for('prayers.prayers') }}">
                             <i class="bi bi-book me-1"></i>Prayers
                         </a>
@@ -46,13 +46,33 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ 'active' if request.endpoint and (request.endpoint == 'donations.donate' or request.endpoint.startswith('donations.')) }}" 
+                        <a class="nav-link {{ 'active' if request.endpoint and (request.endpoint == 'donations.donate' or request.endpoint.startswith('donations.')) }}"
                            href="{{ url_for('donations.donate') }}">
                             <i class="bi bi-heart me-1"></i>Donate
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint and request.endpoint.startswith('solutions.') }}"
+                           href="#" id="solutionsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-hdd-stack me-1"></i>Solutions
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="solutionsDropdown">
+                            <li>
+                                <a class="dropdown-item {{ 'active' if request.endpoint and request.endpoint == 'solutions.saas_overview' }}"
+                                   href="{{ url_for('solutions.saas_overview') }}">
+                                    SaaS Platform
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ 'active' if request.endpoint and request.endpoint == 'solutions.wordpress_plugin' }}"
+                                   href="{{ url_for('solutions.wordpress_plugin') }}">
+                                    WordPress Plugin
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
-                
+
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <button class="btn btn-link nav-link" id="themeToggle">
@@ -142,6 +162,8 @@
                         <li><a href="{{ url_for('events.events') }}" class="footer-link">Events</a></li>
                         <li><a href="{{ url_for('sermons.sermons') }}" class="footer-link">Sermons</a></li>
                         <li><a href="{{ url_for('donations.donate') }}" class="footer-link">Support Us</a></li>
+                        <li><a href="{{ url_for('solutions.saas_overview') }}" class="footer-link">SaaS Platform</a></li>
+                        <li><a href="{{ url_for('solutions.wordpress_plugin') }}" class="footer-link">WordPress Plugin</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4">

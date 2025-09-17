@@ -68,6 +68,7 @@ def create_app():
     from routes.gallery import gallery_bp
     from routes.donations import donations_bp
     from routes.notifications import notifications_bp
+    from routes.solutions import solutions_bp
 
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
@@ -78,6 +79,7 @@ def create_app():
     app.register_blueprint(gallery_bp)
     app.register_blueprint(donations_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(solutions_bp)
 
     # Context processors
     @app.context_processor
@@ -88,6 +90,6 @@ def create_app():
     from models import User
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     return app
