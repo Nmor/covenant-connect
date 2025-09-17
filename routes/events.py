@@ -1,20 +1,29 @@
 from datetime import datetime
 
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
- codex/find-current-location-in-codebase-aqxt07
-from app import db
- codex/find-current-location-in-codebase-ntia0s
-from app import db
-     main
-from models import Event
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
+
+from models import Event, VolunteerAssignment, VolunteerRole
 
 events_bp = Blueprint('events', __name__)
+
 
 @events_bp.route('/events')
 def events():
     try:
-        events_list = Event.query.order_by(Event.start_date).all()
+        events_list = (
+            Event.query.options(
+                joinedload(Event.department),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.coordinator),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.assignments)
+                .joinedload(VolunteerAssignment.volunteer),
+            )
+            .order_by(Event.start_date)
+            .all()
+        )
         return render_template('events.html', events=events_list)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error while fetching events: {str(e)}")
@@ -29,18 +38,23 @@ def events():
 @events_bp.route('/events/<int:event_id>')
 def event_detail(event_id):
     try:
- codex/find-current-location-in-codebase-aqxt07
-        event = db.session.get(Event, event_id)
- codex/find-current-location-in-codebase-ntia0s
-        event = db.session.get(Event, event_id)
-        event = Event.query.get(event_id)
-        main
+        event = (
+            Event.query.options(
+                joinedload(Event.department),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.coordinator),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.assignments)
+                .joinedload(VolunteerAssignment.volunteer),
+            )
+            .get(event_id)
+        )
         if not event:
             flash('Event not found.', 'warning')
             return redirect(url_for('events.events'))
 
         upcoming_events = (
-            Event.query
+            Event.query.options(joinedload(Event.department))
             .filter(Event.start_date >= datetime.utcnow(), Event.id != event_id)
             .order_by(Event.start_date)
             .limit(3)
