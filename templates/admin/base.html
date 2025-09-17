@@ -23,6 +23,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+ codex/add-member-models-and-management-views
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.members', 'admin.member_profile', 'admin.log_member_follow_up'] %}active{% endif %}"
+                           href="{{ url_for('admin.members') }}">
+                            <i class="bi bi-person-heart"></i>
+                            <span>Members</span>
                         <a class="nav-link d-flex align-items-center {% if 'department' in endpoint %}active{% endif %}"
                            href="{{ url_for('admin.departments') }}">
                             <i class="bi bi-diagram-3"></i>
@@ -34,6 +39,7 @@
                            href="{{ url_for('admin.volunteers') }}">
                             <i class="bi bi-person-heart"></i>
                             <span>Volunteers</span>
+     main
                         </a>
                     </li>
                     <li class="nav-item">
