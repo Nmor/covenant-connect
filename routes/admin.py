@@ -8,6 +8,11 @@ from models import (
     User,
     Gallery,
     Settings,
+ codex/define-models-for-facility,-resource,-attendancerecord
+    Facility,
+    Resource,
+    FacilityReservation,
+    ResourceAllocation,
  codex/add-member-models-and-management-views
     Member,
     Household,
@@ -616,6 +621,286 @@ def delete_event(event_id):
         flash('An error occurred while deleting event.', 'danger')
     return redirect(url_for('admin.events'))
 
+ codex/define-models-for-facility,-resource,-attendancerecord
+
+# Facility and Resource Reservation Routes
+@admin_bp.route('/admin/facilities', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def facilities():
+    try:
+        now = datetime.utcnow()
+        facilities = (
+            Facility.query.filter_by(is_active=True)
+            .order_by(Facility.name)
+            .all()
+        )
+        resources = (
+            Resource.query.filter_by(is_active=True)
+            .order_by(Resource.name)
+            .all()
+        )
+        events = Event.query.order_by(Event.start_date.desc()).all()
+        reservations = (
+            FacilityReservation.query
+            .order_by(FacilityReservation.start_time.desc())
+            .limit(25)
+            .all()
+        )
+
+        resource_availability = {}
+        for resource in resources:
+            overlapping_allocations = (
+                ResourceAllocation.query.join(FacilityReservation)
+                .filter(
+                    ResourceAllocation.resource_id == resource.id,
+                    FacilityReservation.end_time >= now,
+                    FacilityReservation.status != 'cancelled'
+                )
+                .all()
+            )
+            allocated = sum(
+                allocation.quantity_approved
+                if allocation.quantity_approved is not None
+                else allocation.quantity_requested
+                for allocation in overlapping_allocations
+            )
+            resource_availability[resource.id] = {
+                'allocated': allocated,
+                'remaining': max(resource.quantity_available - allocated, 0)
+            }
+
+        conflicts = []
+        resource_conflicts = []
+        form_data = {}
+
+        if request.method == 'POST':
+            form_type = request.form.get('form_type')
+
+            if form_type == 'create_facility':
+                name = request.form.get('name')
+                capacity_value = request.form.get('capacity', '').strip()
+                location = request.form.get('location')
+                description = request.form.get('description')
+
+                if not name:
+                    flash('Facility name is required.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    capacity = int(capacity_value) if capacity_value else 0
+                except ValueError:
+                    flash('Capacity must be a numeric value.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                facility = Facility(
+                    name=name,
+                    location=location,
+                    capacity=max(capacity, 0),
+                    description=description
+                )
+                db.session.add(facility)
+                db.session.commit()
+                flash('Facility added successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+            if form_type == 'create_resource':
+                name = request.form.get('name')
+                category = request.form.get('category')
+                quantity_value = request.form.get('quantity_available', '').strip()
+                description = request.form.get('description')
+                facility_id = request.form.get('facility_id')
+
+                if not name:
+                    flash('Resource name is required.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    quantity = int(quantity_value) if quantity_value else 1
+                except ValueError:
+                    flash('Quantity must be a numeric value.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                resource = Resource(
+                    name=name,
+                    category=category or None,
+                    quantity_available=max(quantity, 0),
+                    description=description or None,
+                    facility_id=int(facility_id) if facility_id else None
+                )
+                db.session.add(resource)
+                db.session.commit()
+                flash('Resource added successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+            if form_type == 'create_reservation':
+                event_id = request.form.get('event_id')
+                facility_id = request.form.get('facility_id')
+                ministry_name = request.form.get('ministry_name')
+                start_date = request.form.get('start_date')
+                start_time = request.form.get('start_time')
+                end_date = request.form.get('end_date')
+                end_time = request.form.get('end_time')
+                notes = request.form.get('notes')
+
+                required_fields = [event_id, facility_id, ministry_name, start_date, start_time, end_date, end_time]
+                if not all(required_fields):
+                    flash('Please complete all required fields for the reservation.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                try:
+                    start_dt = datetime.strptime(f"{start_date} {start_time}", '%Y-%m-%d %H:%M')
+                    end_dt = datetime.strptime(f"{end_date} {end_time}", '%Y-%m-%d %H:%M')
+                except ValueError:
+                    flash('Invalid date or time format provided.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                if end_dt <= start_dt:
+                    flash('End time must be after the start time.', 'danger')
+                    return redirect(url_for('admin.facilities'))
+
+                conflicts = FacilityReservation.query.filter(
+                    FacilityReservation.facility_id == int(facility_id),
+                    FacilityReservation.start_time < end_dt,
+                    FacilityReservation.end_time > start_dt,
+                    FacilityReservation.status != 'cancelled'
+                ).all()
+
+                requested_allocations = []
+                resource_conflicts = []
+
+                for resource in resources:
+                    quantity_raw = request.form.get(f'resource_quantity_{resource.id}', '').strip()
+                    if not quantity_raw:
+                        continue
+
+                    try:
+                        quantity_requested = int(quantity_raw)
+                    except ValueError:
+                        quantity_requested = 0
+
+                    if quantity_requested <= 0:
+                        continue
+
+                    overlapping_allocations = (
+                        ResourceAllocation.query.join(FacilityReservation)
+                        .filter(
+                            ResourceAllocation.resource_id == resource.id,
+                            FacilityReservation.start_time < end_dt,
+                            FacilityReservation.end_time > start_dt,
+                            FacilityReservation.status != 'cancelled'
+                        )
+                        .all()
+                    )
+
+                    allocated = sum(
+                        allocation.quantity_approved
+                        if allocation.quantity_approved is not None
+                        else allocation.quantity_requested
+                        for allocation in overlapping_allocations
+                    )
+
+                    if allocated + quantity_requested > resource.quantity_available:
+                        resource_conflicts.append({
+                            'resource': resource,
+                            'requested': quantity_requested,
+                            'available': resource.quantity_available,
+                            'allocated': allocated
+                        })
+
+                    requested_allocations.append((resource, quantity_requested))
+
+                if conflicts or resource_conflicts:
+                    flash('We detected scheduling conflicts. Review the details below.', 'warning')
+                    form_data = request.form.to_dict()
+                    context = {
+                        'facilities': facilities,
+                        'resources': resources,
+                        'reservations': reservations,
+                        'events': events,
+                        'resource_availability': resource_availability,
+                        'conflicts': conflicts,
+                        'resource_conflicts': resource_conflicts,
+                        'form_data': form_data,
+                    }
+                    return render_template('admin/facilities.html', **context)
+
+                reservation = FacilityReservation(
+                    event_id=int(event_id),
+                    facility_id=int(facility_id),
+                    ministry_name=ministry_name,
+                    start_time=start_dt,
+                    end_time=end_dt,
+                    notes=notes
+                )
+                db.session.add(reservation)
+                db.session.flush()
+
+                for resource, quantity in requested_allocations:
+                    allocation = ResourceAllocation(
+                        reservation_id=reservation.id,
+                        resource_id=resource.id,
+                        quantity_requested=quantity
+                    )
+                    db.session.add(allocation)
+
+                db.session.commit()
+                flash('Reservation request submitted successfully.', 'success')
+                return redirect(url_for('admin.facilities'))
+
+        context = {
+            'facilities': facilities,
+            'resources': resources,
+            'reservations': reservations,
+            'events': events,
+            'resource_availability': resource_availability,
+            'conflicts': conflicts,
+            'resource_conflicts': resource_conflicts,
+            'form_data': form_data,
+        }
+        return render_template('admin/facilities.html', **context)
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error in facilities route: {str(e)}")
+        flash('An error occurred while managing facilities.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in facilities route: {str(e)}")
+        flash('An unexpected error occurred.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/facilities/reservations/<int:reservation_id>/status', methods=['POST'])
+@login_required
+@admin_required
+def update_reservation_status(reservation_id):
+    try:
+        reservation = FacilityReservation.query.get_or_404(reservation_id)
+        status = request.form.get('status')
+        if status:
+            reservation.status = status
+
+        for allocation in reservation.resource_requests:
+            approved_value = request.form.get(f'approved_{allocation.id}')
+            if approved_value is None or approved_value == '':
+                continue
+            try:
+                allocation.quantity_approved = int(approved_value)
+            except ValueError:
+                allocation.quantity_approved = allocation.quantity_requested
+
+        db.session.commit()
+        flash('Reservation updated successfully.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.error(f"Database error updating reservation {reservation_id}: {str(e)}")
+        flash('An error occurred while updating the reservation.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error updating reservation {reservation_id}: {str(e)}")
+        flash('An unexpected error occurred while updating the reservation.', 'danger')
+    return redirect(url_for('admin.facilities'))
+
 # Department Management Routes
 @admin_bp.route('/admin/departments')
 @login_required
@@ -1048,6 +1333,7 @@ def delete_volunteer_assignment(assignment_id):
         current_app.logger.error(f"Error deleting assignment: {str(e)}")
         flash('An error occurred while deleting volunteer assignment.', 'danger')
     return redirect(url_for('admin.volunteers'))
+     main
 
 # Prayer Request Management Routes
 @admin_bp.route('/admin/prayers')

@@ -219,6 +219,29 @@ class Event(db.Model):
     volunteer_role = db.relationship('VolunteerRole', back_populates='events')
    main
 
+    facility_reservations = db.relationship(
+        'FacilityReservation',
+        back_populates='event',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+
+    attendance_records = db.relationship(
+        'AttendanceRecord',
+        back_populates='event',
+        cascade='all, delete-orphan',
+        order_by='AttendanceRecord.check_in_time.desc()'
+    )
+
+    @property
+    def total_checked_in(self):
+        return sum(record.checked_in_count or 0 for record in self.attendance_records)
+
+    @property
+    def peak_attendance(self):
+        counts = [record.checked_in_count or 0 for record in self.attendance_records]
+        return max(counts) if counts else 0
+
 class Sermon(db.Model):
     __tablename__ = 'sermons'
     id = db.Column(db.Integer, primary_key=True)
@@ -273,6 +296,58 @@ class Settings(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+ codex/define-models-for-facility,-resource,-attendancerecord
+class Facility(db.Model):
+    __tablename__ = 'facilities'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    location = db.Column(db.String(200))
+    capacity = db.Column(db.Integer, nullable=False, default=0)
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+
+    reservations = db.relationship(
+        'FacilityReservation',
+        back_populates='facility',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+
+    resources = db.relationship(
+        'Resource',
+        back_populates='facility',
+        cascade='all, delete-orphan'
+    )
+
+
+class Resource(db.Model):
+    __tablename__ = 'resources'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    category = db.Column(db.String(100))
+    quantity_available = db.Column(db.Integer, nullable=False, default=1)
+    description = db.Column(db.Text)
+    facility_id = db.Column(db.Integer, db.ForeignKey('facilities.id'), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+
+    facility = db.relationship('Facility', back_populates='resources')
+
+    allocations = db.relationship(
+        'ResourceAllocation',
+        back_populates='resource',
+        cascade='all, delete-orphan'
+    )
+
+
+class FacilityReservation(db.Model):
+    __tablename__ = 'facility_reservations'
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    facility_id = db.Column(db.Integer, db.ForeignKey('facilities.id'), nullable=False)
+    ministry_name = db.Column(db.String(150), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(40), nullable=False, default='requested')
 class MinistryDepartment(db.Model):
     __tablename__ = 'ministry_departments'
     id = db.Column(db.Integer, primary_key=True)
@@ -340,10 +415,45 @@ class VolunteerAssignment(db.Model):
     )
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
+     main
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+ codex/define-models-for-facility,-resource,-attendancerecord
+    event = db.relationship('Event', back_populates='facility_reservations')
+    facility = db.relationship('Facility', back_populates='reservations')
+
+    resource_requests = db.relationship(
+        'ResourceAllocation',
+        back_populates='reservation',
+        cascade='all, delete-orphan'
+    )
+
+
+class ResourceAllocation(db.Model):
+    __tablename__ = 'resource_allocations'
+    id = db.Column(db.Integer, primary_key=True)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('facility_reservations.id'), nullable=False)
+    resource_id = db.Column(db.Integer, db.ForeignKey('resources.id'), nullable=False)
+    quantity_requested = db.Column(db.Integer, nullable=False, default=1)
+    quantity_approved = db.Column(db.Integer)
+    notes = db.Column(db.Text)
+
+    reservation = db.relationship('FacilityReservation', back_populates='resource_requests')
+    resource = db.relationship('Resource', back_populates='allocations')
+
+
+class AttendanceRecord(db.Model):
+    __tablename__ = 'attendance_records'
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    check_in_time = db.Column(db.DateTime, default=datetime.utcnow)
+    expected_attendees = db.Column(db.Integer)
+    checked_in_count = db.Column(db.Integer, nullable=False, default=0)
+    notes = db.Column(db.Text)
+
+    event = db.relationship('Event', back_populates='attendance_records')
     role = db.relationship('VolunteerRole', back_populates='assignments')
     volunteer = db.relationship(
         'User',
@@ -353,3 +463,4 @@ class VolunteerAssignment(db.Model):
     __table_args__ = (
         db.UniqueConstraint('role_id', 'volunteer_id', name='uq_role_volunteer'),
     )
+     main
