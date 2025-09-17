@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List
 
 from flask import current_app, render_template_string
 from flask_mail import Message
 
+from app import db
 from models import (
     Automation,
     AutomationStep,
     Event,
+    MinistryDepartment,
     PrayerRequest,
     Sermon,
     User,
 )
+from routes.admin_reports import ReportingService
 
 
 def send_prayer_notification(prayer_request_id: int) -> None:
@@ -56,6 +60,70 @@ Submitted: {prayer_request.created_at.strftime('%B %d, %Y %I:%M %p')}
             "Prayer request notification sent to %s admin(s)",
             len(admin_users),
         )
+
+
+def send_department_kpi_digest(range_days: int = 30) -> int:
+    from app import create_app, mail
+
+    app = create_app()
+    with app.app_context():
+        start = datetime.utcnow() - timedelta(days=range_days)
+        end = datetime.utcnow()
+        service = ReportingService(db.session)
+        metrics = _collect_kpi_metrics(service, start, end)
+
+        sent = 0
+        departments = MinistryDepartment.query.filter(MinistryDepartment.lead.isnot(None)).all()
+        for department in departments:
+            lead = department.lead
+            if not lead or not lead.email:
+                continue
+
+            body = _render_department_digest(department.name, metrics, start, end)
+            subject = f"{department.name} KPI Digest ({start:%b %d} - {end:%b %d})"
+            msg = Message(subject=subject, recipients=[lead.email], body=body)
+            mail.send(msg)
+            sent += 1
+
+        current_app.logger.info('Sent %s department KPI digests.', sent)
+        return sent
+
+
+def send_executive_kpi_digest(range_days: int = 30) -> int:
+    from app import create_app, mail
+
+    app = create_app()
+    with app.app_context():
+        start = datetime.utcnow() - timedelta(days=range_days)
+        end = datetime.utcnow()
+        service = ReportingService(db.session)
+        metrics = _collect_kpi_metrics(service, start, end)
+
+        admins = [user.email for user in User.query.filter_by(is_admin=True).all() if user.email]
+        if not admins:
+            current_app.logger.info('No executive recipients available for KPI digest.')
+            return 0
+
+        body = _render_executive_digest(metrics, start, end)
+        subject = f"Executive KPI Summary ({start:%b %d} - {end:%b %d})"
+        msg = Message(subject=subject, recipients=admins, body=body)
+        mail.send(msg)
+        current_app.logger.info('Sent executive KPI digest to %s recipients.', len(admins))
+        return len(admins)
+
+
+def schedule_kpi_digest(audience: str = 'executive', range_days: int = 30) -> None:
+    audience = (audience or 'executive').lower()
+    queue = _resolve_queue()
+    if audience == 'department':
+        func = send_department_kpi_digest
+    else:
+        func = send_executive_kpi_digest
+
+    if queue:
+        queue.enqueue(func, range_days)
+    else:
+        func(range_days)
 
 
 def trigger_automation(trigger: str, context: Dict[str, Any] | None = None) -> int:
@@ -177,6 +245,78 @@ def _resolve_queue():
 
     return None
 
+
+def _collect_kpi_metrics(service: ReportingService, start: datetime, end: datetime) -> Dict[str, Any]:
+    return {
+        'attendance': service.attendance_trends(start, end),
+        'volunteers': service.volunteer_fulfilment(start, end),
+        'giving': service.giving_summary(start, end),
+        'assimilation': service.assimilation_funnel(start, end),
+    }
+
+
+def _render_department_digest(name: str, metrics: Dict[str, Any], start: datetime, end: datetime) -> str:
+    attendance = _department_attendance(metrics['attendance'], name)
+    volunteer = _department_volunteers(metrics['volunteers'], name)
+    giving_total = metrics['giving']['total']
+
+    lines = [
+        f"KPI summary for {name}",
+        f"Window: {start:%b %d, %Y} - {end:%b %d, %Y}",
+        "",
+        f"Attendance: {attendance['checked']} checked-in of {attendance['expected']} expected (rate {attendance['rate']}%)",
+        f"Volunteer coverage: {volunteer['assigned']} assigned of {volunteer['needed']} needed (rate {volunteer['rate']}%)",
+        f"Giving (all ministries): ${giving_total:,.2f}",
+        "",
+        "Next Steps:",
+        "- Review volunteer assignments for gaps.",
+        "- Celebrate wins with your campus teams.",
+    ]
+    return "\n".join(lines)
+
+
+def _render_executive_digest(metrics: Dict[str, Any], start: datetime, end: datetime) -> str:
+    attendance = metrics['attendance']
+    volunteer = metrics['volunteers']
+    giving = metrics['giving']
+    assimilation = metrics['assimilation']
+
+    lines = [
+        f"Executive KPI Summary ({start:%b %d, %Y} - {end:%b %d, %Y})",
+        "",
+        f"Attendance rate: {attendance['attendance_rate']}% across {len(attendance['campuses'])} campuses.",
+        f"Volunteer fill rate: {volunteer['overall_rate']}% across {len(volunteer['departments'])} departments.",
+        f"Giving total: ${giving['total']:,.2f} across {len(giving['by_currency'])} currencies.",
+        f"Members tracked: {assimilation['total_members']} in funnel reporting.",
+        "",
+        "Top Opportunities:",
+        "- Review campuses with low attendance rate.",
+        "- Address departments under 70% volunteer coverage.",
+    ]
+    return "\n".join(lines)
+
+
+def _department_attendance(attendance: Dict[str, Any], department: str) -> Dict[str, float]:
+    checked = 0
+    expected = 0
+    for campus in attendance.get('campuses', []):
+        for bucket in campus.get('departments', []):
+            if bucket['name'] == department:
+                checked += bucket.get('checked', 0)
+                expected += bucket.get('expected', 0)
+    rate = 0.0 if not expected else round((checked / expected) * 100, 2)
+    return {'checked': checked, 'expected': expected, 'rate': rate}
+
+
+def _department_volunteers(volunteers: Dict[str, Any], department: str) -> Dict[str, float]:
+    assigned = 0
+    needed = 0
+    for dept in volunteers.get('departments', []):
+        if dept['department'] == department:
+            assigned += dept.get('assigned', 0)
+            needed += dept.get('needed', 0)
+    rate = 0.0 if not needed else round((assigned / needed) * 100, 2)
+    return {'assigned': assigned, 'needed': needed, 'rate': rate}
 
 def _schedule_automation_steps(
     automation: Automation,

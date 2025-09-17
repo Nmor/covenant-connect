@@ -1,22 +1,31 @@
-from datetime import datetime
-from app import db
+"""Database models used by the Covenant Connect application."""
+from __future__ import annotations
+
+from datetime import datetime, date
+from typing import Any
+
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app import db
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256))
-    is_admin = db.Column(db.Boolean, default=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     notification_preferences = db.Column(db.JSON, default=dict)
+
     member_profile = db.relationship('Member', back_populates='user', uselist=False)
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
 
@@ -42,9 +51,6 @@ class Household(db.Model):
         order_by='Member.last_name',
     )
 
-    def __repr__(self) -> str:  # pragma: no cover - representation helper
-        return f"<Household {self.name!r}>"
-
 
 class Member(db.Model):
     __tablename__ = 'members'
@@ -68,6 +74,7 @@ class Member(db.Model):
     marital_status = db.Column(db.String(50))
     membership_status = db.Column(db.String(50), default='guest')
     assimilation_stage = db.Column(db.String(100))
+    campus = db.Column(db.String(120))
     milestones = db.Column(db.JSON, default=dict)
     notes = db.Column(db.Text)
     preferred_contact_method = db.Column(db.String(50))
@@ -85,11 +92,11 @@ class Member(db.Model):
     care_interactions = db.relationship(
         'CareInteraction',
         back_populates='member',
-        order_by='CareInteraction.interaction_date DESC',
+        order_by='CareInteraction.interaction_date.desc()',
         cascade='all, delete-orphan',
     )
 
-    def __repr__(self) -> str:  # pragma: no cover - representation helper
+    def __repr__(self) -> str:  # pragma: no cover - repr helper
         return f"<Member {self.full_name}>"
 
     @property
@@ -98,7 +105,7 @@ class Member(db.Model):
 
     @property
     def milestone_counts(self) -> tuple[int, int]:
-        data = self.milestones or {}
+        data: dict[str, Any] = self.milestones or {}
         default_keys = [key for key, _ in self.DEFAULT_MILESTONES]
 
         total = len(default_keys)
@@ -173,17 +180,16 @@ class CareInteraction(db.Model):
     follow_up_date = db.Column(db.DateTime)
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     source = db.Column(db.String(100))
-    metadata = db.Column(db.JSON, default=dict)
+    extra_data = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     member = db.relationship('Member', back_populates='care_interactions')
     created_by = db.relationship('User', foreign_keys=[created_by_id])
 
-    def __repr__(self) -> str:  # pragma: no cover - representation helper
-        return f"<CareInteraction {self.interaction_type} for member {self.member_id}>"
 
 class PrayerRequest(db.Model):
     __tablename__ = 'prayer_requests'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
@@ -191,15 +197,94 @@ class PrayerRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_public = db.Column(db.Boolean, default=False)
 
+
+class MinistryDepartment(db.Model):
+    __tablename__ = 'ministry_departments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False, unique=True)
+    description = db.Column(db.Text)
+    lead_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    lead = db.relationship('User', backref=db.backref('led_departments', lazy='dynamic'))
+    roles = db.relationship(
+        'VolunteerRole',
+        back_populates='department',
+        cascade='all, delete-orphan',
+        order_by='VolunteerRole.name',
+    )
+    events = db.relationship('Event', back_populates='department')
+
+
+class VolunteerRole(db.Model):
+    __tablename__ = 'volunteer_roles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    department_id = db.Column(
+        db.Integer,
+        db.ForeignKey('ministry_departments.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
+    coordinator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    needed_volunteers = db.Column(db.Integer, default=1)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    department = db.relationship('MinistryDepartment', back_populates='roles')
+    coordinator = db.relationship(
+        'User',
+        backref=db.backref('coordinated_roles', lazy='dynamic'),
+        foreign_keys=[coordinator_id],
+    )
+    assignments = db.relationship(
+        'VolunteerAssignment',
+        back_populates='role',
+        cascade='all, delete-orphan',
+    )
+    events = db.relationship('Event', back_populates='volunteer_role')
+
+
+class VolunteerAssignment(db.Model):
+    __tablename__ = 'volunteer_assignments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey('volunteer_roles.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    volunteer_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+    )
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete='CASCADE'))
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    role = db.relationship('VolunteerRole', back_populates='assignments')
+    volunteer = db.relationship('User', backref=db.backref('volunteer_assignments', cascade='all, delete-orphan'))
+    event = db.relationship('Event', back_populates='volunteer_assignments')
+
+
 class Event(db.Model):
     __tablename__ = 'events'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     location = db.Column(db.String(200))
- codex/expand-event-model-for-recurrence-and-tags
+    campus = db.Column(db.String(120))
     recurrence_rule = db.Column(db.String(255))
     recurrence_end_date = db.Column(db.DateTime)
     service_segments = db.Column(db.JSON, default=list)
@@ -207,43 +292,44 @@ class Event(db.Model):
     department_id = db.Column(
         db.Integer,
         db.ForeignKey('ministry_departments.id', ondelete='SET NULL'),
-        nullable=True
     )
     volunteer_role_id = db.Column(
         db.Integer,
         db.ForeignKey('volunteer_roles.id', ondelete='SET NULL'),
-        nullable=True
     )
 
     department = db.relationship('MinistryDepartment', back_populates='events')
     volunteer_role = db.relationship('VolunteerRole', back_populates='events')
-   main
-
     facility_reservations = db.relationship(
         'FacilityReservation',
         back_populates='event',
         cascade='all, delete-orphan',
-        lazy='dynamic'
     )
-
     attendance_records = db.relationship(
         'AttendanceRecord',
         back_populates='event',
         cascade='all, delete-orphan',
-        order_by='AttendanceRecord.check_in_time.desc()'
+        order_by='AttendanceRecord.check_in_time.desc()',
+    )
+    volunteer_assignments = db.relationship(
+        'VolunteerAssignment',
+        back_populates='event',
+        cascade='all, delete-orphan',
     )
 
     @property
-    def total_checked_in(self):
+    def total_checked_in(self) -> int:
         return sum(record.checked_in_count or 0 for record in self.attendance_records)
 
     @property
-    def peak_attendance(self):
+    def peak_attendance(self) -> int:
         counts = [record.checked_in_count or 0 for record in self.attendance_records]
         return max(counts) if counts else 0
 
+
 class Sermon(db.Model):
     __tablename__ = 'sermons'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
@@ -252,8 +338,10 @@ class Sermon(db.Model):
     media_url = db.Column(db.String(500))
     media_type = db.Column(db.String(20))
 
+
 class Gallery(db.Model):
     __tablename__ = 'gallery'
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
     image_url = db.Column(db.String(500), nullable=False)
@@ -263,13 +351,16 @@ class Gallery(db.Model):
 
 class Church(db.Model):
     __tablename__ = 'churches'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     address = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class Donation(db.Model):
     __tablename__ = 'donations'
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), nullable=False)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
@@ -283,8 +374,10 @@ class Donation(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 class Settings(db.Model):
     __tablename__ = 'settings'
+
     id = db.Column(db.Integer, primary_key=True)
     business_name = db.Column(db.String(200), nullable=False, default='Covenant Connect')
     logo_url = db.Column(db.String(500))
@@ -296,7 +389,6 @@ class Settings(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
- codex/add-generic-workflow-runner-and-ui
 class Automation(db.Model):
     __tablename__ = 'automations'
 
@@ -323,9 +415,7 @@ class AutomationStep(db.Model):
     __tablename__ = 'automation_steps'
 
     id = db.Column(db.Integer, primary_key=True)
-    automation_id = db.Column(
-        db.Integer, db.ForeignKey('automations.id'), nullable=False
-    )
+    automation_id = db.Column(db.Integer, db.ForeignKey('automations.id'), nullable=False)
     title = db.Column(db.String(150))
     action_type = db.Column(db.String(50), nullable=False)
     channel = db.Column(db.String(50))
@@ -337,9 +427,11 @@ class AutomationStep(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     automation = db.relationship('Automation', back_populates='steps')
- codex/define-models-for-facility,-resource,-attendancerecord
+
+
 class Facility(db.Model):
     __tablename__ = 'facilities'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     location = db.Column(db.String(200))
@@ -351,18 +443,17 @@ class Facility(db.Model):
         'FacilityReservation',
         back_populates='facility',
         cascade='all, delete-orphan',
-        lazy='dynamic'
     )
-
     resources = db.relationship(
         'Resource',
         back_populates='facility',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
     )
 
 
 class Resource(db.Model):
     __tablename__ = 'resources'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     category = db.Column(db.String(100))
@@ -372,16 +463,16 @@ class Resource(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     facility = db.relationship('Facility', back_populates='resources')
-
     allocations = db.relationship(
         'ResourceAllocation',
         back_populates='resource',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
     )
 
 
 class FacilityReservation(db.Model):
     __tablename__ = 'facility_reservations'
+
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
     facility_id = db.Column(db.Integer, db.ForeignKey('facilities.id'), nullable=False)
@@ -389,91 +480,19 @@ class FacilityReservation(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(40), nullable=False, default='requested')
-class MinistryDepartment(db.Model):
-    __tablename__ = 'ministry_departments'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False, unique=True)
-    description = db.Column(db.Text)
-    lead_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    lead = db.relationship(
-        'User',
-        backref=db.backref('led_departments', lazy='dynamic'),
-        foreign_keys=[lead_id]
-    )
-    roles = db.relationship(
-        'VolunteerRole',
-        back_populates='department',
-        cascade='all, delete-orphan',
-        order_by='VolunteerRole.name'
-    )
-    events = db.relationship('Event', back_populates='department')
-
-
-class VolunteerRole(db.Model):
-    __tablename__ = 'volunteer_roles'
-    id = db.Column(db.Integer, primary_key=True)
-    department_id = db.Column(
-        db.Integer,
-        db.ForeignKey('ministry_departments.id', ondelete='CASCADE'),
-        nullable=False
-    )
-    name = db.Column(db.String(150), nullable=False)
-    description = db.Column(db.Text)
-    coordinator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    department = db.relationship('MinistryDepartment', back_populates='roles')
-    coordinator = db.relationship(
-        'User',
-        backref=db.backref('coordinated_roles', lazy='dynamic'),
-        foreign_keys=[coordinator_id]
-    )
-    assignments = db.relationship(
-        'VolunteerAssignment',
-        back_populates='role',
-        cascade='all, delete-orphan'
-    )
-    events = db.relationship('Event', back_populates='volunteer_role')
-
-
-class VolunteerAssignment(db.Model):
-    __tablename__ = 'volunteer_assignments'
-    id = db.Column(db.Integer, primary_key=True)
-    role_id = db.Column(
-        db.Integer,
-        db.ForeignKey('volunteer_roles.id', ondelete='CASCADE'),
-        nullable=False
-    )
-    volunteer_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False
-    )
-    start_date = db.Column(db.Date)
-    end_date = db.Column(db.Date)
-     main
-    notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
- codex/define-models-for-facility,-resource,-attendancerecord
     event = db.relationship('Event', back_populates='facility_reservations')
     facility = db.relationship('Facility', back_populates='reservations')
-
     resource_requests = db.relationship(
         'ResourceAllocation',
         back_populates='reservation',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
     )
 
 
 class ResourceAllocation(db.Model):
     __tablename__ = 'resource_allocations'
+
     id = db.Column(db.Integer, primary_key=True)
     reservation_id = db.Column(db.Integer, db.ForeignKey('facility_reservations.id'), nullable=False)
     resource_id = db.Column(db.Integer, db.ForeignKey('resources.id'), nullable=False)
@@ -487,21 +506,41 @@ class ResourceAllocation(db.Model):
 
 class AttendanceRecord(db.Model):
     __tablename__ = 'attendance_records'
+
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey('volunteer_roles.id'))
+    volunteer_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     check_in_time = db.Column(db.DateTime, default=datetime.utcnow)
     expected_attendees = db.Column(db.Integer)
     checked_in_count = db.Column(db.Integer, nullable=False, default=0)
     notes = db.Column(db.Text)
 
     event = db.relationship('Event', back_populates='attendance_records')
-    role = db.relationship('VolunteerRole', back_populates='assignments')
-    volunteer = db.relationship(
-        'User',
-        backref=db.backref('volunteer_assignments', cascade='all, delete-orphan')
-    )
+    role = db.relationship('VolunteerRole', backref=db.backref('attendance_records', lazy='dynamic'))
+    volunteer = db.relationship('User', backref=db.backref('attendance_records', lazy='dynamic'))
 
-    __table_args__ = (
-        db.UniqueConstraint('role_id', 'volunteer_id', name='uq_role_volunteer'),
-    )
-     main
+
+__all__ = [
+    'AttendanceRecord',
+    'Automation',
+    'AutomationStep',
+    'CareInteraction',
+    'Church',
+    'Donation',
+    'Event',
+    'Facility',
+    'FacilityReservation',
+    'Gallery',
+    'Household',
+    'Member',
+    'MinistryDepartment',
+    'PrayerRequest',
+    'Resource',
+    'ResourceAllocation',
+    'Sermon',
+    'Settings',
+    'User',
+    'VolunteerAssignment',
+    'VolunteerRole',
+]

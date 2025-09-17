@@ -1,0 +1,64 @@
+<div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-0">Volunteer Fulfillment</h5>
+            <small class="text-muted">Role coverage and departmental health</small>
+        </div>
+        <a href="{{ url_for('admin_reports.export_volunteers', range=request.args.get('range')) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>Export
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <div class="text-muted">Overall Fill Rate</div>
+                <div class="fs-4">{{ volunteer_rates.overall_rate }}%</div>
+            </div>
+            <div class="text-end">
+                <div class="text-muted">Departments</div>
+                <div class="fs-5">{{ volunteer_rates.departments|length }}</div>
+            </div>
+        </div>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Department</th>
+                        <th>Role</th>
+                        <th class="text-end">Assigned</th>
+                        <th class="text-end">Needed</th>
+                        <th class="text-end">Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in volunteer_rates.roles %}
+                        <tr>
+                            <td>{{ row.department }}</td>
+                            <td>{{ row.role }}</td>
+                            <td class="text-end">{{ row.assigned }}</td>
+                            <td class="text-end">{{ row.needed }}</td>
+                            <td class="text-end">{{ row.rate }}%</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No volunteer assignments recorded.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row g-3">
+            {% for department in volunteer_rates.departments %}
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold">{{ department.department }}</div>
+                        <div class="text-muted small">{{ department.assigned }} of {{ department.needed }} roles filled</div>
+                        <div class="progress mt-2" style="height:6px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ department.rate }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
