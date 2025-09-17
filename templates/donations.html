@@ -24,7 +24,10 @@
                     {% endwith %}
 
                     <form method="POST" action="{{ url_for('donations.process_donation') }}" class="needs-validation" novalidate>
+codex/explain-requested-code-functionality-dxdu2u
+    <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
     {{ csrf_token() }}
+         main
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
@@ -54,17 +57,31 @@
                         <div class="mb-3">
                             <label class="form-label">Payment Method</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" 
+                                <input class="form-check-input" type="radio" name="payment_method"
                                        id="paystack" value="paystack" required>
                                 <label class="form-check-label" for="paystack">
                                     Paystack (NGN only)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" 
+                                <input class="form-check-input" type="radio" name="payment_method"
                                        id="fincra" value="fincra" required>
                                 <label class="form-check-label" for="fincra">
                                     International Payment (Fincra)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method"
+                                       id="stripe" value="stripe" required>
+                                <label class="form-check-label" for="stripe">
+                                    Stripe
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method"
+                                       id="flutterwave" value="flutterwave" required>
+                                <label class="form-check-label" for="flutterwave">
+                                    Flutterwave
                                 </label>
                             </div>
                             <div class="invalid-feedback">
@@ -128,6 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fincraFields.style.display = 'block';
             } else {
                 fincraFields.style.display = 'none';
+            }
+            if (this.value === 'paystack') {
                 currencySelect.value = 'NGN';
             }
         });

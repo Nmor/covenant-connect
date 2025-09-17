@@ -1,4 +1,8 @@
 from datetime import datetime
+ codex/find-current-location-in-codebase-aqxt07
+ codex/find-current-location-in-codebase-ntia0s
+from typing import Dict, Optional
+       main
 from urllib.parse import parse_qs, urlparse
 
 from flask import (
@@ -10,7 +14,11 @@ from flask import (
     request,
     url_for,
 )
+ codex/find-current-location-in-codebase-aqxt07
 from app import db
+ codex/find-current-location-in-codebase-ntia0s
+from app import db
+       main
 from models import Sermon
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -18,6 +26,7 @@ from sqlalchemy.exc import SQLAlchemyError
 sermons_bp = Blueprint('sermons', __name__)
 
 
+ codex/find-current-location-in-codebase-aqxt07
 VIDEO_HOSTS = (
     'youtube.com',
     'youtu.be',
@@ -62,14 +71,24 @@ def _infer_media_type(media_url: str) -> str | None:
 def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
     """Return template context for sermon media, inferring type when missing."""
     media_type = (sermon.media_type or '').strip().lower()
+ codex/find-current-location-in-codebase-ntia0s
+def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
+def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
+        main
+    """Return template-friendly context describing how to render sermon media."""
+    media_type = (sermon.media_type or '').lower()
+       main
     media_url = (sermon.media_url or '').strip()
 
     if not media_url:
         return {"type": None, "embed_url": None, "source_url": None}
 
+ codex/find-current-location-in-codebase-aqxt07
     detected_media_type = media_type or (_infer_media_type(media_url) or '')
 
     if detected_media_type == 'video':
+    if media_type == 'video':
+        main
         embed_url = _resolve_video_embed(media_url)
 
         return {
@@ -78,7 +97,10 @@ def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
             "source_url": media_url,
         }
 
+ codex/find-current-location-in-codebase-aqxt07
     if detected_media_type == 'audio':
+    if media_type == 'audio':
+         main
         return {
             "type": 'audio',
             "embed_url": media_url,
@@ -175,7 +197,12 @@ def search_sermons():
 def sermon_detail(sermon_id: int):
     """Render the detail page for a specific sermon with related content."""
     try:
+ codex/find-current-location-in-codebase-aqxt07
         sermon = db.session.get(Sermon, sermon_id)
+ codex/find-current-location-in-codebase-ntia0s
+        sermon = db.session.get(Sermon, sermon_id)
+        sermon = Sermon.query.get(sermon_id)
+        main
         if not sermon:
             flash('Sermon not found.', 'warning')
             return redirect(url_for('sermons.sermons'))

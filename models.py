@@ -54,6 +54,14 @@ class Gallery(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
+class Church(db.Model):
+    __tablename__ = 'churches'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    address = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Donation(db.Model):
     __tablename__ = 'donations'
     id = db.Column(db.Integer, primary_key=True)
