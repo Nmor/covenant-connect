@@ -22,10 +22,17 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}" 
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint == 'admin.events' %}active{% endif %}"
                            href="{{ url_for('admin.events') }}">
                             <i class="bi bi-calendar-event"></i>
                             <span>Events</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.facilities', 'admin.update_reservation_status'] %}active{% endif %}"
+                           href="{{ url_for('admin.facilities') }}">
+                            <i class="bi bi-building"></i>
+                            <span>Facilities</span>
                         </a>
                     </li>
                     <li class="nav-item">
