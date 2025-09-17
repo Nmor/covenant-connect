@@ -1,0 +1,73 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>{{ department and 'Edit Department' or 'Create Department' }}</h1>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" class="needs-validation" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="name" class="form-label">Department Name</label>
+                <input type="text" class="form-control" id="name" name="name"
+                       value="{{ department.name if department }}" required>
+                <div class="invalid-feedback">
+                    Please provide a department name.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4"
+                          placeholder="Describe the purpose of this team">{{ department.description if department }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label for="lead_id" class="form-label">Staff Lead</label>
+                <select class="form-select" id="lead_id" name="lead_id">
+                    <option value="">-- No lead assigned --</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}" {% if department and department.lead_id == user.id %}selected{% endif %}>
+                            {{ user.username }} ({{ user.email }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Assign a staff member to oversee this ministry department.</div>
+            </div>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    {{ department and 'Update Department' or 'Create Department' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

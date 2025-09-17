@@ -88,6 +88,37 @@ main
                 </div>
             </div>
 
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="department_id" class="form-label">Department / Team</label>
+                        <select class="form-select" id="department_id" name="department_id">
+                            <option value="">-- No team assigned --</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}" {% if event and event.department_id == department.id %}selected{% endif %}>
+                                    {{ department.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Link this event to the ministry team responsible for delivery.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="volunteer_role_id" class="form-label">Serving Role</label>
+                        <select class="form-select" id="volunteer_role_id" name="volunteer_role_id">
+                            <option value="">-- No serving role assigned --</option>
+                            {% for role in roles %}
+                                <option value="{{ role.id }}" {% if event and event.volunteer_role_id == role.id %}selected{% endif %}>
+                                    {{ role.name }}{% if role.department %} ({{ role.department.name }}){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Coordinators attached to the selected role will appear on event pages.</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label for="location" class="form-label">Location</label>
                 <input type="text" class="form-control" id="location" name="location"
