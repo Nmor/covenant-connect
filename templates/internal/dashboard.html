@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}Internal Dashboard{% endblock %}
+{% block title %}Internal Dashboard - Covenant Connect{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">Internal Dashboard</h1>
-    <ul class="list-group">
-        <li class="list-group-item">Users: {{ stats.users }}</li>
-        <li class="list-group-item">Donations: {{ stats.donations }}</li>
-        <li class="list-group-item">Prayer Requests: {{ stats.prayers }}</li>
-        <li class="list-group-item">Events: {{ stats.events }}</li>
-    </ul>
+<h1>Internal Dashboard</h1>
+<div class="row g-3 mt-3">
+    {% for label, value in stats.items() %}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h2 class="display-6">{{ value }}</h2>
+                    <p class="text-muted text-uppercase small mb-0">{{ label }}</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}

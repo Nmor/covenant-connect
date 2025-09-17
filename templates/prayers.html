@@ -1,125 +1,42 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Prayer Requests - Covenant Connect{% endblock %}
+{% block title %}Prayers - Covenant Connect{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">Prayer Requests</h1>
-            <p class="lead">Share your prayer needs with our community and join us in prayer for others.</p>
-        </div>
-    </div>
-
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Submit Prayer Request</h5>
-                </div>
-                <div class="card-body">
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" 
-                                            aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-
-                    <form method="POST" class="needs-validation" novalidate>
+<h1 class="mb-4">Prayer Requests</h1>
+<form method="post" action="{{ url_for('prayers.submit_prayer') }}" class="card card-body shadow-sm mb-4">
     <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
-    {{ csrf_token() }}
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Your Name</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                            <div class="invalid-feedback">
-                                Please enter your name.
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                            <div class="invalid-feedback">
-                                Please enter a valid email address.
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="request" class="form-label">Prayer Request</label>
-                            <textarea class="form-control" id="request" name="request" rows="4" required></textarea>
-                            <div class="invalid-feedback">
-                                Please share your prayer request.
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
-                                <label class="form-check-label" for="is_public">
-                                    Make this prayer request public
-                                </label>
-                            </div>
-                            <small class="text-muted">
-                                Public prayers will be shared with the community. Private prayers will only be seen by our prayer team.
-                            </small>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Submit Request</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
     </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+    <div class="mb-3">
+        <label for="request" class="form-label">Prayer Request</label>
+        <textarea class="form-control" id="request" name="request" rows="4" required></textarea>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
+        <label class="form-check-label" for="is_public">Share publicly</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
 
-    {% if public_prayers %}
-        <div class="row g-4">
-            <div class="col-12">
-                <h2 class="text-center mb-4">Community Prayer Requests</h2>
-            </div>
-            {% for prayer in public_prayers %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">From: {{ prayer.name }}</h5>
-                            <p class="card-text">{{ prayer.request }}</p>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar me-2"></i>
-                                    {{ prayer.created_at.strftime('%B %d, %Y') }}
-                                </small>
-                            </p>
-                            <button class="btn btn-outline-primary btn-sm" onclick="prayFor('{{ prayer.id }}')">
-                                <i class="bi bi-heart me-1"></i>Pray for This
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
-});
-
-function prayFor(prayerId) {
-    alert('Thank you for praying!');
-}
-</script>
+<h2 class="h5">Public Prayers</h2>
+{% if prayers %}
+    <ul class="list-group">
+        {% for prayer in prayers %}
+            <li class="list-group-item">
+                <strong>{{ prayer.name }}</strong>
+                <div class="small text-muted">{{ prayer.created_at.strftime('%B %d, %Y %I:%M %p') }}</div>
+                <p class="mb-0">{{ prayer.request }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">No public prayer requests yet.</p>
+{% endif %}
 {% endblock %}

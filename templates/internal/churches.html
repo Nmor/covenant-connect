@@ -1,21 +1,28 @@
 {% extends 'base.html' %}
+
+{% block title %}Churches - Covenant Connect{% endblock %}
+
 {% block content %}
-<h1>Churches</h1>
-<a href="{{ url_for('internal.add_church') }}">Add Church</a>
-<table>
-  <tr><th>Name</th><th>Address</th><th>Actions</th></tr>
-  {% for church in churches %}
-  <tr>
-    <td>{{ church.name }}</td>
-    <td>{{ church.address or '' }}</td>
-    <td>
-      <a href="{{ url_for('internal.edit_church', church_id=church.id) }}">Edit</a>
-      <form method="post" action="{{ url_for('internal.delete_church', church_id=church.id) }}" style="display:inline">
-        <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
-        <button type="submit">Delete</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
+<h1 class="mb-3">Churches</h1>
+<a class="btn btn-primary mb-3" href="{{ url_for('internal.add_church') }}">Add Church</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for church in churches %}
+            <tr>
+                <td>{{ church.name }}</td>
+                <td>{{ church.address or '—' }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="2" class="text-muted">No churches have been added yet.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}
