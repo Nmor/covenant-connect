@@ -1,6 +1,16 @@
 from flask import Blueprint, render_template, current_app, flash, redirect, url_for, request
 from flask_login import login_required, current_user
-from models import PrayerRequest, Event, Sermon, Donation, User, Gallery, Settings
+from models import (
+    Automation,
+    AutomationStep,
+    Donation,
+    Event,
+    Gallery,
+    PrayerRequest,
+    Sermon,
+    Settings,
+    User,
+)
 from app import db
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,8 +19,29 @@ from decimal import Decimal
 from functools import wraps
 import csv
 import io
+import json
 import os
 from werkzeug.utils import secure_filename
+
+from tasks import trigger_automation
+
+
+AUTOMATION_TRIGGER_CHOICES = [
+    ('prayer_request_created', 'Prayer request submitted'),
+    ('event_created', 'Event created'),
+    ('event_viewed', 'Event viewed'),
+    ('sermon_published', 'Sermon published'),
+    ('sermon_viewed', 'Sermon viewed'),
+    ('member_status_changed', 'Member status changed'),
+]
+
+AUTOMATION_ACTION_TYPES = [
+    ('email', 'Send Email'),
+    ('sms', 'Send SMS'),
+    ('assignment', 'Assignment / Task'),
+]
+
+DEFAULT_CHANNEL_OPTIONS = ['email', 'sms', 'app']
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -22,6 +53,39 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def _safe_json_loads(value: str | None, default: dict | None = None) -> dict:
+    """Parse a JSON string from form input, providing helpful errors."""
+
+    if value is None or not value.strip():
+        return {} if default is None else default
+
+    try:
+        parsed = json.loads(value)
+        if isinstance(parsed, dict):
+            return parsed
+        raise ValueError('JSON value must be an object')
+    except json.JSONDecodeError as exc:  # pragma: no cover - defensive
+        raise ValueError(f'Invalid JSON: {exc.msg}') from exc
+
+
+def _update_automation_from_form(automation: Automation) -> None:
+    """Populate an automation model instance from posted form data."""
+
+    automation.name = request.form.get('name', '').strip()
+    if not automation.name:
+        raise ValueError('Automation name is required.')
+
+    automation.trigger = request.form.get('trigger') or automation.trigger
+    automation.description = request.form.get('description') or None
+    automation.is_active = bool(request.form.get('is_active'))
+    automation.default_channel = request.form.get('default_channel') or None
+    automation.target_department = request.form.get('target_department') or None
+    automation.trigger_filters = _safe_json_loads(
+        request.form.get('trigger_filters'),
+        automation.trigger_filters or {},
+    )
 
 @admin_bp.route('/admin')
 @admin_bp.route('/admin/dashboard')
@@ -126,6 +190,7 @@ def create_user():
 def edit_user(user_id):
     try:
         user = User.query.get_or_404(user_id)
+        original_admin_state = user.is_admin
         if request.method == 'POST':
             user.username = request.form['username']
             user.email = request.form['email']
@@ -133,6 +198,17 @@ def edit_user(user_id):
             if request.form.get('password'):
                 user.set_password(request.form['password'])
             db.session.commit()
+            status_changes = {}
+            if original_admin_state != user.is_admin:
+                status_changes['is_admin'] = {
+                    'previous': original_admin_state,
+                    'current': user.is_admin,
+                }
+            if status_changes:
+                trigger_automation(
+                    'member_status_changed',
+                    {'user_id': user.id, 'changes': status_changes},
+                )
             flash('User updated successfully.', 'success')
             return redirect(url_for('admin.users'))
         return render_template('admin/user_form.html', user=user)
@@ -214,6 +290,265 @@ def user_import():
         flash('An error occurred while importing users.', 'danger')
         return redirect(url_for('admin.users'))
 
+
+# Automation Workflow Routes
+@admin_bp.route('/admin/automations')
+@login_required
+@admin_required
+def automations():
+    automations_list = (
+        Automation.query.order_by(Automation.created_at.desc()).all()
+    )
+    return render_template(
+        'admin/automations/index.html',
+        automations=automations_list,
+    )
+
+
+@admin_bp.route('/admin/automations/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_automation():
+    automation = Automation(
+        trigger=AUTOMATION_TRIGGER_CHOICES[0][0],
+        is_active=True,
+    )
+
+    if request.method == 'POST':
+        try:
+            _update_automation_from_form(automation)
+            db.session.add(automation)
+            db.session.commit()
+            flash('Automation created successfully.', 'success')
+            return redirect(
+                url_for('admin.automation_detail', automation_id=automation.id)
+            )
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), 'danger')
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error creating automation: {exc}"
+            )
+            flash('An error occurred while creating the automation.', 'danger')
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Unexpected error creating automation: {exc}"
+            )
+            flash(
+                'An unexpected error occurred while creating the automation.',
+                'danger',
+            )
+
+    trigger_filters_value = (
+        request.form.get('trigger_filters')
+        if request.method == 'POST'
+        else json.dumps(automation.trigger_filters or {}, indent=2)
+    )
+
+    return render_template(
+        'admin/automations/form.html',
+        automation=automation,
+        trigger_choices=AUTOMATION_TRIGGER_CHOICES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        trigger_filters=trigger_filters_value,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_automation(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+
+    if request.method == 'POST':
+        try:
+            _update_automation_from_form(automation)
+            db.session.commit()
+            flash('Automation updated successfully.', 'success')
+            return redirect(
+                url_for('admin.automation_detail', automation_id=automation.id)
+            )
+        except ValueError as exc:
+            db.session.rollback()
+            flash(str(exc), 'danger')
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error updating automation {automation_id}: {exc}"
+            )
+            flash('An error occurred while updating the automation.', 'danger')
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Unexpected error updating automation {automation_id}: {exc}"
+            )
+            flash(
+                'An unexpected error occurred while updating the automation.',
+                'danger',
+            )
+
+    trigger_filters_value = (
+        request.form.get('trigger_filters')
+        if request.method == 'POST'
+        else json.dumps(automation.trigger_filters or {}, indent=2)
+    )
+
+    return render_template(
+        'admin/automations/form.html',
+        automation=automation,
+        trigger_choices=AUTOMATION_TRIGGER_CHOICES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        trigger_filters=trigger_filters_value,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>')
+@login_required
+@admin_required
+def automation_detail(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+
+    step_configs = {
+        step.id: json.dumps(step.config or {}, indent=2)
+        for step in automation.steps
+    }
+
+    default_step_config = json.dumps(
+        {
+            'recipient_mode': 'admins',
+            'subject': 'New notification from {{ automation.name }}',
+            'body': 'Update details can use values in {{ context }}.',
+        },
+        indent=2,
+    )
+
+    return render_template(
+        'admin/automations/detail.html',
+        automation=automation,
+        action_types=AUTOMATION_ACTION_TYPES,
+        channel_options=DEFAULT_CHANNEL_OPTIONS,
+        step_configs=step_configs,
+        default_step_config=default_step_config,
+    )
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_automation(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    try:
+        db.session.delete(automation)
+        db.session.commit()
+        flash('Automation deleted successfully.', 'success')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error deleting automation {automation_id}: {exc}"
+        )
+        flash('An error occurred while deleting the automation.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error deleting automation {automation_id}: {exc}"
+        )
+        flash('An unexpected error occurred while deleting the automation.', 'danger')
+
+    return redirect(url_for('admin.automations'))
+
+
+@admin_bp.route('/admin/automations/<int:automation_id>/steps/save', methods=['POST'])
+@login_required
+@admin_required
+def save_automation_step(automation_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    step_id_raw = request.form.get('step_id')
+
+    try:
+        if step_id_raw:
+            step_id = int(step_id_raw)
+            step = AutomationStep.query.filter_by(
+                id=step_id, automation_id=automation.id
+            ).first_or_404()
+        else:
+            step = AutomationStep(automation=automation)
+
+        step.title = request.form.get('title') or None
+        step.action_type = request.form.get('action_type') or 'email'
+        if step.action_type not in {choice[0] for choice in AUTOMATION_ACTION_TYPES}:
+            raise ValueError('Invalid action type selected.')
+
+        step.channel = request.form.get('channel') or None
+        step.department = request.form.get('department') or None
+
+        order_value = request.form.get('order')
+        delay_value = request.form.get('delay_minutes')
+
+        step.order = int(order_value) if order_value else len(automation.steps) + 1
+        step.delay_minutes = int(delay_value) if delay_value else 0
+
+        config_value = request.form.get('config')
+        step.config = _safe_json_loads(config_value, step.config or {})
+
+        db.session.add(step)
+        db.session.commit()
+        flash('Automation step saved successfully.', 'success')
+    except ValueError as exc:
+        db.session.rollback()
+        flash(str(exc), 'danger')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error saving automation step for automation {automation_id}: {exc}"
+        )
+        flash('An error occurred while saving the automation step.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error saving automation step for automation {automation_id}: {exc}"
+        )
+        flash(
+            'An unexpected error occurred while saving the automation step.',
+            'danger',
+        )
+
+    return redirect(url_for('admin.automation_detail', automation_id=automation.id))
+
+
+@admin_bp.route(
+    '/admin/automations/<int:automation_id>/steps/<int:step_id>/delete',
+    methods=['POST'],
+)
+@login_required
+@admin_required
+def delete_automation_step(automation_id: int, step_id: int):
+    automation = Automation.query.get_or_404(automation_id)
+    try:
+        step = AutomationStep.query.filter_by(
+            id=step_id, automation_id=automation.id
+        ).first_or_404()
+        db.session.delete(step)
+        db.session.commit()
+        flash('Automation step deleted successfully.', 'success')
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Database error deleting automation step {step_id}: {exc}"
+        )
+        flash('An error occurred while deleting the automation step.', 'danger')
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Unexpected error deleting automation step {step_id}: {exc}"
+        )
+        flash('An unexpected error occurred while deleting the automation step.', 'danger')
+
+    return redirect(url_for('admin.automation_detail', automation_id=automation.id))
+
+
 # Event Management Routes
 @admin_bp.route('/admin/events')
 @login_required
@@ -246,6 +581,7 @@ def create_event():
             event.location = request.form['location']
             db.session.add(event)
             db.session.commit()
+            trigger_automation('event_created', {'event_id': event.id})
             flash('Event created successfully.', 'success')
             return redirect(url_for('admin.events'))
         return render_template('admin/event_form.html')
@@ -471,6 +807,7 @@ def create_sermon():
             sermon.media_type = request.form['media_type']
             db.session.add(sermon)
             db.session.commit()
+            trigger_automation('sermon_published', {'sermon_id': sermon.id})
             flash('Sermon added successfully.', 'success')
             return redirect(url_for('admin.sermons'))
         return render_template('admin/sermon_form.html')

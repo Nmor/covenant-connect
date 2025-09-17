@@ -1,8 +1,5 @@
 from datetime import datetime
- codex/find-current-location-in-codebase-aqxt07
- codex/find-current-location-in-codebase-ntia0s
 from typing import Dict, Optional
-       main
 from urllib.parse import parse_qs, urlparse
 
 from flask import (
@@ -14,19 +11,16 @@ from flask import (
     request,
     url_for,
 )
- codex/find-current-location-in-codebase-aqxt07
-from app import db
- codex/find-current-location-in-codebase-ntia0s
-from app import db
-       main
-from models import Sermon
 from sqlalchemy.exc import SQLAlchemyError
+
+from app import db
+from models import Sermon
+from tasks import trigger_automation
 
 
 sermons_bp = Blueprint('sermons', __name__)
 
 
- codex/find-current-location-in-codebase-aqxt07
 VIDEO_HOSTS = (
     'youtube.com',
     'youtu.be',
@@ -50,7 +44,7 @@ AUDIO_EXTENSIONS = (
 )
 
 
-def _infer_media_type(media_url: str) -> str | None:
+def _infer_media_type(media_url: str) -> Optional[str]:
     """Guess the media type from known host names or file extensions."""
     parsed = urlparse(media_url)
     host = parsed.netloc.lower()
@@ -66,52 +60,6 @@ def _infer_media_type(media_url: str) -> str | None:
         return 'audio'
 
     return None
-
-
-def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
-    """Return template context for sermon media, inferring type when missing."""
-    media_type = (sermon.media_type or '').strip().lower()
- codex/find-current-location-in-codebase-ntia0s
-def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
-def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
-        main
-    """Return template-friendly context describing how to render sermon media."""
-    media_type = (sermon.media_type or '').lower()
-       main
-    media_url = (sermon.media_url or '').strip()
-
-    if not media_url:
-        return {"type": None, "embed_url": None, "source_url": None}
-
- codex/find-current-location-in-codebase-aqxt07
-    detected_media_type = media_type or (_infer_media_type(media_url) or '')
-
-    if detected_media_type == 'video':
-    if media_type == 'video':
-        main
-        embed_url = _resolve_video_embed(media_url)
-
-        return {
-            "type": 'video',
-            "embed_url": embed_url,
-            "source_url": media_url,
-        }
-
- codex/find-current-location-in-codebase-aqxt07
-    if detected_media_type == 'audio':
-    if media_type == 'audio':
-         main
-        return {
-            "type": 'audio',
-            "embed_url": media_url,
-            "source_url": media_url,
-        }
-
-    return {
-        "type": 'link',
-        "embed_url": None,
-        "source_url": media_url,
-    }
 
 
 def _resolve_video_embed(media_url: str) -> str:
@@ -140,21 +88,50 @@ def _resolve_video_embed(media_url: str) -> str:
     return media_url
 
 
+def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
+    """Return template-friendly context describing how to render sermon media."""
+    media_type = (sermon.media_type or '').strip().lower()
+    media_url = (sermon.media_url or '').strip()
+
+    if not media_url:
+        return {"type": None, "embed_url": None, "source_url": None}
+
+    detected_media_type = media_type or (_infer_media_type(media_url) or '')
+
+    if detected_media_type == 'video':
+        embed_url = _resolve_video_embed(media_url)
+        return {
+            "type": 'video',
+            "embed_url": embed_url,
+            "source_url": media_url,
+        }
+
+    if detected_media_type == 'audio':
+        return {
+            "type": 'audio',
+            "embed_url": media_url,
+            "source_url": media_url,
+        }
+
+    return {
+        "type": 'link',
+        "embed_url": None,
+        "source_url": media_url,
+    }
+
+
 @sermons_bp.route('/sermons')
 def sermons():
     """Display all sermons with optional search parameters."""
     try:
-        # Get search parameters
         title = request.args.get('title', '').strip()
         preacher = request.args.get('preacher', '').strip()
         start_date = request.args.get('start_date', '')
         end_date = request.args.get('end_date', '')
         media_type = request.args.get('media_type', '').strip()
 
-        # Build query
         query = Sermon.query
 
-        # Apply filters
         if title:
             query = query.filter(Sermon.title.ilike(f'%{title}%'))
         if preacher:
@@ -165,7 +142,8 @@ def sermons():
                 query = query.filter(Sermon.date >= start_date_parsed)
             except ValueError:
                 current_app.logger.warning(
-                    f"Invalid start_date format: {start_date}"
+                    "Invalid start_date format received: %s",
+                    start_date,
                 )
         if end_date:
             try:
@@ -173,36 +151,31 @@ def sermons():
                 query = query.filter(Sermon.date <= end_date_parsed)
             except ValueError:
                 current_app.logger.warning(
-                    f"Invalid end_date format: {end_date}"
+                    "Invalid end_date format received: %s",
+                    end_date,
                 )
         if media_type:
             query = query.filter(Sermon.media_type == media_type)
 
-        # Execute query with sorting
         sermons_list = query.order_by(Sermon.date.desc()).all()
         return render_template('sermons.html', sermons=sermons_list)
 
-    except Exception as exc:
-        current_app.logger.error(f"Error in sermons route: {exc}")
+    except Exception as exc:  # pragma: no cover - defensive logging
+        current_app.logger.error("Error in sermons route: %s", exc)
         return render_template('sermons.html', sermons=[])
 
 
 @sermons_bp.route('/sermons/search')
 def search_sermons():
     """Advanced search endpoint for sermons."""
-    return sermons()  # Reuse the main sermons route as it already handles search
+    return sermons()
 
 
 @sermons_bp.route('/sermons/<int:sermon_id>')
 def sermon_detail(sermon_id: int):
     """Render the detail page for a specific sermon with related content."""
     try:
- codex/find-current-location-in-codebase-aqxt07
         sermon = db.session.get(Sermon, sermon_id)
- codex/find-current-location-in-codebase-ntia0s
-        sermon = db.session.get(Sermon, sermon_id)
-        sermon = Sermon.query.get(sermon_id)
-        main
         if not sermon:
             flash('Sermon not found.', 'warning')
             return redirect(url_for('sermons.sermons'))
@@ -217,6 +190,8 @@ def sermon_detail(sermon_id: int):
 
         media_context = _build_media_context(sermon)
 
+        trigger_automation('sermon_viewed', {'sermon_id': sermon.id})
+
         return render_template(
             'sermon_detail.html',
             sermon=sermon,
@@ -226,13 +201,16 @@ def sermon_detail(sermon_id: int):
 
     except SQLAlchemyError as exc:
         current_app.logger.error(
-            f"Database error while fetching sermon {sermon_id}: {exc}"
+            "Database error while fetching sermon %s: %s",
+            sermon_id,
+            exc,
         )
         flash('Unable to load the sermon right now. Please try again later.', 'danger')
         return redirect(url_for('sermons.sermons'))
-    except Exception as exc:
+    except Exception as exc:  # pragma: no cover - defensive logging
         current_app.logger.error(
-            f"Unexpected error in sermon_detail route: {exc}"
+            "Unexpected error in sermon_detail route: %s",
+            exc,
         )
         flash('An unexpected error occurred. Please try again later.', 'danger')
         return redirect(url_for('sermons.sermons'))
