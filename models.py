@@ -35,6 +35,10 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     location = db.Column(db.String(200))
+    recurrence_rule = db.Column(db.String(255))
+    recurrence_end_date = db.Column(db.DateTime)
+    service_segments = db.Column(db.JSON, default=list)
+    ministry_tags = db.Column(db.JSON, default=list)
 
 class Sermon(db.Model):
     __tablename__ = 'sermons'

@@ -1,51 +1,65 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
-codex/explain-requested-code-functionality-dxdu2u
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+
 from app import db
-from app import db, task_queue
-main
-from models import PrayerRequest, User
+from models import PrayerRequest
 from tasks import send_prayer_notification
+
 
 prayers_bp = Blueprint('prayers', __name__)
 
+
 @prayers_bp.route('/prayers', methods=['GET'])
 def prayers():
-    public_prayers = PrayerRequest.query.filter_by(is_public=True).order_by(PrayerRequest.created_at.desc()).all()
-    return render_template('prayers.html', prayers=public_prayers)
+    prayers_list = (
+        PrayerRequest.query
+        .filter_by(is_public=True)
+        .order_by(PrayerRequest.created_at.desc())
+        .all()
+    )
+    return render_template('prayers.html', prayers=prayers_list)
 
 
 @prayers_bp.route('/prayers/submit', methods=['POST'])
 def submit_prayer():
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    prayer_text = request.form.get('request', '').strip()
+    is_public = bool(request.form.get('is_public'))
+
+    if not all([name, email, prayer_text]):
+        flash('Please fill all required fields', 'error')
+        return redirect(url_for('prayers.prayers'))
+
+    new_prayer = PrayerRequest(
+        name=name,
+        email=email,
+        request=prayer_text,
+        is_public=is_public,
+    )
+
     try:
-        name = request.form.get('name')
-        email = request.form.get('email')
-        prayer_request = request.form.get('request')
-        is_public = bool(request.form.get('is_public'))
-
-        if not all([name, email, prayer_request]):
-            flash('Please fill all required fields', 'error')
-            return redirect(url_for('prayers.prayers'))
-
-        new_prayer = PrayerRequest(
-            name=name,
-            email=email,
-            request=prayer_request,
-            is_public=is_public
-        )
-        
         db.session.add(new_prayer)
         db.session.commit()
-        
-        # Send email notification to admins
-codex/explain-requested-code-functionality-dxdu2u
-        current_app.task_queue.enqueue(send_prayer_notification, new_prayer.id)
-        task_queue.enqueue(send_prayer_notification, new_prayer.id)
-main
-        
+
+        task_queue = getattr(current_app, 'task_queue', None)
+        if task_queue is not None:
+            task_queue.enqueue(send_prayer_notification, new_prayer.id)
+
         flash('Prayer request submitted successfully', 'success')
-        return redirect(url_for('prayers.prayers'))
-    except Exception as e:
-        current_app.logger.error(f"Error submitting prayer request: {str(e)}")
+    except Exception as exc:  # noqa: BLE001
         db.session.rollback()
-        flash('An error occurred while submitting your prayer request. Please try again.', 'error')
-        return redirect(url_for('prayers.prayers'))
+        current_app.logger.error('Error submitting prayer request: %s', exc)
+        flash(
+            'An error occurred while submitting your prayer request. Please try again.',
+            'error',
+        )
+
+    return redirect(url_for('prayers.prayers'))
