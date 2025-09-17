@@ -1,0 +1,54 @@
+<div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title mb-0">Giving Summary</h5>
+            <small class="text-muted">Financial health across payment channels</small>
+        </div>
+        <a href="{{ url_for('admin_reports.export_giving', range=request.args.get('range')) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i>Export
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row text-center mb-3">
+            <div class="col-md-6">
+                <div class="text-muted">Total</div>
+                <div class="fs-3">${{ '%.2f'|format(giving.total) }}</div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted">Currencies</div>
+                <div class="fs-4">{{ giving.by_currency|length }}</div>
+            </div>
+        </div>
+        <h6 class="text-muted text-uppercase">By Currency</h6>
+        <ul class="list-group list-group-flush mb-3">
+            {% for currency, amount in giving.by_currency.items() %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ currency }}
+                    <span>${{ '%.2f'|format(amount) }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <h6 class="text-muted text-uppercase">By Method</h6>
+        <ul class="list-group list-group-flush mb-3">
+            {% for method, amount in giving.by_method.items() %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ method|title }}
+                    <span>${{ '%.2f'|format(amount) }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <h6 class="text-muted text-uppercase">Monthly Trend</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-borderless">
+                {% for item in giving.monthly %}
+                    <tr>
+                        <td>{{ item.month }}</td>
+                        <td class="text-end">${{ '%.2f'|format(item.amount) }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="2" class="text-muted text-center">No giving records for this window.</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>

@@ -3,127 +3,56 @@
 {% block title %}Events - Covenant Connect{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center mb-5">
-            <h1 class="display-4 mb-3">Church Events</h1>
-            <p class="lead">Stay connected with our community through various events and gatherings.</p>
+<div class="container py-4">
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8 text-center">
+            <h1 class="display-5">Church Events</h1>
+            <p class="lead text-muted">Plan, promote, and review gatherings across every campus.</p>
         </div>
     </div>
-
     {% if available_tags %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-body d-flex flex-wrap align-items-center gap-2">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
                     <span class="text-muted">Filter by ministry:</span>
-                    <a href="{{ url_for('events.events') }}"
-                       class="btn btn-sm {{ 'btn-primary' if not tag_filter else 'btn-outline-primary' }}">
-                        All
-                    </a>
+                    <a href="{{ url_for('events.events') }}" class="btn btn-sm {{ 'btn-primary' if not tag_filter else 'btn-outline-primary' }}">All</a>
                     {% for tag in available_tags %}
                         <a href="{{ url_for('events.events', tag=tag) }}"
-                           class="btn btn-sm {{ 'btn-primary' if tag_filter == tag else 'btn-outline-primary' }}">
-                            {{ tag }}
-                        </a>
+                           class="btn btn-sm {{ 'btn-primary' if tag_filter == tag else 'btn-outline-primary' }}">{{ tag }}</a>
                     {% endfor %}
-                    <a href="{{ url_for('events.departmental_calendar') }}" class="btn btn-sm btn-outline-secondary ms-auto">
-                        <i class="bi bi-calendar3"></i> Departmental Calendar
-                    </a>
                 </div>
             </div>
         </div>
-    </div>
     {% endif %}
-
     {% if events %}
-        <div class="row g-4">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             {% for event in events %}
-                <div class="col-md-6 col-lg-4">
+                <div class="col">
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">{{ event.title }}</h5>
-                            <p class="card-text">
-                                {{ event.description | default('No description available.', true) | truncate(150, True, '...') }}
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-calendar me-1"></i>{{ event.start_date.strftime('%b %d, %Y') }}
+                                &bull;
+                                <i class="bi bi-clock me-1"></i>{{ event.start_date.strftime('%I:%M %p') }}
                             </p>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar me-2"></i>Date: 
-                                    {{ event.start_date.strftime('%B %d, %Y') }}
-                                </small>
-                            </p>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-2"></i>Time: 
-                                    {{ event.start_date.strftime('%I:%M %p') }}
-                                </small>
-                            </p>
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-geo-alt me-2"></i>Location:
-                                    {{ event.location or 'Location TBA' }}
-                                </small>
-                            </p>
- codex/expand-event-model-for-recurrence-and-tags
+                            <p class="text-muted small"><i class="bi bi-geo-alt me-1"></i>{{ event.location or 'Location TBA' }}</p>
+                            <p class="card-text">{{ event.description or 'Details coming soon.' }}</p>
                             {% if event.ministry_tags %}
-                            <div class="mb-3">
-                                {% for tag in event.ministry_tags %}
-                                    <span class="badge bg-info text-dark me-1">{{ tag }}</span>
-                                {% endfor %}
-                            </div>
-                            {% if event.department %}
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-people me-2"></i>Team:
-                                    {{ event.department.name }}
-                                    {% if event.department.lead %}
-                                        <span class="ms-1">(Lead: {{ event.department.lead.username }})</span>
-                                    {% endif %}
-                                </small>
-                            </p>
+                                <div class="mb-3">
+                                    {% for tag in event.ministry_tags %}
+                                        <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
                             {% endif %}
-                            {% if event.volunteer_role %}
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-person-badge me-2"></i>Coordinator:
-                                    {% if event.volunteer_role.coordinator %}
-                                        {{ event.volunteer_role.coordinator.username }}
-                                    {% elif event.department and event.department.lead %}
-                                        {{ event.department.lead.username }}
-                                    {% else %}
-                                        To be announced
-                                    {% endif %}
-                                </small>
-                            </p>
-                            {% if event.volunteer_role.assignments %}
-                            <p class="card-text">
-                                <small class="text-muted">
-                                    <i class="bi bi-people-fill me-2"></i>
-                                    {{ event.volunteer_role.assignments|length }} volunteer{{ event.volunteer_role.assignments|length != 1 and 's' or '' }} serving
-                                </small>
-                            </p>
-                            {% endif %}
-     main
-                            {% endif %}
-                            <a href="{{ url_for('events.event_detail', event_id=event.id) }}"
-                               class="btn btn-outline-primary">
-                                Learn More
-                            </a>
-                            <a href="{{ url_for('events.plan_event', event_id=event.id) }}"
-                               class="btn btn-primary ms-2">
-                                <i class="bi bi-journal-text"></i> Plan &amp; Agenda
-                            </a>
+                            <a href="{{ url_for('events.plan_event', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">Plan &amp; Agenda</a>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
-            <h5 class="text-muted">No events found</h5>
-            <p class="text-muted">Check back soon for upcoming events!</p>
-        </div>
+        <div class="alert alert-info text-center">No events scheduled for this timeframe.</div>
     {% endif %}
 </div>
 {% endblock %}
