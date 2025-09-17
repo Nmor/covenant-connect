@@ -15,13 +15,21 @@ from flask import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 
+ codex/expand-event-model-for-recurrence-and-tags
 from app import db
 from models import Event
 
+from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
+
+from models import Event, VolunteerAssignment, VolunteerRole
+     main
 
 events_bp = Blueprint('events', __name__)
 
 
+ codex/expand-event-model-for-recurrence-and-tags
 def _filter_events_by_tag(events, tag):
     if not tag:
         return events
@@ -73,11 +81,13 @@ def _serialize_event(event):
     }
 
 
+     main
 @events_bp.route('/events')
 def events():
     tag_filter = request.args.get('tag')
 
     try:
+ codex/expand-event-model-for-recurrence-and-tags
         events_query = Event.query.order_by(Event.start_date)
         events_all = events_query.all()
         available_tags = sorted(
@@ -99,6 +109,22 @@ def events():
         current_app.logger.error(
             'Database error while fetching events: %s', exc
         )
+        events_list = (
+            Event.query.options(
+                joinedload(Event.department),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.coordinator),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.assignments)
+                .joinedload(VolunteerAssignment.volunteer),
+            )
+            .order_by(Event.start_date)
+            .all()
+        )
+        return render_template('events.html', events=events_list)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error while fetching events: {str(e)}")
+     main
         flash('Unable to load events at this time. Please try again later.', 'danger')
         return render_template(
             'events.html',
@@ -120,13 +146,26 @@ def events():
 @events_bp.route('/events/<int:event_id>')
 def event_detail(event_id):
     try:
+ codex/expand-event-model-for-recurrence-and-tags
         event = db.session.get(Event, event_id)
+        event = (
+            Event.query.options(
+                joinedload(Event.department),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.coordinator),
+                joinedload(Event.volunteer_role)
+                .joinedload(VolunteerRole.assignments)
+                .joinedload(VolunteerAssignment.volunteer),
+            )
+            .get(event_id)
+        )
+     main
         if not event:
             flash('Event not found.', 'warning')
             return redirect(url_for('events.events'))
 
         upcoming_events = (
-            Event.query
+            Event.query.options(joinedload(Event.department))
             .filter(Event.start_date >= datetime.utcnow(), Event.id != event_id)
             .order_by(Event.start_date)
             .limit(3)
