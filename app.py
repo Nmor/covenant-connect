@@ -90,11 +90,12 @@ codex/explain-requested-code-functionality-dxdu2u
     from routes.gallery import gallery_bp
     from routes.donations import donations_bp
     from routes.notifications import notifications_bp
+ codex/find-current-location-in-codebase-aqxt07
+    from routes.solutions import solutions_bp
  codex/find-current-location-in-codebase-ntia0s
     from routes.solutions import solutions_bp
     from routes.internal import internal_bp
      main
-
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -104,11 +105,12 @@ codex/explain-requested-code-functionality-dxdu2u
     app.register_blueprint(gallery_bp)
     app.register_blueprint(donations_bp)
     app.register_blueprint(notifications_bp)
+ codex/find-current-location-in-codebase-aqxt07
+    app.register_blueprint(solutions_bp)
  codex/find-current-location-in-codebase-ntia0s
     app.register_blueprint(solutions_bp)
     app.register_blueprint(internal_bp)
      main
-
     # Context processors
     @app.context_processor
     def inject_year():

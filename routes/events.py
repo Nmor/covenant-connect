@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+ codex/find-current-location-in-codebase-aqxt07
+from app import db
  codex/find-current-location-in-codebase-ntia0s
 from app import db
      main
@@ -27,6 +29,8 @@ def events():
 @events_bp.route('/events/<int:event_id>')
 def event_detail(event_id):
     try:
+ codex/find-current-location-in-codebase-aqxt07
+        event = db.session.get(Event, event_id)
  codex/find-current-location-in-codebase-ntia0s
         event = db.session.get(Event, event_id)
         event = Event.query.get(event_id)
