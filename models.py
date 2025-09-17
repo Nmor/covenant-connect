@@ -199,6 +199,11 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     location = db.Column(db.String(200))
+ codex/expand-event-model-for-recurrence-and-tags
+    recurrence_rule = db.Column(db.String(255))
+    recurrence_end_date = db.Column(db.DateTime)
+    service_segments = db.Column(db.JSON, default=list)
+    ministry_tags = db.Column(db.JSON, default=list)
     department_id = db.Column(
         db.Integer,
         db.ForeignKey('ministry_departments.id', ondelete='SET NULL'),
@@ -212,6 +217,7 @@ class Event(db.Model):
 
     department = db.relationship('MinistryDepartment', back_populates='events')
     volunteer_role = db.relationship('VolunteerRole', back_populates='events')
+   main
 
 class Sermon(db.Model):
     __tablename__ = 'sermons'

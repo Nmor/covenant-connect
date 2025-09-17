@@ -1,4 +1,20 @@
 from datetime import datetime
+ codex/expand-event-model-for-recurrence-and-tags
+from urllib.parse import parse_qs, urlparse
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from sqlalchemy.exc import SQLAlchemyError
+
+from app import db
+from models import Sermon
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
@@ -6,6 +22,7 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
+     main
 
 from app import db
 from models import CareInteraction, Member, Sermon
@@ -35,20 +52,20 @@ AUDIO_EXTENSIONS = (
 )
 
 
+ codex/expand-event-model-for-recurrence-and-tags
+def _infer_media_type(media_url: str) -> str | None:
 def _infer_media_type(media_url: str) -> Optional[str]:
+     main
     parsed = urlparse(media_url)
     host = parsed.netloc.lower()
     path = parsed.path.lower()
 
     if any(domain in host for domain in VIDEO_HOSTS):
         return 'video'
-
     if any(path.endswith(ext) for ext in VIDEO_EXTENSIONS):
         return 'video'
-
     if any(path.endswith(ext) for ext in AUDIO_EXTENSIONS):
         return 'audio'
-
     return None
 
 
@@ -77,6 +94,23 @@ def _resolve_video_embed(media_url: str) -> str:
     return media_url
 
 
+ codex/expand-event-model-for-recurrence-and-tags
+def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
+    media_url = (sermon.media_url or '').strip()
+    if not media_url:
+        return {'type': None, 'embed_url': None, 'source_url': None}
+
+    explicit_type = (sermon.media_type or '').strip().lower()
+    detected_type = explicit_type or (_infer_media_type(media_url) or '')
+
+    if detected_type == 'video':
+        return {
+            'type': 'video',
+            'embed_url': _resolve_video_embed(media_url),
+            'source_url': media_url,
+        }
+
+    if detected_type == 'audio':
 def _build_media_context(sermon: Sermon) -> dict[str, Optional[str]]:
     media_type = (sermon.media_type or '').strip().lower()
     media_url = (sermon.media_url or '').strip()
@@ -95,12 +129,15 @@ def _build_media_context(sermon: Sermon) -> dict[str, Optional[str]]:
         }
 
     if detected_media_type == 'audio':
+     main
         return {
             'type': 'audio',
             'embed_url': media_url,
             'source_url': media_url,
         }
 
+ codex/expand-event-model-for-recurrence-and-tags
+    return {'type': 'link', 'embed_url': None, 'source_url': media_url}
     return {
         'type': 'link',
         'embed_url': None,
@@ -172,6 +209,7 @@ def _log_sermon_engagement(member: Member, sermon: Sermon) -> bool:
 
     db.session.add(interaction)
     return True
+     main
 
 
 @sermons_bp.route('/sermons')
@@ -191,23 +229,37 @@ def sermons():
             query = query.filter(Sermon.preacher.ilike(f'%{preacher}%'))
         if start_date:
             try:
-                start_date_parsed = datetime.strptime(start_date, '%Y-%m-%d')
-                query = query.filter(Sermon.date >= start_date_parsed)
+                start = datetime.strptime(start_date, '%Y-%m-%d')
+                query = query.filter(Sermon.date >= start)
             except ValueError:
+ codex/expand-event-model-for-recurrence-and-tags
+                current_app.logger.warning('Invalid start_date format: %s', start_date)
                 current_app.logger.warning(f"Invalid start_date format: {start_date}")
+     main
         if end_date:
             try:
-                end_date_parsed = datetime.strptime(end_date, '%Y-%m-%d')
-                query = query.filter(Sermon.date <= end_date_parsed)
+                end = datetime.strptime(end_date, '%Y-%m-%d')
+                query = query.filter(Sermon.date <= end)
             except ValueError:
+ codex/expand-event-model-for-recurrence-and-tags
+                current_app.logger.warning('Invalid end_date format: %s', end_date)
                 current_app.logger.warning(f"Invalid end_date format: {end_date}")
+     main
         if media_type:
             query = query.filter(Sermon.media_type == media_type)
 
         sermons_list = query.order_by(Sermon.date.desc()).all()
         return render_template('sermons.html', sermons=sermons_list)
+ codex/expand-event-model-for-recurrence-and-tags
+    except SQLAlchemyError as exc:
+        current_app.logger.error('Database error while fetching sermons: %s', exc)
+        flash('Unable to load sermons at this time.', 'danger')
+        return render_template('sermons.html', sermons=[])
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.error('Unexpected error in sermons route: %s', exc)
     except Exception as exc:  # pragma: no cover - defensive fallback
         current_app.logger.error(f"Error in sermons route: {exc}")
+     main
         return render_template('sermons.html', sermons=[])
 
 
@@ -219,7 +271,10 @@ def search_sermons():
 @sermons_bp.route('/sermons/<int:sermon_id>')
 def sermon_detail(sermon_id: int):
     try:
+ codex/expand-event-model-for-recurrence-and-tags
+        sermon = db.session.get(Sermon, sermon_id)
         sermon = Sermon.query.get(sermon_id)
+     main
         if not sermon:
             flash('Sermon not found.', 'warning')
             return redirect(url_for('sermons.sermons'))
@@ -253,19 +308,16 @@ def sermon_detail(sermon_id: int):
         return render_template(
             'sermon_detail.html',
             sermon=sermon,
-            related_sermons=related_sermons,
             media_context=media_context,
+            related_sermons=related_sermons,
         )
-
     except SQLAlchemyError as exc:
-        current_app.logger.error(
-            f"Database error while fetching sermon {sermon_id}: {exc}"
-        )
-        flash('Unable to load the sermon right now. Please try again later.', 'danger')
+        current_app.logger.error('Database error loading sermon %s: %s', sermon_id, exc)
+        flash('Unable to load the sermon right now.', 'danger')
         return redirect(url_for('sermons.sermons'))
-    except Exception as exc:
-        current_app.logger.error(
-            f"Unexpected error in sermon_detail route: {exc}"
-        )
-        flash('An unexpected error occurred. Please try again later.', 'danger')
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.error('Unexpected error in sermon_detail: %s', exc)
         return redirect(url_for('sermons.sermons'))
+
+
+__all__ = ['_build_media_context', '_resolve_video_embed', 'sermons_bp']

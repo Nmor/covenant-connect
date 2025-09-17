@@ -19,8 +19,11 @@ login_manager = LoginManager()
 mail = Mail()
 csrf = CSRFProtect()
 cors = CORS()
+ codex/expand-event-model-for-recurrence-and-tags
+  
 redis_conn = Redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379/0'))
 task_queue = Queue(connection=redis_conn)
+     main
 
 
 def create_app() -> Flask:
@@ -29,6 +32,17 @@ def create_app() -> Flask:
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('covenant_connect')
+ codex/expand-event-model-for-recurrence-and-tags
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        logger.addHandler(handler)
+
+    if Config.SECRET_KEY == 'dev-secret-key':
+        logger.warning('SECRET_KEY is not set. Using development key.')
+     main
 
     database_url = os.getenv('DATABASE_URL', 'sqlite:///app.db')
     if not database_url:
@@ -36,11 +50,21 @@ def create_app() -> Flask:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+ codex/expand-event-model-for-recurrence-and-tags
+    secret_key = os.getenv('SECRET_KEY')
+    if not secret_key:
+        secret_key = 'dev-secret-key'
+        logger.warning('SECRET_KEY is not set. Using development key.')
+    app.config['SECRET_KEY'] = secret_key
+
+    app.config.setdefault('REDIS_URL', os.getenv('REDIS_URL', 'redis://localhost:6379/0'))
+    app.config.setdefault('CORS_ORIGINS', ['*'])
     secret_key = os.getenv('SECRET_KEY') or 'dev-secret-key'
     if secret_key == 'dev-secret-key':
         logger.warning('SECRET_KEY is not set. Using development key.')
     app.config['SECRET_KEY'] = secret_key
 
+     main
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
     app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
     app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'true').lower() == 'true'
@@ -52,6 +76,13 @@ def create_app() -> Flask:
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+ codex/expand-event-model-for-recurrence-and-tags
+    cors.init_app(app, resources={r'/*': {'origins': app.config['CORS_ORIGINS']}})
+
+    login_manager.login_view = 'auth.login'
+
+    redis_connection = Redis.from_url(app.config['REDIS_URL'])
+    app.task_queue = Queue(connection=redis_connection)
     cors.init_app(app, resources={r"/*": {"origins": app.config.get('CORS_ORIGINS', '*')}})
 
     login_manager.login_view = 'auth.login'
@@ -62,6 +93,7 @@ def create_app() -> Flask:
 
     global task_queue
     task_queue = app.task_queue
+     main
 
     from routes.home import home_bp
     from routes.auth import auth_bp
