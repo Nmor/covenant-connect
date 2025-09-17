@@ -33,6 +33,8 @@
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Location</th>
+                            <th>Team</th>
+                            <th>Coordinator</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -44,6 +46,22 @@
                                 <td>{{ event.start_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>{{ event.end_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>{{ event.location }}</td>
+                                <td>
+                                    {% if event.department %}
+                                        {{ event.department.name }}
+                                    {% else %}
+                                        <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if event.volunteer_role and event.volunteer_role.coordinator %}
+                                        {{ event.volunteer_role.coordinator.username }}
+                                    {% elif event.department and event.department.lead %}
+                                        {{ event.department.lead.username }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if event.end_date < now %}
                                         <span class="badge bg-secondary">Past</span>

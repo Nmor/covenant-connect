@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>Volunteer Assignments</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin.create_volunteer_assignment') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-person-plus"></i> Assign Volunteer
+        </a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="card">
+    <div class="card-body">
+        {% if assignments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Volunteer</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Coordinator</th>
+                            <th scope="col">Serving Since</th>
+                            <th scope="col">Notes</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in assignments %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ assignment.volunteer.username }}</div>
+                                    <div class="text-muted small">{{ assignment.volunteer.email }}</div>
+                                </td>
+                                <td>{{ assignment.role.name }}</td>
+                                <td>{{ assignment.role.department.name }}</td>
+                                <td>
+                                    {% if assignment.role.coordinator %}
+                                        {{ assignment.role.coordinator.username }}
+                                    {% else %}
+                                        <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if assignment.start_date %}
+                                        {{ assignment.start_date.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if assignment.notes %}
+                                        <span class="text-muted">{{ assignment.notes }}</span>
+                                    {% else %}
+                                        <span class="text-muted">&mdash;</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin.edit_volunteer_assignment', assignment_id=assignment.id) }}"
+                                           class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="{{ url_for('admin.delete_volunteer_assignment', assignment_id=assignment.id) }}"
+                                              method="POST" class="d-inline"
+                                              onsubmit="return confirm('Remove this volunteer from the role?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people display-1 text-muted mb-3"></i>
+                <h5 class="text-muted">No volunteer assignments yet</h5>
+                <p class="text-muted">Link volunteers to teams to coordinate event support.</p>
+                <a href="{{ url_for('admin.create_volunteer_assignment') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Assign Volunteer
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

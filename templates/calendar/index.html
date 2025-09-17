@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Departmental Calendars - Covenant Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-lg-10">
+            <h1 class="display-5">Departmental Calendars</h1>
+            <p class="lead">Coordinate ministry schedules, sync calendars with your favorite tools, and download printable run sheets for each gathering.</p>
+        </div>
+        <div class="col-lg-2 d-flex align-items-start justify-content-lg-end mt-3 mt-lg-0">
+            <div class="btn-group" role="group" aria-label="All ministry feeds">
+                <a href="{{ url_for('events.events_json_feed') }}" class="btn btn-outline-light btn-sm" target="_blank">
+                    <i class="bi bi-code-slash"></i> JSON
+                </a>
+                <a href="{{ url_for('events.events_ical_feed') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-calendar2-plus"></i> iCal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if grouped_events %}
+        <div class="accordion" id="departmentCalendarAccordion">
+            {% for tag, events in grouped_events|dictsort %}
+            <div class="accordion-item bg-dark border-secondary mb-3">
+                <h2 class="accordion-header" id="heading-{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="false" aria-controls="collapse-{{ loop.index }}">
+                        <span class="me-2 badge bg-info text-dark">{{ events|length }}</span>
+                        <span class="fw-semibold">{{ tag }}</span>
+                    </button>
+                </h2>
+                <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#departmentCalendarAccordion">
+                    <div class="accordion-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                            <div>
+                                <small class="text-muted">Sync tools:</small>
+                                <div class="btn-group btn-group-sm ms-2" role="group">
+                                    <a href="{{ url_for('events.events_json_feed', tag=tag) }}" class="btn btn-outline-light" target="_blank">
+                                        <i class="bi bi-code"></i> JSON
+                                    </a>
+                                    <a href="{{ url_for('events.events_ical_feed', tag=tag) }}" class="btn btn-outline-light">
+                                        <i class="bi bi-calendar-plus"></i> iCal
+                                    </a>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('events.events', tag=tag) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-funnel"></i> View tagged events
+                            </a>
+                        </div>
+
+                        {% for event in events %}
+                            <div class="card bg-secondary-subtle text-white border-0 shadow-sm mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex flex-wrap justify-content-between gap-3">
+                                        <div class="flex-grow-1">
+                                            <h3 class="h5 mb-1">
+                                                <a href="{{ url_for('events.event_detail', event_id=event.id) }}" class="text-decoration-none text-white">
+                                                    {{ event.title }}
+                                                </a>
+                                            </h3>
+                                            <p class="small text-muted mb-2">
+                                                {{ event.description | default('Details coming soon.', true) | truncate(140, True, '...') }}
+                                            </p>
+                                            <div class="small text-muted">
+                                                <div>
+                                                    <i class="bi bi-calendar-event me-1"></i>{{ event.start_date.strftime('%B %d, %Y %I:%M %p') }}
+                                                    {% if event.end_date %}
+                                                        &ndash; {{ event.end_date.strftime('%I:%M %p') }}
+                                                    {% endif %}
+                                                </div>
+                                                {% if event.location %}
+                                                <div><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</div>
+                                                {% endif %}
+                                                {% if event.recurrence_rule %}
+                                                <div><i class="bi bi-repeat me-1"></i>{{ event.recurrence_rule }}{% if event.recurrence_end_date %} (until {{ event.recurrence_end_date.strftime('%b %d, %Y') }}){% endif %}</div>
+                                                {% endif %}
+                                            </div>
+                                            {% if event.service_segments %}
+                                            <div class="mt-2">
+                                                <small class="text-uppercase fw-semibold">Service Segments:</small>
+                                                <ul class="small mb-0 ps-3">
+                                                    {% for segment in event.service_segments %}
+                                                        {% if segment.title or segment.leader or segment.duration %}
+                                                        <li>
+                                                            <strong>{{ segment.title or 'Segment' }}</strong>
+                                                            {% if segment.leader %} &mdash; Lead: {{ segment.leader }}{% endif %}
+                                                            {% if segment.duration %} ({{ segment.duration }}){% endif %}
+                                                        </li>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <a href="{{ url_for('events.plan_event', event_id=event.id) }}" class="btn btn-outline-light btn-sm mb-2">
+                                                <i class="bi bi-journal-text"></i> Plan &amp; Run Sheet
+                                            </a>
+                                            <div class="d-flex flex-column gap-2">
+                                                <a href="{{ url_for('events.events_ical_feed', tag=tag) }}" class="btn btn-dark btn-sm">
+                                                    <i class="bi bi-cloud-download"></i> Subscribe
+                                                </a>
+                                                <a href="{{ url_for('events.events_json_feed', tag=tag) }}" class="btn btn-dark btn-sm" target="_blank">
+                                                    <i class="bi bi-diagram-3"></i> Integrate
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No scheduled items for this ministry yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+            <h2 class="h4">No events scheduled</h2>
+            <p class="text-muted">Add ministry tags to events to populate departmental calendars.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

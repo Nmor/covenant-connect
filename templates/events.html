@@ -11,6 +11,31 @@
         </div>
     </div>
 
+    {% if available_tags %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-muted">Filter by ministry:</span>
+                    <a href="{{ url_for('events.events') }}"
+                       class="btn btn-sm {{ 'btn-primary' if not tag_filter else 'btn-outline-primary' }}">
+                        All
+                    </a>
+                    {% for tag in available_tags %}
+                        <a href="{{ url_for('events.events', tag=tag) }}"
+                           class="btn btn-sm {{ 'btn-primary' if tag_filter == tag else 'btn-outline-primary' }}">
+                            {{ tag }}
+                        </a>
+                    {% endfor %}
+                    <a href="{{ url_for('events.departmental_calendar') }}" class="btn btn-sm btn-outline-secondary ms-auto">
+                        <i class="bi bi-calendar3"></i> Departmental Calendar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% if events %}
         <div class="row g-4">
             {% for event in events %}
@@ -39,9 +64,54 @@
                                     {{ event.location or 'Location TBA' }}
                                 </small>
                             </p>
-                            <a href="{{ url_for('events.event_detail', event_id=event.id) }}" 
+ codex/expand-event-model-for-recurrence-and-tags
+                            {% if event.ministry_tags %}
+                            <div class="mb-3">
+                                {% for tag in event.ministry_tags %}
+                                    <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% if event.department %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-people me-2"></i>Team:
+                                    {{ event.department.name }}
+                                    {% if event.department.lead %}
+                                        <span class="ms-1">(Lead: {{ event.department.lead.username }})</span>
+                                    {% endif %}
+                                </small>
+                            </p>
+                            {% endif %}
+                            {% if event.volunteer_role %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-person-badge me-2"></i>Coordinator:
+                                    {% if event.volunteer_role.coordinator %}
+                                        {{ event.volunteer_role.coordinator.username }}
+                                    {% elif event.department and event.department.lead %}
+                                        {{ event.department.lead.username }}
+                                    {% else %}
+                                        To be announced
+                                    {% endif %}
+                                </small>
+                            </p>
+                            {% if event.volunteer_role.assignments %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="bi bi-people-fill me-2"></i>
+                                    {{ event.volunteer_role.assignments|length }} volunteer{{ event.volunteer_role.assignments|length != 1 and 's' or '' }} serving
+                                </small>
+                            </p>
+                            {% endif %}
+     main
+                            {% endif %}
+                            <a href="{{ url_for('events.event_detail', event_id=event.id) }}"
                                class="btn btn-outline-primary">
                                 Learn More
+                            </a>
+                            <a href="{{ url_for('events.plan_event', event_id=event.id) }}"
+                               class="btn btn-primary ms-2">
+                                <i class="bi bi-journal-text"></i> Plan &amp; Agenda
                             </a>
                         </div>
                     </div>
