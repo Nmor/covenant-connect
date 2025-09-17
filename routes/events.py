@@ -3,6 +3,13 @@ import csv
 import io
 from datetime import datetime
 
+ codex/add-generic-workflow-runner-and-ui
+from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+from sqlalchemy.exc import SQLAlchemyError
+
+from app import db
+from models import Event
+from tasks import trigger_automation
 from flask import (
     Blueprint,
     current_app,
@@ -44,11 +51,13 @@ from models import Event, VolunteerAssignment, VolunteerRole
 
 from app import db
 from models import AttendanceRecord, Event, FacilityReservation
+     main
 
 
 events_bp = Blueprint('events', __name__)
 
 
+ codex/add-generic-workflow-runner-and-ui
  codex/define-models-for-facility,-resource,-attendancerecord
 def _safe_filename(event: Event, suffix: str) -> str:
     """Return a filesystem-friendly filename for downloads."""
@@ -151,8 +160,6 @@ def _serialize_event(event):
         'ministry_tags': event.ministry_tags or [],
     }
 
-
-     main
      main
 @events_bp.route('/events')
 def events():
@@ -194,6 +201,15 @@ def events():
             .all()
         )
         return render_template('events.html', events=events_list)
+ codex/add-generic-workflow-runner-and-ui
+    except SQLAlchemyError as exc:
+        current_app.logger.error(
+            "Database error while fetching events: %s", exc,
+        )
+        flash('Unable to load events at this time. Please try again later.', 'danger')
+        return render_template('events.html', events=[])
+    except Exception as exc:  # pragma: no cover - defensive logging
+        current_app.logger.error("Unexpected error in events route: %s", exc)
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error while fetching events: {str(e)}")
      main
@@ -206,6 +222,7 @@ def events():
         )
     except Exception as exc:  # noqa: BLE001 - broad exception to surface to the UI
         current_app.logger.error('Unexpected error in events route: %s', exc)
+     main
         flash('An unexpected error occurred. Please try again later.', 'danger')
         return render_template(
             'events.html',
@@ -216,8 +233,10 @@ def events():
 
 
 @events_bp.route('/events/<int:event_id>')
-def event_detail(event_id):
+def event_detail(event_id: int):
     try:
+ codex/add-generic-workflow-runner-and-ui
+        event = db.session.get(Event, event_id)
  codex/define-models-for-facility,-resource,-attendancerecord
         event = db.session.get(Event, event_id)
  codex/expand-event-model-for-recurrence-and-tags
@@ -250,6 +269,8 @@ def event_detail(event_id):
             .all()
         )
 
+ codex/add-generic-workflow-runner-and-ui
+        trigger_automation('event_viewed', {'event_id': event.id})
         (
             facility_reservations,
             resource_allocations,
@@ -267,11 +288,26 @@ def event_detail(event_id):
         expected_attendance = sum(record.expected_attendees or 0 for record in attendance_records)
         total_checked_in = sum(record.checked_in_count or 0 for record in attendance_records)
         last_check_in = attendance_records[0].check_in_time if attendance_records else None
+     main
 
         return render_template(
             'event_detail.html',
             event=event,
             upcoming_events=upcoming_events,
+ codex/add-generic-workflow-runner-and-ui
+        )
+    except SQLAlchemyError as exc:
+        current_app.logger.error(
+            "Database error while fetching event %s: %s",
+            event_id,
+            exc,
+        )
+        flash('Unable to load the event at this time. Please try again later.', 'danger')
+        return redirect(url_for('events.events'))
+    except Exception as exc:  # pragma: no cover - defensive logging
+        current_app.logger.error(
+            "Unexpected error in event_detail route: %s",
+            exc,
  codex/define-models-for-facility,-resource,-attendancerecord
             facility_reservations=facility_reservations,
             resource_allocations=resource_allocations,
@@ -292,6 +328,7 @@ def event_detail(event_id):
     except Exception as exc:  # noqa: BLE001
         current_app.logger.error(
             'Unexpected error in event_detail route: %s', exc
+     main
         )
         flash('An unexpected error occurred. Please try again later.', 'danger')
         return redirect(url_for('events.events'))

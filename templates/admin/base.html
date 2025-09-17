@@ -23,6 +23,14 @@
                         </a>
                     </li>
                     <li class="nav-item">
+ codex/add-generic-workflow-runner-and-ui
+                        <a class="nav-link d-flex align-items-center {% if request.endpoint and request.endpoint.startswith('admin.automation') %}active{% endif %}"
+                           href="{{ url_for('admin.automations') }}">
+                            <i class="bi bi-diagram-3"></i>
+                            <span>Automations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
  codex/define-models-for-facility,-resource,-attendancerecord
  codex/add-member-models-and-management-views
                         <a class="nav-link d-flex align-items-center {% if request.endpoint in ['admin.members', 'admin.member_profile', 'admin.log_member_follow_up'] %}active{% endif %}"

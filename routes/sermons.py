@@ -1,5 +1,8 @@
 from datetime import datetime
+ codex/add-generic-workflow-runner-and-ui
+from typing import Dict, Optional
  codex/expand-event-model-for-recurrence-and-tags
+     main
 from urllib.parse import parse_qs, urlparse
 
 from flask import (
@@ -15,6 +18,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app import db
 from models import Sermon
+ codex/add-generic-workflow-runner-and-ui
+from tasks import trigger_automation
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
@@ -23,12 +28,14 @@ from flask_login import current_user
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
      main
-
 from app import db
 from models import CareInteraction, Member, Sermon
 
 sermons_bp = Blueprint('sermons', __name__)
 
+ codex/add-generic-workflow-runner-and-ui
+
+ main
 VIDEO_HOSTS = (
     'youtube.com',
     'youtu.be',
@@ -52,6 +59,9 @@ AUDIO_EXTENSIONS = (
 )
 
 
+ codex/add-generic-workflow-runner-and-ui
+def _infer_media_type(media_url: str) -> Optional[str]:
+    """Guess the media type from known host names or file extensions."""
  codex/expand-event-model-for-recurrence-and-tags
 def _infer_media_type(media_url: str) -> str | None:
 def _infer_media_type(media_url: str) -> Optional[str]:
@@ -70,6 +80,9 @@ def _infer_media_type(media_url: str) -> Optional[str]:
 
 
 def _resolve_video_embed(media_url: str) -> str:
+ codex/add-generic-workflow-runner-and-ui
+    """Convert known video providers into embeddable URLs when possible."""
+     main
     parsed = urlparse(media_url)
     host = parsed.netloc.lower()
 
@@ -94,6 +107,9 @@ def _resolve_video_embed(media_url: str) -> str:
     return media_url
 
 
+ codex/add-generic-workflow-runner-and-ui
+def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
+    """Return template-friendly context describing how to render sermon media."""
  codex/expand-event-model-for-recurrence-and-tags
 def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
     media_url = (sermon.media_url or '').strip()
@@ -112,6 +128,7 @@ def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
 
     if detected_type == 'audio':
 def _build_media_context(sermon: Sermon) -> dict[str, Optional[str]]:
+     main
     media_type = (sermon.media_type or '').strip().lower()
     media_url = (sermon.media_url or '').strip()
 
@@ -129,6 +146,7 @@ def _build_media_context(sermon: Sermon) -> dict[str, Optional[str]]:
         }
 
     if detected_media_type == 'audio':
+ codex/add-generic-workflow-runner-and-ui
      main
         return {
             'type': 'audio',
@@ -145,6 +163,7 @@ def _build_media_context(sermon: Sermon) -> dict[str, Optional[str]]:
     }
 
 
+ codex/add-generic-workflow-runner-and-ui
 def _find_member_by_email(email: Optional[str]) -> Optional[Member]:
     if not email:
         return None
@@ -212,6 +231,7 @@ def _log_sermon_engagement(member: Member, sermon: Sermon) -> bool:
      main
 
 
+     main
 @sermons_bp.route('/sermons')
 def sermons():
     try:
@@ -232,6 +252,11 @@ def sermons():
                 start = datetime.strptime(start_date, '%Y-%m-%d')
                 query = query.filter(Sermon.date >= start)
             except ValueError:
+ codex/add-generic-workflow-runner-and-ui
+                current_app.logger.warning(
+                    "Invalid start_date format received: %s",
+                    start_date,
+                )
  codex/expand-event-model-for-recurrence-and-tags
                 current_app.logger.warning('Invalid start_date format: %s', start_date)
                 current_app.logger.warning(f"Invalid start_date format: {start_date}")
@@ -241,6 +266,11 @@ def sermons():
                 end = datetime.strptime(end_date, '%Y-%m-%d')
                 query = query.filter(Sermon.date <= end)
             except ValueError:
+ codex/add-generic-workflow-runner-and-ui
+                current_app.logger.warning(
+                    "Invalid end_date format received: %s",
+                    end_date,
+                )
  codex/expand-event-model-for-recurrence-and-tags
                 current_app.logger.warning('Invalid end_date format: %s', end_date)
                 current_app.logger.warning(f"Invalid end_date format: {end_date}")
@@ -250,6 +280,10 @@ def sermons():
 
         sermons_list = query.order_by(Sermon.date.desc()).all()
         return render_template('sermons.html', sermons=sermons_list)
+ codex/add-generic-workflow-runner-and-ui
+
+    except Exception as exc:  # pragma: no cover - defensive logging
+        current_app.logger.error("Error in sermons route: %s", exc)
  codex/expand-event-model-for-recurrence-and-tags
     except SQLAlchemyError as exc:
         current_app.logger.error('Database error while fetching sermons: %s', exc)
@@ -265,12 +299,17 @@ def sermons():
 
 @sermons_bp.route('/sermons/search')
 def search_sermons():
+ codex/add-generic-workflow-runner-and-ui
+    """Advanced search endpoint for sermons."""
+     main
     return sermons()
 
 
 @sermons_bp.route('/sermons/<int:sermon_id>')
 def sermon_detail(sermon_id: int):
     try:
+ codex/add-generic-workflow-runner-and-ui
+        sermon = db.session.get(Sermon, sermon_id)
  codex/expand-event-model-for-recurrence-and-tags
         sermon = db.session.get(Sermon, sermon_id)
         sermon = Sermon.query.get(sermon_id)
@@ -289,6 +328,8 @@ def sermon_detail(sermon_id: int):
 
         media_context = _build_media_context(sermon)
 
+ codex/add-generic-workflow-runner-and-ui
+        trigger_automation('sermon_viewed', {'sermon_id': sermon.id})
         member = _resolve_member_for_engagement()
         if member:
             try:
@@ -304,6 +345,7 @@ def sermon_detail(sermon_id: int):
                 current_app.logger.error(
                     f"Unexpected error logging sermon engagement for member {member.id}: {engagement_exc}"
                 )
+     main
 
         return render_template(
             'sermon_detail.html',
@@ -312,11 +354,26 @@ def sermon_detail(sermon_id: int):
             related_sermons=related_sermons,
         )
     except SQLAlchemyError as exc:
+ codex/add-generic-workflow-runner-and-ui
+        current_app.logger.error(
+            "Database error while fetching sermon %s: %s",
+            sermon_id,
+            exc,
+        )
+        flash('Unable to load the sermon right now. Please try again later.', 'danger')
+        return redirect(url_for('sermons.sermons'))
+    except Exception as exc:  # pragma: no cover - defensive logging
+        current_app.logger.error(
+            "Unexpected error in sermon_detail route: %s",
+            exc,
+        )
+        flash('An unexpected error occurred. Please try again later.', 'danger')
         current_app.logger.error('Database error loading sermon %s: %s', sermon_id, exc)
         flash('Unable to load the sermon right now.', 'danger')
         return redirect(url_for('sermons.sermons'))
     except Exception as exc:  # noqa: BLE001
         current_app.logger.error('Unexpected error in sermon_detail: %s', exc)
+     main
         return redirect(url_for('sermons.sermons'))
 
 

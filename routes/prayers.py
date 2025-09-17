@@ -1,3 +1,9 @@
+ codex/add-generic-workflow-runner-and-ui
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
+
+from app import db
+from models import PrayerRequest
+from tasks import send_prayer_notification, trigger_automation
  codex/expand-event-model-for-recurrence-and-tags
 from flask import (
     Blueprint,
@@ -21,11 +27,15 @@ from app import db, task_queue
 from models import CareInteraction, Member, PrayerRequest
  main
 from tasks import send_prayer_notification
+     main
 
 
 prayers_bp = Blueprint('prayers', __name__)
 
 
+ codex/add-generic-workflow-runner-and-ui
+@prayers_bp.route('/prayers', methods=['GET'])
+def prayers():
  codex/expand-event-model-for-recurrence-and-tags
 @prayers_bp.route('/prayers', methods=['GET'])
 def prayers():
@@ -83,6 +93,7 @@ def _enqueue_notification(prayer_id: int) -> None:
 
 @prayers_bp.route('/prayers', methods=['GET'])
 def prayers():
+     main
     public_prayers = (
         PrayerRequest.query.filter_by(is_public=True)
         .order_by(PrayerRequest.created_at.desc())
@@ -114,16 +125,21 @@ def submit_prayer():
  codex/expand-event-model-for-recurrence-and-tags
         name = request.form.get('name')
         email = request.form.get('email')
-        prayer_request = request.form.get('request')
+        prayer_request_text = request.form.get('request')
         is_public = bool(request.form.get('is_public'))
 
-        if not all([name, email, prayer_request]):
+        if not all([name, email, prayer_request_text]):
             flash('Please fill all required fields', 'error')
             return redirect(url_for('prayers.prayers'))
 
         new_prayer = PrayerRequest(
             name=name,
             email=email,
+ codex/add-generic-workflow-runner-and-ui
+            request=prayer_request_text,
+            is_public=is_public,
+        )
+
             request=prayer_request,
             is_public=is_public,
         )
@@ -138,6 +154,23 @@ def submit_prayer():
 
         db.session.commit()
 
+ codex/add-generic-workflow-runner-and-ui
+        triggered = trigger_automation(
+            'prayer_request_created',
+            {'prayer_request_id': new_prayer.id},
+        )
+
+        if triggered == 0:
+            queue = getattr(current_app, 'task_queue', None)
+            if queue:
+                queue.enqueue(send_prayer_notification, new_prayer.id)
+            else:
+                send_prayer_notification(new_prayer.id)
+
+        flash('Prayer request submitted successfully', 'success')
+        return redirect(url_for('prayers.prayers'))
+    except Exception as exc:
+        current_app.logger.error(f"Error submitting prayer request: {exc}")
  codex/expand-event-model-for-recurrence-and-tags
         task_queue = getattr(current_app, 'task_queue', None)
         if task_queue is not None:
@@ -151,8 +184,12 @@ def submit_prayer():
         return redirect(url_for('prayers.prayers'))
     except SQLAlchemyError as exc:
         current_app.logger.error(f"Database error submitting prayer request: {exc}")
+     main
         db.session.rollback()
-        flash('An error occurred while submitting your prayer request. Please try again.', 'error')
+        flash(
+            'An error occurred while submitting your prayer request. Please try again.',
+            'error',
+        )
         return redirect(url_for('prayers.prayers'))
     except Exception as exc:
         current_app.logger.error(f"Unexpected error submitting prayer request: {exc}")

@@ -2,7 +2,10 @@ import logging
 import os
 from datetime import datetime
 
+ codex/add-generic-workflow-runner-and-ui
+from flask import Flask, render_template, request, g, session, redirect, url_for
 from flask import Flask
+     main
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -19,12 +22,15 @@ login_manager = LoginManager()
 mail = Mail()
 csrf = CSRFProtect()
 cors = CORS()
+ codex/add-generic-workflow-runner-and-ui
+
+redis_conn = Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+task_queue = Queue(connection=redis_conn)
  codex/expand-event-model-for-recurrence-and-tags
   
 redis_conn = Redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379/0'))
 task_queue = Queue(connection=redis_conn)
      main
-
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -32,18 +38,27 @@ def create_app() -> Flask:
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('covenant_connect')
+ codex/add-generic-workflow-runner-and-ui
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    )
+    if not any(isinstance(existing, logging.StreamHandler) for existing in logger.handlers):
  codex/expand-event-model-for-recurrence-and-tags
     if not logger.handlers:
         handler = logging.StreamHandler()
         handler.setFormatter(
             logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         )
+     main
         logger.addHandler(handler)
 
     if Config.SECRET_KEY == 'dev-secret-key':
         logger.warning('SECRET_KEY is not set. Using development key.')
-     main
+ codex/add-generic-workflow-runner-and-ui
 
+    # Configure database
+     main
     database_url = os.getenv('DATABASE_URL', 'sqlite:///app.db')
     if not database_url:
         raise RuntimeError('DATABASE_URL is not set')
@@ -71,11 +86,24 @@ def create_app() -> Flask:
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+ codex/add-generic-workflow-runner-and-ui
+
+    if not app.config.get('CORS_ORIGINS'):
+        app.config['CORS_ORIGINS'] = ['*']
+     main
 
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+ codex/add-generic-workflow-runner-and-ui
+    cors.init_app(app, resources={r"/*": {"origins": app.config['CORS_ORIGINS']}})
+    login_manager.login_view = 'auth.login'
+
+    # Initialize task queue
+    redis_url = app.config.get('REDIS_URL') or os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    redis_connection = Redis.from_url(redis_url)
+    app.task_queue = Queue(connection=redis_connection)
  codex/expand-event-model-for-recurrence-and-tags
     cors.init_app(app, resources={r'/*': {'origins': app.config['CORS_ORIGINS']}})
 
@@ -126,7 +154,10 @@ def create_app() -> Flask:
     from models import User
 
     @login_manager.user_loader
+ codex/add-generic-workflow-runner-and-ui
+    def load_user(user_id: str):
     def load_user(user_id: str) -> User | None:
+     main
         return db.session.get(User, int(user_id))
 
     return app

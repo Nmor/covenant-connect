@@ -296,6 +296,47 @@ class Settings(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+ codex/add-generic-workflow-runner-and-ui
+class Automation(db.Model):
+    __tablename__ = 'automations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    trigger = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    default_channel = db.Column(db.String(50))
+    target_department = db.Column(db.String(120))
+    trigger_filters = db.Column(db.JSON, default=dict)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    steps = db.relationship(
+        'AutomationStep',
+        back_populates='automation',
+        cascade='all, delete-orphan',
+        order_by='AutomationStep.order',
+    )
+
+
+class AutomationStep(db.Model):
+    __tablename__ = 'automation_steps'
+
+    id = db.Column(db.Integer, primary_key=True)
+    automation_id = db.Column(
+        db.Integer, db.ForeignKey('automations.id'), nullable=False
+    )
+    title = db.Column(db.String(150))
+    action_type = db.Column(db.String(50), nullable=False)
+    channel = db.Column(db.String(50))
+    department = db.Column(db.String(120))
+    order = db.Column(db.Integer, default=0)
+    delay_minutes = db.Column(db.Integer, default=0)
+    config = db.Column(db.JSON, default=dict)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    automation = db.relationship('Automation', back_populates='steps')
  codex/define-models-for-facility,-resource,-attendancerecord
 class Facility(db.Model):
     __tablename__ = 'facilities'
