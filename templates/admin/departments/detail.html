@@ -1,0 +1,163 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1>{{ department.name }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin.edit_department', department_id=department.id) }}" class="btn btn-sm btn-outline-primary me-2">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{{ url_for('admin.create_role', department_id=department.id) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-person-plus"></i> New Role
+        </a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="row gy-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Department Overview</h2>
+                {% if department.description %}
+                    <p class="mb-3">{{ department.description }}</p>
+                {% else %}
+                    <p class="text-muted">No description has been added for this department yet.</p>
+                {% endif %}
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Staff Lead</dt>
+                    <dd class="col-sm-8">
+                        {% if department.lead %}
+                            {{ department.lead.username }} &lt;{{ department.lead.email }}&gt;
+                        {% else %}
+                            <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                    </dd>
+                    <dt class="col-sm-4">Total Roles</dt>
+                    <dd class="col-sm-8">{{ department.roles|length }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Upcoming Events</h2>
+                {% if upcoming_events %}
+                    <ul class="list-group list-group-flush">
+                        {% for event in upcoming_events %}
+                            <li class="list-group-item">
+                                <div class="fw-semibold">{{ event.title }}</div>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-calendar-event me-1"></i>{{ event.start_date.strftime('%b %d, %Y %I:%M %p') }}
+                                </small>
+                                {% if event.volunteer_role %}
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-person-check me-1"></i>{{ event.volunteer_role.name }}
+                                    </small>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">No upcoming events assigned to this department.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">Volunteer Roles</h2>
+            <a href="{{ url_for('admin.create_role', department_id=department.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-person-plus"></i> Add Role
+            </a>
+        </div>
+        {% if department.roles %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Role</th>
+                            <th scope="col">Coordinator</th>
+                            <th scope="col">Volunteers</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in department.roles %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ role.name }}</div>
+                                    {% if role.description %}
+                                        <div class="text-muted small">{{ role.description }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if role.coordinator %}
+                                        {{ role.coordinator.username }}
+                                    {% else %}
+                                        <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if role.assignments %}
+                                        <div class="d-flex flex-column gap-1">
+                                            {% for assignment in role.assignments %}
+                                                <span class="badge bg-light text-dark">
+                                                    {{ assignment.volunteer.username }}
+                                                    {% if assignment.start_date %}
+                                                        <small class="text-muted ms-2">since {{ assignment.start_date.strftime('%b %Y') }}</small>
+                                                    {% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">No volunteers assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin.edit_role', department_id=department.id, role_id=role.id) }}"
+                                           class="btn btn-sm btn-outline-primary" title="Edit Role">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="{{ url_for('admin.delete_role', department_id=department.id, role_id=role.id) }}"
+                                              method="POST" class="d-inline"
+                                              onsubmit="return confirm('Delete this volunteer role?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Role">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-people display-5 text-muted mb-3"></i>
+                <p class="text-muted">No volunteer roles have been set up for this department yet.</p>
+                <a href="{{ url_for('admin.create_role', department_id=department.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-person-plus"></i> Create a Role
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

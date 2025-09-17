@@ -127,10 +127,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Member Care Stats -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 dashboard-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stat-icon bg-secondary bg-opacity-10 rounded p-3">
+                            <i class="bi bi-people-heart fs-3 text-secondary"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Member Care</h6>
+                        <h3 class="card-title mb-0">{{ member_stats.total }}</h3>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col">
+                        <small class="text-muted d-block">Connected</small>
+                        <span class="h5">{{ member_stats.connected }}</span>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted d-block">Follow-ups Due</small>
+                        <span class="h5">{{ member_stats.followups_due }}</span>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted d-block mb-1">Avg. Milestone Completion</small>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-secondary" role="progressbar"
+                             style="width: {{ member_stats.milestone_completion_rate }}%;"
+                             aria-valuenow="{{ member_stats.milestone_completion_rate }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="text-end small text-muted mt-1">{{ member_stats.milestone_completion_rate }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-12">
+<div class="row mt-4 g-4">
+    <div class="col-lg-6">
         <div class="card dashboard-card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Quick Actions</h5>
@@ -158,6 +198,43 @@
                         </a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card dashboard-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Care Follow-ups</h5>
+                <a href="{{ url_for('admin.members') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_followups %}
+                    <ul class="list-group list-group-flush">
+                        {% for interaction in recent_followups %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ interaction.member.full_name }}</strong>
+                                        <div class="small text-muted">{{ interaction.interaction_type.replace('_', ' ')|title }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">{{ interaction.interaction_date.strftime('%b %d, %Y') }}</div>
+                                        {% if interaction.created_by %}
+                                            <div class="small text-muted">by {{ interaction.created_by.username }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if interaction.notes %}
+                                    <div class="small mt-2 text-muted">{{ interaction.notes }}</div>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        No follow-up activity recorded yet.
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

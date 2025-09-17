@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Plan {{ event.title }} - Covenant Connect{% endblock %}
+
+{% block content %}
+{% if printable %}
+<style>
+    nav.navbar,
+    footer.footer,
+    #themeToggle {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+</style>
+{% endif %}
+
+<div class="container py-4">
+    <div class="row gy-4">
+        <div class="{{ 'col-12' if printable else 'col-lg-8' }}">
+            {% if not printable %}
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <a href="{{ url_for('events.event_detail', event_id=event.id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Event
+                </a>
+                <a href="{{ url_for('events.events') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-calendar-event"></i> All Events
+                </a>
+                <a href="{{ url_for('events.plan_event', event_id=event.id, format='print') }}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-printer"></i> Print Run Sheet
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Service Planning</h2>
+                    {% if not printable %}
+                        <span class="badge bg-secondary">{{ event.start_date.strftime('%B %d, %Y') }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if printable %}
+                        <div class="mb-4">
+                            <h1 class="h3 mb-1">{{ event.title }}</h1>
+                            <p class="mb-0 text-muted">
+                                {{ event.start_date.strftime('%A, %B %d, %Y %I:%M %p') }}
+                                {% if event.end_date %}
+                                    &ndash; {{ event.end_date.strftime('%I:%M %p') }}
+                                {% endif %}
+                            </p>
+                            {% if event.location %}
+                                <p class="mb-0 text-muted">{{ event.location }}</p>
+                            {% endif %}
+                            {% if event.ministry_tags %}
+                                <p class="mb-0 text-muted">Ministries: {{ event.ministry_tags | join(', ') }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                    <form method="post">
+                        <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Recurrence Rule</label>
+                                <input type="text" class="form-control" name="recurrence_rule"
+                                       value="{{ event.recurrence_rule or '' }}"
+                                       placeholder="FREQ=WEEKLY;BYDAY=SU">
+                                <div class="form-text">Use iCal RRULE syntax (e.g., FREQ=MONTHLY;BYDAY=SU).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Recurrence Ends</label>
+                                <input type="date" class="form-control" name="recurrence_end"
+                                       value="{{ event.recurrence_end_date.strftime('%Y-%m-%d') if event.recurrence_end_date else '' }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Ministry Tags</label>
+                                <input type="text" class="form-control" name="ministry_tags"
+                                       value="{{ event.ministry_tags | join(', ') }}"
+                                       placeholder="Worship, Youth, Outreach">
+                                <div class="form-text">Separate tags with commas to power departmental calendars and feeds.</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h6 mb-0">Service Segments</h3>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-segment">
+                                <i class="bi bi-plus-circle"></i> Add Segment
+                            </button>
+                        </div>
+
+                        <div id="segments-container">
+                            {% for segment in segments %}
+                            <div class="segment-row border rounded-3 p-3 mb-3">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Segment Title</label>
+                                        <input type="text" class="form-control" name="segment_title"
+                                               value="{{ segment.title }}" placeholder="Worship">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Lead</label>
+                                        <input type="text" class="form-control" name="segment_leader"
+                                               value="{{ segment.leader }}" placeholder="Leader name">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Duration</label>
+                                        <input type="text" class="form-control" name="segment_duration"
+                                               value="{{ segment.duration }}" placeholder="10 min">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Notes</label>
+                                        <input type="text" class="form-control" name="segment_notes"
+                                               value="{{ segment.notes }}" placeholder="Key transitions">
+                                    </div>
+                                </div>
+                                <div class="text-end mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-segment">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Planning Details
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="{{ 'col-12' if printable else 'col-lg-4' }}">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h6 mb-0">Run Sheet</h2>
+                    {% if not printable %}
+                        <a href="{{ url_for('events.plan_event', event_id=event.id, format='print') }}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h3 class="h6 text-uppercase">{{ event.title }}</h3>
+                    <p class="small text-muted mb-2">
+                        {{ event.start_date.strftime('%A, %B %d, %Y %I:%M %p') }}
+                        {% if event.end_date %}
+                            &ndash; {{ event.end_date.strftime('%I:%M %p') }}
+                        {% endif %}
+                    </p>
+                    {% if event.location %}
+                        <p class="small text-muted mb-3"><i class="bi bi-geo-alt me-1"></i>{{ event.location }}</p>
+                    {% endif %}
+                    {% if event.recurrence_rule %}
+                        <p class="small text-muted">Recurs via {{ event.recurrence_rule }}{% if event.recurrence_end_date %} until {{ event.recurrence_end_date.strftime('%B %d, %Y') }}{% endif %}.</p>
+                    {% endif %}
+                    {% if event.ministry_tags %}
+                        <div class="mb-3">
+                            {% for tag in event.ministry_tags %}
+                                <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if planned_segments %}
+                        <ul class="list-group list-group-flush">
+                            {% for segment in planned_segments %}
+                                <li class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>{{ segment.title or 'Segment' }}</strong>
+                                            {% if segment.notes %}
+                                                <div class="small text-muted">{{ segment.notes }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            {% if segment.duration %}
+                                                <span class="badge bg-secondary">{{ segment.duration }}</span>
+                                            {% endif %}
+                                            {% if segment.leader %}
+                                                <div class="small text-muted">Lead: {{ segment.leader }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Add segments to build a service-friendly run sheet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not printable %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const segmentsContainer = document.getElementById('segments-container');
+    const addButton = document.getElementById('add-segment');
+
+    if (addButton) {
+        addButton.addEventListener('click', function () {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'segment-row border rounded-3 p-3 mb-3';
+            wrapper.innerHTML = `
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Segment Title</label>
+                        <input type="text" class="form-control" name="segment_title" placeholder="Segment">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Lead</label>
+                        <input type="text" class="form-control" name="segment_leader" placeholder="Leader name">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control" name="segment_duration" placeholder="10 min">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-control" name="segment_notes" placeholder="Key transitions">
+                    </div>
+                </div>
+                <div class="text-end mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-segment">
+                        <i class="bi bi-trash"></i> Remove
+                    </button>
+                </div>
+            `;
+            segmentsContainer.appendChild(wrapper);
+        });
+    }
+
+    segmentsContainer.addEventListener('click', function (event) {
+        if (event.target.classList.contains('remove-segment') || event.target.closest('.remove-segment')) {
+            const row = event.target.closest('.segment-row');
+            if (row) {
+                row.remove();
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
