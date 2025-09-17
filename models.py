@@ -35,6 +35,19 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     location = db.Column(db.String(200))
+    department_id = db.Column(
+        db.Integer,
+        db.ForeignKey('ministry_departments.id', ondelete='SET NULL'),
+        nullable=True
+    )
+    volunteer_role_id = db.Column(
+        db.Integer,
+        db.ForeignKey('volunteer_roles.id', ondelete='SET NULL'),
+        nullable=True
+    )
+
+    department = db.relationship('MinistryDepartment', back_populates='events')
+    volunteer_role = db.relationship('VolunteerRole', back_populates='events')
 
 class Sermon(db.Model):
     __tablename__ = 'sermons'
@@ -88,3 +101,85 @@ class Settings(db.Model):
     contact_info = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class MinistryDepartment(db.Model):
+    __tablename__ = 'ministry_departments'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False, unique=True)
+    description = db.Column(db.Text)
+    lead_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    lead = db.relationship(
+        'User',
+        backref=db.backref('led_departments', lazy='dynamic'),
+        foreign_keys=[lead_id]
+    )
+    roles = db.relationship(
+        'VolunteerRole',
+        back_populates='department',
+        cascade='all, delete-orphan',
+        order_by='VolunteerRole.name'
+    )
+    events = db.relationship('Event', back_populates='department')
+
+
+class VolunteerRole(db.Model):
+    __tablename__ = 'volunteer_roles'
+    id = db.Column(db.Integer, primary_key=True)
+    department_id = db.Column(
+        db.Integer,
+        db.ForeignKey('ministry_departments.id', ondelete='CASCADE'),
+        nullable=False
+    )
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text)
+    coordinator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    department = db.relationship('MinistryDepartment', back_populates='roles')
+    coordinator = db.relationship(
+        'User',
+        backref=db.backref('coordinated_roles', lazy='dynamic'),
+        foreign_keys=[coordinator_id]
+    )
+    assignments = db.relationship(
+        'VolunteerAssignment',
+        back_populates='role',
+        cascade='all, delete-orphan'
+    )
+    events = db.relationship('Event', back_populates='volunteer_role')
+
+
+class VolunteerAssignment(db.Model):
+    __tablename__ = 'volunteer_assignments'
+    id = db.Column(db.Integer, primary_key=True)
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey('volunteer_roles.id', ondelete='CASCADE'),
+        nullable=False
+    )
+    volunteer_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False
+    )
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    role = db.relationship('VolunteerRole', back_populates='assignments')
+    volunteer = db.relationship(
+        'User',
+        backref=db.backref('volunteer_assignments', cascade='all, delete-orphan')
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('role_id', 'volunteer_id', name='uq_role_volunteer'),
+    )
