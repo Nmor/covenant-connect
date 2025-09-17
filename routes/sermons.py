@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
 from flask import (
@@ -19,7 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 sermons_bp = Blueprint('sermons', __name__)
 
 
-def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
+def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
     """Return template-friendly context describing how to render sermon media."""
     media_type = (sermon.media_type or '').lower()
     media_url = (sermon.media_url or '').strip()
