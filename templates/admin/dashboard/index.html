@@ -1,0 +1,288 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+{% set attendance = metrics['attendance'] %}
+{% set volunteers = metrics['volunteers'] %}
+{% set giving = metrics['giving'] %}
+{% set assimilation = metrics['assimilation'] %}
+{% set kpi_snapshot = metrics['kpi_snapshot'] %}
+
+<div class="pt-4 pb-3 border-bottom d-flex flex-column flex-md-row align-items-md-center gap-3">
+    <div>
+        <h1 class="h3 mb-1">Executive Insights</h1>
+        <p class="text-muted mb-0">Campus and department performance for {{ filters.label|lower }}.</p>
+        <small class="text-muted">Reporting window: {{ filters.start.strftime('%b %d, %Y') }} – {{ filters.end.strftime('%b %d, %Y') }}</small>
+    </div>
+    <form method="get" class="ms-md-auto">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text">Period</span>
+            <select class="form-select" name="period">
+                {% set period = filters.period %}
+                <option value="7d" {% if period == '7d' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30d" {% if period == '30d' %}selected{% endif %}>Last 30 Days</option>
+                <option value="90d" {% if period == '90d' %}selected{% endif %}>Last 90 Days</option>
+                <option value="180d" {% if period == '180d' %}selected{% endif %}>Last 6 Months</option>
+                <option value="365d" {% if period == '365d' %}selected{% endif %}>Last 12 Months</option>
+                <option value="qtd" {% if period == 'qtd' %}selected{% endif %}>Quarter to Date</option>
+                <option value="ytd" {% if period == 'ytd' %}selected{% endif %}>Year to Date</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Apply</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mt-1">
+    {% for card in kpi_snapshot %}
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-uppercase small text-muted fw-semibold mb-2">{{ card.label }}</p>
+                <p class="display-6 mb-1">{{ card.value }}</p>
+                <p class="text-muted small mb-0">{{ card.description }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-xxl-8">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <h2 class="h5 mb-1">Attendance Trends</h2>
+                        <p class="text-muted small mb-0">Estimated attendance by campus and week.</p>
+                    </div>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_reports.export_metric', metric='attendance', **export_args) }}">
+                        <i class="bi bi-download"></i> Export CSV
+                    </a>
+                </div>
+                <canvas id="attendanceChart" class="mt-4" height="220"></canvas>
+                {% if attendance.summary.campus_leaders %}
+                <div class="mt-4">
+                    <h6 class="text-muted text-uppercase small">Leading Campuses</h6>
+                    <div class="row g-2">
+                        {% for leader in attendance.summary.campus_leaders %}
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <p class="fw-semibold mb-1">{{ leader.campus }}</p>
+                                <p class="mb-0 text-muted small">{{ leader.estimated_attendance|round(0) }} est. attendees</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="h5 mb-1">Volunteer Fulfillment</h2>
+                        <p class="text-muted small mb-0">Volunteer capacity by campus.</p>
+                    </div>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_reports.export_metric', metric='volunteers', **export_args) }}">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </div>
+                <div class="mt-3">
+                    {% if volunteers.campus_breakdown %}
+                        {% for campus in volunteers.campus_breakdown %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-semibold">{{ campus.campus }}</span>
+                                <span class="text-muted small">{{ campus.fulfillment_rate }}%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ campus.fulfillment_rate }}%;" aria-valuenow="{{ campus.fulfillment_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <p class="text-muted small mt-1 mb-0">{{ campus.fulfilled|int }} of {{ campus.required|int }} roles filled</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">No volunteer requirements recorded for this window.</p>
+                    {% endif %}
+                </div>
+                <hr>
+                <p class="mb-1 small text-uppercase text-muted">Department Highlights</p>
+                <ul class="list-unstyled mb-0 small">
+                    {% for department in volunteers.department_breakdown %}
+                    <li class="d-flex justify-content-between">
+                        <span>{{ department.department }}</span>
+                        <span>{{ department.fulfillment_rate }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-xl-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="h5 mb-1">Giving Comparison</h2>
+                        <p class="text-muted small mb-0">Successful gifts by campus and month.</p>
+                    </div>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_reports.export_metric', metric='giving', **export_args) }}">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </div>
+                <canvas id="givingChart" class="mt-4" height="220"></canvas>
+                <div class="mt-3">
+                    <p class="small text-muted mb-1">Top Campuses</p>
+                    <ul class="list-unstyled mb-0 small">
+                        {% for campus in giving.summary.campus_leaders %}
+                        <li class="d-flex justify-content-between">
+                            <span>{{ campus.campus }}</span>
+                            <span>${{ campus.total_amount|round(2) }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="h5 mb-1">Assimilation Funnel</h2>
+                        <p class="text-muted small mb-0">Conversion from first contact to covenant partner.</p>
+                    </div>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_reports.export_metric', metric='assimilation', **export_args) }}">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </div>
+                <canvas id="funnelChart" class="mt-4" height="220"></canvas>
+                <div class="row g-3 mt-1">
+                    <div class="col-sm-4">
+                        <div class="border rounded p-3 h-100">
+                            <p class="text-muted small mb-1">Engagement</p>
+                            <p class="h4 mb-0">{{ assimilation.summary.engagement_rate }}%</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="border rounded p-3 h-100">
+                            <p class="text-muted small mb-1">Generosity</p>
+                            <p class="h4 mb-0">{{ assimilation.summary.generosity_rate }}%</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="border rounded p-3 h-100">
+                            <p class="text-muted small mb-1">Discipleship</p>
+                            <p class="h4 mb-0">{{ assimilation.summary.discipleship_rate }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const chartColors = [
+        '#4c6ef5', '#12b886', '#f59f00', '#e64980', '#7950f2', '#0ca678'
+    ];
+
+    const attendanceData = {{ attendance.chart|tojson }};
+    if (attendanceData.labels.length) {
+        const attendanceDatasets = attendanceData.datasets.map((dataset, index) => ({
+            label: dataset.label,
+            data: dataset.data,
+            borderColor: chartColors[index % chartColors.length],
+            backgroundColor: chartColors[index % chartColors.length],
+            tension: 0.35,
+            fill: false,
+        }));
+        new Chart(document.getElementById('attendanceChart'), {
+            type: 'line',
+            data: {
+                labels: attendanceData.labels,
+                datasets: attendanceDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    const givingData = {{ giving.chart|tojson }};
+    if (givingData.labels.length) {
+        const givingDatasets = givingData.datasets.map((dataset, index) => ({
+            label: dataset.label,
+            data: dataset.data,
+            backgroundColor: chartColors[index % chartColors.length],
+            borderRadius: 6,
+        }));
+        new Chart(document.getElementById('givingChart'), {
+            type: 'bar',
+            data: {
+                labels: givingData.labels,
+                datasets: givingDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) { return '$' + value; }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const funnelData = {{ assimilation.chart|tojson }};
+    if (funnelData.labels.length) {
+        new Chart(document.getElementById('funnelChart'), {
+            type: 'bar',
+            data: {
+                labels: funnelData.labels,
+                datasets: [{
+                    label: 'People',
+                    data: funnelData.data,
+                    backgroundColor: chartColors[0],
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

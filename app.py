@@ -84,6 +84,7 @@ codex/explain-requested-code-functionality-dxdu2u
     from routes.home import home_bp
     from routes.auth import auth_bp
     from routes.admin import admin_bp
+    from routes.admin_reports import admin_reports_bp
     from routes.prayers import prayers_bp
     from routes.events import events_bp
     from routes.sermons import sermons_bp
@@ -99,6 +100,7 @@ codex/explain-requested-code-functionality-dxdu2u
     app.register_blueprint(home_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_reports_bp)
     app.register_blueprint(prayers_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(sermons_bp)

@@ -2,15 +2,15 @@ from flask import Blueprint, render_template, current_app, flash, redirect, url_
 from flask_login import login_required, current_user
 from models import PrayerRequest, Event, Sermon, Donation, User, Gallery, Settings
 from app import db
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime, time
-from decimal import Decimal
+from datetime import datetime
 from functools import wraps
 import csv
 import io
 import os
 from werkzeug.utils import secure_filename
+
+from routes.admin_reports import collect_dashboard_metrics, resolve_reporting_window
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -29,36 +29,35 @@ def admin_required(f):
 @admin_required
 def dashboard():
     try:
-        # Add dashboard statistics
-        prayer_stats = {
-            'total': PrayerRequest.query.count(),
-            'public': PrayerRequest.query.filter_by(is_public=True).count(),
-            'private': PrayerRequest.query.filter_by(is_public=False).count()
+        window = resolve_reporting_window(
+            period=request.args.get('period'),
+            start=request.args.get('start'),
+            end=request.args.get('end'),
+        )
+
+        metrics = collect_dashboard_metrics(window['start'], window['end'])
+
+        filters = {
+            'label': window['label'],
+            'period': window['period'],
+            'start': window['start'],
+            'end': window['end'],
+            'start_iso': window['start'].isoformat(),
+            'end_iso': window['end'].isoformat(),
         }
-        
-        event_stats = {
-            'upcoming': Event.query.filter(Event.start_date >= datetime.now()).count(),
-            'past': Event.query.filter(Event.end_date < datetime.now()).count(),
-            'total': Event.query.count()
-        }
-        
-        sermon_stats = {
-            'total': Sermon.query.count(),
-            'video': Sermon.query.filter_by(media_type='video').count(),
-            'audio': Sermon.query.filter_by(media_type='audio').count()
-        }
-        
-        donation_stats = {
-            'total': Donation.query.filter_by(status='success').count(),
-            'amount': db.session.query(func.sum(Donation.amount)).filter_by(status='success').scalar() or 0
-        }
-        
-        return render_template('admin/dashboard.html',
-                             prayer_stats=prayer_stats,
-                             event_stats=event_stats,
-                             sermon_stats=sermon_stats,
-                             donation_stats=donation_stats)
-                             
+
+        if window['period'] == 'custom':
+            export_args = {'start': filters['start_iso'], 'end': filters['end_iso']}
+        else:
+            export_args = {'period': window['period']}
+
+        return render_template(
+            'admin/dashboard/index.html',
+            metrics=metrics,
+            filters=filters,
+            export_args=export_args,
+        )
+
     except SQLAlchemyError as e:
         current_app.logger.error(f"Database error in dashboard route: {str(e)}")
         db.session.rollback()
