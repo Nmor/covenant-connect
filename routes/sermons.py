@@ -1,5 +1,7 @@
 from datetime import datetime
+ codex/find-current-location-in-codebase-ntia0s
 from typing import Dict, Optional
+       main
 from urllib.parse import parse_qs, urlparse
 
 from flask import (
@@ -11,6 +13,9 @@ from flask import (
     request,
     url_for,
 )
+ codex/find-current-location-in-codebase-ntia0s
+from app import db
+       main
 from models import Sermon
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -18,7 +23,10 @@ from sqlalchemy.exc import SQLAlchemyError
 sermons_bp = Blueprint('sermons', __name__)
 
 
+ codex/find-current-location-in-codebase-ntia0s
+def _build_media_context(sermon: Sermon) -> dict[str, str | None]:
 def _build_media_context(sermon: Sermon) -> Dict[str, Optional[str]]:
+        main
     """Return template-friendly context describing how to render sermon media."""
     media_type = (sermon.media_type or '').lower()
     media_url = (sermon.media_url or '').strip()
@@ -132,7 +140,10 @@ def search_sermons():
 def sermon_detail(sermon_id: int):
     """Render the detail page for a specific sermon with related content."""
     try:
+ codex/find-current-location-in-codebase-ntia0s
+        sermon = db.session.get(Sermon, sermon_id)
         sermon = Sermon.query.get(sermon_id)
+        main
         if not sermon:
             flash('Sermon not found.', 'warning')
             return redirect(url_for('sermons.sermons'))
