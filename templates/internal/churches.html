@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Churches</h1>
+<a href="{{ url_for('internal.add_church') }}">Add Church</a>
+<table>
+  <tr><th>Name</th><th>Address</th><th>Actions</th></tr>
+  {% for church in churches %}
+  <tr>
+    <td>{{ church.name }}</td>
+    <td>{{ church.address or '' }}</td>
+    <td>
+      <a href="{{ url_for('internal.edit_church', church_id=church.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('internal.delete_church', church_id=church.id) }}" style="display:inline">
+        <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
+        <button type="submit">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
