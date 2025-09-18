@@ -9,7 +9,15 @@ from app import create_app, db
 @pytest.fixture
 def app():
     app = create_app()
-    app.config.update({'TESTING': True})
+    app.config.update(
+        {
+            'TESTING': True,
+            'PAYSTACK_SECRET_KEY': 'test-paystack',
+            'FINCRA_SECRET_KEY': 'test-fincra',
+            'STRIPE_SECRET_KEY': 'test-stripe',
+            'FLUTTERWAVE_SECRET_KEY': 'test-flutterwave',
+        }
+    )
     with app.app_context():
         db.create_all()
         yield app
