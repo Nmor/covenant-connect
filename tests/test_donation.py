@@ -1,9 +1,12 @@
 import json
+import hashlib
+import hmac
 from decimal import Decimal
 import re
 
 from requests.exceptions import RequestException, Timeout
 
+from app import db
 from models import Donation
 
 
@@ -26,6 +29,16 @@ class DummyResponse:
         if isinstance(self._payload, dict):
             return self._payload
         raise ValueError('No JSON payload configured')
+
+
+def sign_fincra_payload(app, payload):
+    body = json.dumps(payload)
+    signature = hmac.new(
+        app.config['FINCRA_SECRET_KEY'].encode('utf-8'),
+        body.encode('utf-8'),
+        hashlib.sha256,
+    ).hexdigest()
+    return body, signature
 
 
 def test_donation_rejects_invalid_amount(client):
@@ -352,3 +365,118 @@ def test_flutterwave_request_exception_marks_failed(monkeypatch, client, app):
         assert donation.status == 'failed'
         assert 'Request to Flutterwave failed: boom' in donation.error_message
         assert donation.transaction_id is None
+
+
+def test_fincra_webhook_updates_on_valid_signature(client, app):
+    with app.app_context():
+        donation = Donation(
+            email='webhook-success@example.com',
+            amount=Decimal('25.00'),
+            currency='USD',
+            reference='webhook-success-ref',
+            status='pending',
+            payment_method='fincra',
+        )
+        db.session.add(donation)
+        db.session.commit()
+
+    payload = {
+        'transactionId': 'txn-success-001',
+        'status': 'successful',
+        'reference': 'webhook-success-ref',
+    }
+    body, signature = sign_fincra_payload(app, payload)
+
+    resp = client.post(
+        '/webhooks/fincra',
+        data=body,
+        content_type='application/json',
+        headers={'x-fincra-signature': signature},
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json()['status'] == 'success'
+
+    with app.app_context():
+        donation = Donation.query.filter_by(reference='webhook-success-ref').first()
+        assert donation is not None
+        assert donation.status == 'success'
+        assert donation.transaction_id == 'txn-success-001'
+        assert donation.error_message is None
+
+
+def test_fincra_webhook_rejects_invalid_signature(client, app):
+    with app.app_context():
+        donation = Donation(
+            email='webhook-invalid@example.com',
+            amount=Decimal('30.00'),
+            currency='USD',
+            reference='webhook-invalid-ref',
+            status='pending',
+            payment_method='fincra',
+        )
+        db.session.add(donation)
+        db.session.commit()
+
+    payload = {
+        'transactionId': 'txn-invalid-001',
+        'status': 'failed',
+        'reference': 'webhook-invalid-ref',
+        'failureReason': 'declined',
+    }
+    body, _ = sign_fincra_payload(app, payload)
+
+    resp = client.post(
+        '/webhooks/fincra',
+        data=body,
+        content_type='application/json',
+        headers={'x-fincra-signature': 'invalid-signature'},
+    )
+
+    assert resp.status_code == 401
+    assert resp.get_json()['status'] == 'error'
+
+    with app.app_context():
+        donation = Donation.query.filter_by(reference='webhook-invalid-ref').first()
+        assert donation is not None
+        assert donation.status == 'pending'
+        assert donation.transaction_id is None
+
+
+def test_fincra_webhook_ignores_duplicate_notifications(client, app):
+    with app.app_context():
+        donation = Donation(
+            email='webhook-duplicate@example.com',
+            amount=Decimal('45.00'),
+            currency='USD',
+            reference='webhook-duplicate-ref',
+            status='success',
+            payment_method='fincra',
+            transaction_id='existing-txn',
+        )
+        db.session.add(donation)
+        db.session.commit()
+
+    payload = {
+        'transactionId': 'new-txn',
+        'status': 'failed',
+        'reference': 'webhook-duplicate-ref',
+        'failureReason': 'duplicate',
+    }
+    body, signature = sign_fincra_payload(app, payload)
+
+    resp = client.post(
+        '/webhooks/fincra',
+        data=body,
+        content_type='application/json',
+        headers={'x-fincra-signature': signature},
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json()['status'] == 'ignored'
+
+    with app.app_context():
+        donation = Donation.query.filter_by(reference='webhook-duplicate-ref').first()
+        assert donation is not None
+        assert donation.status == 'success'
+        assert donation.transaction_id == 'existing-txn'

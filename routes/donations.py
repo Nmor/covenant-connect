@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from models import Donation
-from app import db
+from app import db, csrf
 from sqlalchemy.exc import SQLAlchemyError
 from decimal import Decimal, InvalidOperation
 import uuid
 import json
+import hmac
+import hashlib
 from datetime import datetime
 
 import requests
@@ -552,17 +554,40 @@ def process_donation():
         flash('An unexpected error occurred. Please try again later.', 'danger')
         return redirect(url_for('donations.donate'))
 
+@csrf.exempt
 @donations_bp.route('/webhooks/fincra', methods=['POST'])
 def fincra_webhook():
     """Handle Fincra payment webhooks"""
     try:
+        secret_key = current_app.config.get('FINCRA_SECRET_KEY')
+        if not secret_key:
+            current_app.logger.error(
+                "Fincra secret key not configured for webhook verification"
+            )
+            return (
+                jsonify({'status': 'error', 'message': 'Signature verification failed'}),
+                500,
+            )
+
+        raw_body = request.get_data(cache=True) or b''
+        expected_signature = hmac.new(
+            secret_key.encode('utf-8'), raw_body, hashlib.sha256
+        ).hexdigest()
+
         # Verify webhook signature
         signature = request.headers.get('x-fincra-signature')
         if not signature:
             current_app.logger.error("Missing webhook signature")
             return jsonify({'status': 'error', 'message': 'Missing signature'}), 401
 
-        payload = request.get_json()
+        provided_signature = signature.strip()
+        if not hmac.compare_digest(
+            provided_signature.lower(), expected_signature.lower()
+        ):
+            current_app.logger.warning("Invalid Fincra webhook signature")
+            return jsonify({'status': 'error', 'message': 'Invalid signature'}), 401
+
+        payload = request.get_json(silent=True)
         if not payload:
             current_app.logger.error("Invalid webhook payload")
             return jsonify({'status': 'error', 'message': 'Invalid payload'}), 400
@@ -582,18 +607,36 @@ def fincra_webhook():
             current_app.logger.error(f"Donation not found for reference: {reference}")
             return jsonify({'status': 'error', 'message': 'Donation not found'}), 404
 
+        target_status = 'success' if status.lower() == 'successful' else 'failed'
+        if donation.status in {'success', 'failed'}:
+            if donation.status == target_status:
+                current_app.logger.info(
+                    "Ignoring duplicate Fincra webhook for reference %s", reference
+                )
+            else:
+                current_app.logger.warning(
+                    "Ignoring stale Fincra webhook for reference %s: current=%s, incoming=%s",
+                    reference,
+                    donation.status,
+                    target_status,
+                )
+            return jsonify({'status': 'ignored'}), 200
+
         # Update donation status
         donation.transaction_id = transaction_id
-        donation.status = 'success' if status.lower() == 'successful' else 'failed'
-        donation.error_message = payload.get('failureReason')
+        donation.status = target_status
+        donation.error_message = (
+            payload.get('failureReason') if target_status == 'failed' else None
+        )
         donation.updated_at = datetime.utcnow()
-        
+
         db.session.commit()
-        
+
         return jsonify({'status': 'success'}), 200
 
     except Exception as e:
         current_app.logger.error(f"Error processing Fincra webhook: {str(e)}")
+        db.session.rollback()
         return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
 @donations_bp.route('/payment/callback')
