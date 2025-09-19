@@ -1,0 +1,30 @@
+# Covenant Connect
+
+This project powers the Covenant Connect ministry management application.  The
+application is built with Flask and SQLAlchemy and ships with a helper script
+for provisioning the first administrator account in a brand-new deployment.
+
+## Seeding the initial admin user
+
+Use ``create_admin.py`` to create the very first administrator.  The script
+reads credentials from command-line arguments or the ``ADMIN_USERNAME``,
+``ADMIN_EMAIL`` and ``ADMIN_PASSWORD`` environment variables.  The password must
+be at least 12 characters long and include an uppercase letter, lowercase
+letter, digit and symbol.
+
+```bash
+# Option 1: provide everything inline
+python create_admin.py --username covenant-admin \
+    --email admin@example.com \
+    --password 'Sup3r$ecretP@ss'
+
+# Option 2: rely on environment variables for non-interactive deployments
+export ADMIN_USERNAME=covenant-admin
+export ADMIN_EMAIL=admin@example.com
+export ADMIN_PASSWORD='Sup3r$ecretP@ss'
+python create_admin.py
+```
+
+If the script is run again with the same email address it exits cleanly without
+creating a duplicate administrator account, making it safe to re-run as part of
+deployment automation.
