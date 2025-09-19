@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List
 
 from flask import current_app, render_template_string
-from flask_mail import Message
 
 from app import db
 from models import (
@@ -20,10 +19,11 @@ from models import (
     User,
 )
 from routes.admin_reports import ReportingService
+from integrations import EmailIntegrationManager
 
 
 def send_prayer_notification(prayer_request_id: int) -> None:
-    from app import create_app, mail
+    from app import create_app
 
     """Background task to send prayer notification emails to admins."""
     app = create_app()
@@ -50,12 +50,11 @@ Request: {prayer_request.request}
 Public: {'Yes' if prayer_request.is_public else 'No'}
 Submitted: {prayer_request.created_at.strftime('%B %d, %Y %I:%M %p')}
 """
-        msg = Message(
+        EmailIntegrationManager.send_email(
             subject=subject,
-            recipients=[admin.email for admin in admin_users],
             body=body,
+            recipients=[admin.email for admin in admin_users],
         )
-        mail.send(msg)
         current_app.logger.info(
             "Prayer request notification sent to %s admin(s)",
             len(admin_users),
@@ -63,7 +62,7 @@ Submitted: {prayer_request.created_at.strftime('%B %d, %Y %I:%M %p')}
 
 
 def send_department_kpi_digest(range_days: int = 30) -> int:
-    from app import create_app, mail
+    from app import create_app
 
     app = create_app()
     with app.app_context():
@@ -81,8 +80,11 @@ def send_department_kpi_digest(range_days: int = 30) -> int:
 
             body = _render_department_digest(department.name, metrics, start, end)
             subject = f"{department.name} KPI Digest ({start:%b %d} - {end:%b %d})"
-            msg = Message(subject=subject, recipients=[lead.email], body=body)
-            mail.send(msg)
+            EmailIntegrationManager.send_email(
+                subject=subject,
+                body=body,
+                recipients=[lead.email],
+            )
             sent += 1
 
         current_app.logger.info('Sent %s department KPI digests.', sent)
@@ -90,7 +92,7 @@ def send_department_kpi_digest(range_days: int = 30) -> int:
 
 
 def send_executive_kpi_digest(range_days: int = 30) -> int:
-    from app import create_app, mail
+    from app import create_app
 
     app = create_app()
     with app.app_context():
@@ -106,8 +108,11 @@ def send_executive_kpi_digest(range_days: int = 30) -> int:
 
         body = _render_executive_digest(metrics, start, end)
         subject = f"Executive KPI Summary ({start:%b %d} - {end:%b %d})"
-        msg = Message(subject=subject, recipients=admins, body=body)
-        mail.send(msg)
+        EmailIntegrationManager.send_email(
+            subject=subject,
+            body=body,
+            recipients=admins,
+        )
         current_app.logger.info('Sent executive KPI digest to %s recipients.', len(admins))
         return len(admins)
 
@@ -414,8 +419,12 @@ def _run_email_action(
     subject = render_template_string(subject_template, **render_context).strip()
     body = render_template_string(body_template, **render_context)
 
-    message = Message(subject=subject, recipients=recipients, body=body)
-    mail.send(message)
+    EmailIntegrationManager.send_email(
+        subject=subject,
+        body=body,
+        recipients=recipients,
+        html=body if config.get("body_format") == "html" else None,
+    )
 
     current_app.logger.info(
         "Automation email step %s sent to %s recipient(s)",

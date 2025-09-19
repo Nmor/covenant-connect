@@ -375,6 +375,23 @@ class Donation(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ServiceIntegration(db.Model):
+    __tablename__ = 'service_integrations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    service = db.Column(db.String(50), nullable=False)
+    provider = db.Column(db.String(50), nullable=False)
+    display_name = db.Column(db.String(100), nullable=False)
+    config = db.Column(db.JSON, default=dict)
+    is_active = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('service', 'provider', name='uq_service_provider'),
+    )
+
+
 class Settings(db.Model):
     __tablename__ = 'settings'
 
@@ -538,6 +555,7 @@ __all__ = [
     'PrayerRequest',
     'Resource',
     'ResourceAllocation',
+    'ServiceIntegration',
     'Sermon',
     'Settings',
     'User',
