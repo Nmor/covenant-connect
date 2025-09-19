@@ -42,3 +42,8 @@ python create_admin.py
 If the script is run again with the same email address it exits cleanly without
 creating a duplicate administrator account, making it safe to re-run as part of
 deployment automation.
+
+## Deployment runbook
+
+Operational details, AWS resource mappings, and ECS deployment instructions live in [docs/deployment-runbook.md](docs/deployment-runbook.md).
+
