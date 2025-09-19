@@ -68,6 +68,42 @@ def _initialize_queue(app: Flask) -> None:
     app.task_queue = queue  # type: ignore[attr-defined]
 
 
+def _warn_insecure_config(app: Flask) -> None:
+    """Emit warnings when security-related config deviates in production."""
+
+    if not app.config.get('IS_PRODUCTION'):
+        return
+
+    insecure_flags: list[str] = []
+
+    if not app.config.get('SESSION_COOKIE_SECURE', False):
+        insecure_flags.append('SESSION_COOKIE_SECURE')
+    if not app.config.get('REMEMBER_COOKIE_SECURE', False):
+        insecure_flags.append('REMEMBER_COOKIE_SECURE')
+    if not app.config.get('SESSION_COOKIE_HTTPONLY', False):
+        insecure_flags.append('SESSION_COOKIE_HTTPONLY')
+
+    samesite = app.config.get('SESSION_COOKIE_SAMESITE')
+    if isinstance(samesite, str) and samesite.lower() not in {'lax', 'strict'}:
+        insecure_flags.append('SESSION_COOKIE_SAMESITE')
+
+    if app.config.get('PREFERRED_URL_SCHEME', 'http') != 'https':
+        insecure_flags.append('PREFERRED_URL_SCHEME')
+
+    if insecure_flags:
+        app.logger.warning(
+            'Production security defaults overridden: %s',
+            ', '.join(sorted(insecure_flags)),
+        )
+
+    cors_origins = app.config.get('CORS_ORIGINS')
+    if cors_origins in ('*', ['*']):
+        app.logger.warning(
+            'CORS_ORIGINS allows any origin while running in production. '
+            'Set CORS_ORIGINS to an explicit list of domains.',
+        )
+
+
 def create_app(config_object: type[Config] | None = None) -> Flask:
     """Create and configure a :class:`~flask.Flask` application."""
 
@@ -79,6 +115,8 @@ def create_app(config_object: type[Config] | None = None) -> Flask:
     # Configure secret key explicitly to aid tests
     secret_key = app.config.get('SECRET_KEY') or 'dev-secret-key'
     app.config['SECRET_KEY'] = secret_key
+
+    _warn_insecure_config(app)
 
     db.init_app(app)
     login_manager.init_app(app)

@@ -4,6 +4,20 @@ This project powers the Covenant Connect ministry management application.  The
 application is built with Flask and SQLAlchemy and ships with a helper script
 for provisioning the first administrator account in a brand-new deployment.
 
+## Environment configuration
+
+Set the ``ENVIRONMENT`` (or legacy ``FLASK_ENV``) variable to ``production`` to
+enable secure defaults for cookies and URL generation.  In production the
+configuration will automatically mark session and remember-me cookies as secure,
+default the preferred URL scheme to HTTPS and require explicit CORS origins.  A
+comma-separated ``CORS_ORIGINS`` list can be provided when hosting on AWS or any
+other multi-domain environment.  ``SERVER_NAME`` may also be defined when Flask
+needs to know the canonical hostname for URL generation.
+
+If any of the secure defaults are overridden while running in production the
+application will log a warning during startup, allowing operators to spot
+misconfigurations quickly.
+
 ## Seeding the initial admin user
 
 Use ``create_admin.py`` to create the very first administrator.  The script
