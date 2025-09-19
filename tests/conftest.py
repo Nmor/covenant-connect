@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from flask_migrate import Migrate, downgrade, upgrade
+from flask_migrate import Migrate
 
 sys.path.append(os.path.abspath(os.curdir))
 from app import create_app, db
@@ -25,10 +25,13 @@ def app(tmp_path: Path):
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{database_path}"
     Migrate(app, db)
     with app.app_context():
-        upgrade()
+        database_path.unlink(missing_ok=True)
+        db.drop_all()
+        db.create_all()
         yield app
         db.session.remove()
-        downgrade(revision='base')
+        db.drop_all()
+        db.engine.dispose()
     database_path.unlink(missing_ok=True)
 
 
