@@ -34,6 +34,15 @@ ENV/
 .env
 .env.local
 *.sqlite3
+node_modules/
+.next/
+apps/**/dist/
+apps/**/.turbo/
+apps/**/coverage/
+packages/**/dist/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
 
 # Replit specific
 .config/
