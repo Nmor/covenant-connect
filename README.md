@@ -1,8 +1,19 @@
 # Covenant Connect
 
 This project powers the Covenant Connect ministry management application.  The
-application is built with Flask and SQLAlchemy and ships with a helper script
-for provisioning the first administrator account in a brand-new deployment.
+legacy application is built with Flask and SQLAlchemy and ships with a helper
+script for provisioning the first administrator account in a brand-new
+deployment.
+
+> **New TypeScript rewrite**
+>
+> A greenfield JavaScript/TypeScript implementation now lives under
+> [`apps/backend`](apps/backend) and [`apps/frontend`](apps/frontend). The NestJS
+> backend exposes modular services for authentication, donations, events,
+> prayer, content, and reporting while the Next.js frontend provides the
+> landing experience and an operational dashboard. Shared domain interfaces are
+> published from [`packages/shared`](packages/shared), and the architecture is
+> documented in [docs/js-architecture.md](docs/js-architecture.md).
 
 ## Environment configuration
 
