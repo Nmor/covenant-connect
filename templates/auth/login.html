@@ -25,6 +25,7 @@
 
                     <form method="POST" class="needs-validation" novalidate>
                         <input type='hidden' name='csrf_token' value='{{ csrf_token() }}'>
+                        <input type="hidden" name="next" value="{{ next_url or '' }}">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" required>
@@ -49,6 +50,16 @@
                             </p>
                         </div>
                     </form>
+                    {% if sso_providers %}
+                        <hr class="my-4">
+                        <div class="d-grid gap-2">
+                            {% for provider in sso_providers %}
+                                <a class="btn btn-outline-secondary" href="{{ url_for('auth.oauth_start', provider=provider.name, next=next_url if next_url else None) }}">
+                                    Continue with {{ provider.label }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
