@@ -12,13 +12,20 @@ from app import db
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+    __table_args__ = (
+        db.UniqueConstraint(
+            'auth_provider', 'auth_provider_id', name='uq_users_provider_identity'
+        ),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=True)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     notification_preferences = db.Column(db.JSON, default=dict)
+    auth_provider = db.Column(db.String(50))
+    auth_provider_id = db.Column(db.String(255))
 
     member_profile = db.relationship('Member', back_populates='user', uselist=False)
 
@@ -26,6 +33,8 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
 

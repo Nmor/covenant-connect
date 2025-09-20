@@ -18,6 +18,20 @@ If any of the secure defaults are overridden while running in production the
 application will log a warning during startup, allowing operators to spot
 misconfigurations quickly.
 
+### Social sign-on providers
+
+Support for Google, Apple, and Facebook single sign-on is available when the
+corresponding OAuth credentials are supplied via environment variables:
+
+* ``GOOGLE_CLIENT_ID`` and ``GOOGLE_CLIENT_SECRET``
+* ``APPLE_CLIENT_ID`` and ``APPLE_CLIENT_SECRET``
+* ``FACEBOOK_CLIENT_ID`` and ``FACEBOOK_CLIENT_SECRET``
+
+When any of the above pairs are present the login screen automatically surfaces
+buttons for the configured providers.  Successful sign-ins create a user record
+that links the provider identity while leaving the password unset, allowing a
+smooth passwordless experience for SSO-only accounts.
+
 ## Seeding the initial admin user
 
 Use ``create_admin.py`` to create the very first administrator.  The script
