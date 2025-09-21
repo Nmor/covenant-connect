@@ -1,21 +1,7 @@
 import React from 'react';
 
+import type { DashboardResponse, EventsResponse, HomeContentResponse } from '../lib/api';
 import { getDashboardReport, getHomeContent, getUpcomingEvents } from '../lib/api';
-
-type DashboardResponse = {
-  kpis: { label: string; value: number; change?: number }[];
-};
-
-type EventsResponse = {
-  data: { id: string; title: string; startsAt: string; location: string }[];
-};
-
-type HomeContentResponse = {
-  heroTitle: string;
-  heroSubtitle: string;
-  highlights: string[];
-  nextSteps: { label: string; url: string }[];
-};
 
 async function loadData() {
   try {
@@ -47,7 +33,10 @@ async function loadData() {
         ]
       },
       events: {
-        data: []
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 0
       }
     } satisfies {
       home: HomeContentResponse;
