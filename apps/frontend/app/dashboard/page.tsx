@@ -1,10 +1,7 @@
 import React from 'react';
 
+import type { DashboardResponse } from '../../lib/api';
 import { getDashboardReport } from '../../lib/api';
-
-type DashboardResponse = {
-  kpis: { label: string; value: number; change?: number }[];
-};
 
 export default async function DashboardPage() {
   const report: DashboardResponse = await getDashboardReport().catch(() => ({
