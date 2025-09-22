@@ -14,9 +14,21 @@ export class EmailController {
 
   @Post('providers')
   upsertProvider(
-    @Body() body: { id?: string; type: EmailProvider['type']; name: string; credentials: Record<string, string>; isActive?: boolean }
+    @Body()
+    body: {
+      id?: string;
+      type: EmailProvider['type'];
+      name: string;
+      credentials: Record<string, string>;
+      isActive?: boolean;
+    }
   ): Promise<EmailProvider> {
-    return this.email.upsertProvider(body.id ?? null, body);
+    return this.email.upsertProvider(body.id ?? null, {
+      type: body.type,
+      name: body.name,
+      credentials: body.credentials,
+      isActive: body.isActive
+    });
   }
 
   @Patch('providers/:id/activate')
@@ -25,7 +37,24 @@ export class EmailController {
   }
 
   @Post('send')
-  send(@Body() body: { to: string; subject: string; html: string }): Promise<{ provider: EmailProvider }> {
-    return this.email.sendMail(body.to, body.subject, body.html);
+  send(
+    @Body()
+    body: {
+      to: string | string[];
+      subject: string;
+      html?: string;
+      text?: string;
+      from?: string;
+      replyTo?: string;
+    }
+  ): Promise<{ provider: EmailProvider }> {
+    return this.email.sendMail({
+      to: body.to,
+      subject: body.subject,
+      html: body.html,
+      text: body.text,
+      from: body.from,
+      replyTo: body.replyTo
+    });
   }
 }
