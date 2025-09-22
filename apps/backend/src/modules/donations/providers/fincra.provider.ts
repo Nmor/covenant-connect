@@ -12,6 +12,7 @@ import type {
   VerifyPaymentInput,
   VerifyPaymentResult
 } from './payment-provider.interface';
+import { DonationProviderError } from './provider.error';
 
 @Injectable()
 export class FincraPaymentProvider implements DonationPaymentProvider {
@@ -63,7 +64,7 @@ export class FincraPaymentProvider implements DonationPaymentProvider {
       this.tryString(data, 'link');
 
     if (!authorizationUrl) {
-      throw new Error('Fincra initialize response did not include a checkout URL');
+      throw DonationProviderError.processing('Fincra initialize response did not include a checkout URL');
     }
 
     const resolvedReference =
@@ -142,7 +143,7 @@ export class FincraPaymentProvider implements DonationPaymentProvider {
   private getSecretKey(): string {
     const key = this.configService.get<string>('application.payments.fincraKey');
     if (!key) {
-      throw new Error('Fincra secret key is not configured');
+      throw DonationProviderError.processing('Fincra secret key is not configured');
     }
 
     return key;
@@ -163,7 +164,7 @@ export class FincraPaymentProvider implements DonationPaymentProvider {
       return value;
     }
 
-    throw new Error(message);
+    throw DonationProviderError.validation(message);
   }
 
   private tryString(metadata: Record<string, unknown>, key: string): string | null {
@@ -207,17 +208,19 @@ export class FincraPaymentProvider implements DonationPaymentProvider {
       const response = await fetch(url, init);
       if (!response.ok) {
         const body = await this.safeReadBody(response);
-        throw new Error(`Fincra ${action} request failed with status ${response.status}: ${body}`);
+        throw DonationProviderError.processing(
+          `Fincra ${action} request failed with status ${response.status}: ${body}`
+        );
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Fincra')) {
+      if (error instanceof DonationProviderError) {
         throw error;
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Fincra ${action} request failed: ${message}`);
+      throw DonationProviderError.processing(`Fincra ${action} request failed: ${message}`);
     }
   }
 
@@ -226,7 +229,7 @@ export class FincraPaymentProvider implements DonationPaymentProvider {
       return (await response.json()) as T;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Fincra ${action} response was not valid JSON: ${message}`);
+      throw DonationProviderError.processing(`Fincra ${action} response was not valid JSON: ${message}`);
     }
   }
 

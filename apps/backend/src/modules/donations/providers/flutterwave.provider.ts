@@ -12,6 +12,7 @@ import type {
   VerifyPaymentInput,
   VerifyPaymentResult
 } from './payment-provider.interface';
+import { DonationProviderError } from './provider.error';
 
 @Injectable()
 export class FlutterwavePaymentProvider implements DonationPaymentProvider {
@@ -50,7 +51,9 @@ export class FlutterwavePaymentProvider implements DonationPaymentProvider {
     const authorizationUrl = this.tryString(data, 'link') ?? this.tryString(data, 'url');
 
     if (!authorizationUrl) {
-      throw new Error('Flutterwave initialize response did not include a checkout URL');
+      throw DonationProviderError.processing(
+        'Flutterwave initialize response did not include a checkout URL'
+      );
     }
 
     const resolvedReference = this.tryString(data, 'tx_ref') ?? this.tryString(data, 'flw_ref') ?? this.tryString(data, 'id') ?? reference;
@@ -128,7 +131,7 @@ export class FlutterwavePaymentProvider implements DonationPaymentProvider {
   private getSecretKey(): string {
     const key = this.configService.get<string>('application.payments.flutterwaveKey');
     if (!key) {
-      throw new Error('Flutterwave secret key is not configured');
+      throw DonationProviderError.processing('Flutterwave secret key is not configured');
     }
 
     return key;
@@ -149,7 +152,7 @@ export class FlutterwavePaymentProvider implements DonationPaymentProvider {
       return value;
     }
 
-    throw new Error(message);
+    throw DonationProviderError.validation(message);
   }
 
   private tryString(record: Record<string, unknown>, key: string): string | null {
@@ -193,17 +196,19 @@ export class FlutterwavePaymentProvider implements DonationPaymentProvider {
       const response = await fetch(url, init);
       if (!response.ok) {
         const body = await this.safeReadBody(response);
-        throw new Error(`Flutterwave ${action} request failed with status ${response.status}: ${body}`);
+        throw DonationProviderError.processing(
+          `Flutterwave ${action} request failed with status ${response.status}: ${body}`
+        );
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Flutterwave')) {
+      if (error instanceof DonationProviderError) {
         throw error;
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Flutterwave ${action} request failed: ${message}`);
+      throw DonationProviderError.processing(`Flutterwave ${action} request failed: ${message}`);
     }
   }
 
@@ -212,7 +217,7 @@ export class FlutterwavePaymentProvider implements DonationPaymentProvider {
       return (await response.json()) as T;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Flutterwave ${action} response was not valid JSON: ${message}`);
+      throw DonationProviderError.processing(`Flutterwave ${action} response was not valid JSON: ${message}`);
     }
   }
 

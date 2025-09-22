@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import type { Donation as DonationModel } from '@prisma/client';
@@ -7,6 +13,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import type { DonationPaymentProvider } from './providers/payment-provider.interface';
+import { DonationProviderError } from './providers/provider.error';
 import { PaystackPaymentProvider } from './providers/paystack.provider';
 import { FincraPaymentProvider } from './providers/fincra.provider';
 import { StripePaymentProvider } from './providers/stripe.provider';
@@ -97,11 +104,13 @@ export class DonationsService {
     const provider = this.getProvider(input.provider);
     const baseMetadata = this.cloneMetadata(input.metadata);
 
-    const initialization = await provider.initializePayment({
-      amount: input.amount,
-      currency: input.currency,
-      metadata: baseMetadata
-    });
+    const initialization = await this.executeProviderCall(() =>
+      provider.initializePayment({
+        amount: input.amount,
+        currency: input.currency,
+        metadata: baseMetadata
+      })
+    );
 
     const combinedMetadata = {
       ...baseMetadata,
@@ -145,21 +154,25 @@ export class DonationsService {
 
     if (input.status === 'completed') {
       const reference = this.ensureReference(existing);
-      const verification = await provider.verifyPayment({
-        reference,
-        metadata: existingMetadata
-      });
+      const verification = await this.executeProviderCall(() =>
+        provider.verifyPayment({
+          reference,
+          metadata: existingMetadata
+        })
+      );
       status = verification.status ?? input.status;
       transactionId = verification.transactionId ?? transactionId;
       providerMetadata = verification.metadata;
     } else if (input.status === 'refunded') {
       const reference = this.getRefundReference(existing);
       const amount = this.getAmountValue(existing.amount);
-      const refund = await provider.refund({
-        reference,
-        amount,
-        metadata: existingMetadata
-      });
+      const refund = await this.executeProviderCall(() =>
+        provider.refund({
+          reference,
+          amount,
+          metadata: existingMetadata
+        })
+      );
       providerMetadata = refund.metadata;
     }
 
@@ -207,6 +220,30 @@ export class DonationsService {
     this.verifyFlutterwaveSignature(context.signature);
     const update = this.extractFlutterwaveWebhook(payload);
     return this.reconcileDonation('flutterwave', update);
+  }
+
+  private async executeProviderCall<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      return this.handleProviderError(error);
+    }
+  }
+
+  private handleProviderError(error: unknown): never {
+    if (error instanceof DonationProviderError) {
+      if (error.type === 'validation') {
+        throw new BadRequestException(error.message);
+      }
+
+      throw new BadGatewayException(error.message);
+    }
+
+    if (error instanceof Error) {
+      throw new BadGatewayException(error.message);
+    }
+
+    throw new BadGatewayException('Donation provider error');
   }
 
   private toDomain(record: DonationModel): Donation {
