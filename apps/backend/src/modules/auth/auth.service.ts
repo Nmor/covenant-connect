@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import type { Provider, ProviderIdentity, UserAccount } from '@covenant-connect/shared';
 
 import { AccountsService } from '../accounts/accounts.service';

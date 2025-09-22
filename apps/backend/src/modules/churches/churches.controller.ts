@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-
 import type { Church } from '@covenant-connect/shared';
 
 import { ChurchesService } from './churches.service';

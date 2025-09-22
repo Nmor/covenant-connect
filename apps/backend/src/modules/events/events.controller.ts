@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
-
 import type { Event, PaginatedResult } from '@covenant-connect/shared';
 
 import { EventsService } from './events.service';

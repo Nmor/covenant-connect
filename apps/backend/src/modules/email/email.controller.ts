@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-
 import type { EmailProvider } from '@covenant-connect/shared';
 
 import { EmailService } from './email.service';

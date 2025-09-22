@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-
 import type { PaginatedResult, PrayerRequest } from '@covenant-connect/shared';
 
 import { PrayerService } from './prayer.service';
