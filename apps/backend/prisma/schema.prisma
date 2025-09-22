@@ -273,6 +273,16 @@ model ServiceIntegration {
   @@map("service_integrations")
 }
 
+model IntegrationSetting {
+  id        Int      @id @default(autoincrement())
+  provider  String   @unique
+  config    Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("integration_settings")
+}
+
 model Settings {
   id                Int      @id @default(autoincrement())
   businessName      String   @default("Covenant Connect") @map("business_name")

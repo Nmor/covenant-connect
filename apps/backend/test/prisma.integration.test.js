@@ -9,6 +9,7 @@ const { DonationsService } = require('../src/modules/donations/donations.service
 const { EventsService } = require('../src/modules/events/events.service');
 const { PrayerService } = require('../src/modules/prayer/prayer.service');
 const { PrismaService } = require('../src/prisma/prisma.service');
+const { IntegrationsService } = require('../src/modules/integrations/integrations.service');
 
 const backendRoot = path.resolve(__dirname, '..');
 const migrationsDir = path.join(backendRoot, 'prisma/migrations');
@@ -69,6 +70,7 @@ describe('Prisma-backed services', () => {
   let donations;
   let events;
   let prayer;
+  let integrations;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = databaseUrl;
@@ -87,6 +89,7 @@ describe('Prisma-backed services', () => {
     donations = new DonationsService(prisma);
     events = new EventsService(prisma);
     prayer = new PrayerService(prisma);
+    integrations = new IntegrationsService(prisma);
   }, 120000);
 
   beforeEach(async () => {
@@ -96,6 +99,7 @@ describe('Prisma-backed services', () => {
     await prisma.donation.deleteMany();
     await prisma.event.deleteMany();
     await prisma.prayerRequest.deleteMany();
+    await prisma.integrationSetting.deleteMany();
   });
 
   afterAll(async () => {
@@ -186,5 +190,35 @@ describe('Prisma-backed services', () => {
     const list = await prayer.list();
     expect(list.total).toBe(1);
     expect(list.data[0].requesterName).toBe('Integration Tester');
+  });
+
+  it('persists integration settings across service instances', async () => {
+    const created = await integrations.create({
+      provider: 'stripe',
+      config: { apiKey: 'sk_test_123' }
+    });
+
+    expect(created.id).toBeGreaterThan(0);
+    expect(created.config.apiKey).toBe('sk_test_123');
+
+    const fetched = await integrations.findOne('stripe');
+    expect(fetched.config.apiKey).toBe('sk_test_123');
+
+    const anotherInstance = new IntegrationsService(prisma);
+    const updated = await anotherInstance.update('stripe', {
+      config: { apiKey: 'sk_live_456', accountId: 'acct_123' }
+    });
+
+    expect(updated.config.apiKey).toBe('sk_live_456');
+    expect(updated.config.accountId).toBe('acct_123');
+
+    const list = await integrations.findAll();
+    expect(list).toHaveLength(1);
+    expect(list[0].config.apiKey).toBe('sk_live_456');
+
+    await anotherInstance.remove('stripe');
+
+    const emptyList = await integrations.findAll();
+    expect(emptyList).toHaveLength(0);
   });
 });

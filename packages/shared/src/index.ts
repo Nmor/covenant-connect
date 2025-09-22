@@ -138,11 +138,12 @@ export type VolunteerAssignment = {
   status: 'confirmed' | 'pending' | 'declined';
 };
 
-export type IntegrationSettings = {
-  paystack?: Record<string, string>;
-  fincra?: Record<string, string>;
-  stripe?: Record<string, string>;
-  flutterwave?: Record<string, string>;
+export type IntegrationSetting = {
+  id: number;
+  provider: string;
+  config: Record<string, string>;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type Church = {
