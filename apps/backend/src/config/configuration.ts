@@ -8,9 +8,13 @@ type HttpConfig = {
 
 type PaymentsConfig = {
   stripeKey: string | null;
+  stripeWebhookSecret: string | null;
   paystackKey: string | null;
+  paystackWebhookSecret: string | null;
   flutterwaveKey: string | null;
+  flutterwaveWebhookSecret: string | null;
   fincraKey: string | null;
+  fincraWebhookSecret: string | null;
 };
 
 type IntegrationsConfig = {
@@ -65,9 +69,14 @@ export default registerAs<ApplicationConfig>('application', () => ({
   redisUrl: process.env.REDIS_URL ?? null,
   payments: {
     stripeKey: process.env.STRIPE_SECRET_KEY ?? null,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? null,
     paystackKey: process.env.PAYSTACK_SECRET_KEY ?? null,
+    paystackWebhookSecret: process.env.PAYSTACK_WEBHOOK_SECRET ?? null,
     flutterwaveKey: process.env.FLUTTERWAVE_SECRET_KEY ?? null,
-    fincraKey: process.env.FINCRA_SECRET_KEY ?? null
+    flutterwaveWebhookSecret:
+      process.env.FLUTTERWAVE_WEBHOOK_SECRET ?? process.env.FLUTTERWAVE_SECRET_HASH ?? null,
+    fincraKey: process.env.FINCRA_SECRET_KEY ?? null,
+    fincraWebhookSecret: process.env.FINCRA_WEBHOOK_SECRET ?? null
   },
   integrations: {
     googleClientId: process.env.GOOGLE_CLIENT_ID ?? null,
