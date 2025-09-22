@@ -1,0 +1,76 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      args:
+        APP_VERSION: local
+    image: covenant-connect/backend:local
+    environment:
+      APP_NAME: Covenant Connect
+      APP_VERSION: local
+      NODE_ENV: production
+      PORT: 8000
+      DATABASE_URL: postgresql://covenant_connect:covenantconnect@db:5432/covenant_connect?schema=public
+      REDIS_URL: redis://redis:6379/0
+      SESSION_SECRET: localdevsupersecret
+      CORS_ORIGINS: http://localhost:3000
+      QUEUE_DRIVER: redis
+      STORAGE_DRIVER: local
+      LOCAL_STORAGE_DIR: /tmp/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '8000:8000'
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        APP_VERSION: local
+    image: covenant-connect/frontend:local
+    environment:
+      APP_VERSION: local
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - '3000:3000'
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: covenant_connect
+      POSTGRES_USER: covenant_connect
+      POSTGRES_PASSWORD: covenantconnect
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:

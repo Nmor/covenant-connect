@@ -1,118 +1,132 @@
 # Covenant Connect Deployment Runbook
 
-This runbook documents the AWS resources, secrets, and deployment automation that keep the Covenant Connect production environment reproducible.
+This runbook describes how the TypeScript/Nest/Next rewrite of Covenant Connect is packaged, orchestrated locally, and deployed to Kubernetes. It replaces the legacy ECS/Flask notes and focuses on the new container images, Helm chart, secrets, and CI automation that keep production reproducible.
 
-## AWS Resources
+## Container images
 
-| Resource | AWS Service | Name / Identifier | Notes |
-| --- | --- | --- | --- |
-| Application load balancer | Elastic Load Balancing | `covenant-connect-alb` | Routes HTTPS traffic to the Fargate web service.
-| Web service cluster | Amazon ECS (Fargate) | Cluster `covenant-connect-cluster`, service `covenant-connect-web` | Runs the Flask application using the task definition in `deploy/ecs/task-definition.json`.
-| Background worker service | Amazon ECS (Fargate) | Service `covenant-connect-worker` | Executes queued jobs via `python scripts/worker.py` using `deploy/ecs/worker-task-definition.json`.
-| Database | Amazon RDS for PostgreSQL | DB identifier `covenant-connect-prod-db`, database `covenantconnect` | Multi-AZ db.t3.medium instance with automated backups.
-| Cache / queue backend | Amazon ElastiCache for Redis | Cluster `covenant-connect-prod-redis` | Standard Redis (cluster mode disabled) with TLS enforced.
-| Secrets store | AWS Secrets Manager | `covenant-connect/app-secrets`, `covenant-connect/database-url` | Holds credentials and connection strings consumed at runtime.
-| Configuration parameters | AWS Systems Manager Parameter Store | `/covenant-connect/config/*` | Non-secret configuration values referenced by ECS task definitions.
-| Email sending | Amazon SES SMTP endpoint | `email-smtp.us-east-1.amazonaws.com` | Authenticated SMTP used by Flask-Mail.
+Two production images live under `apps/backend` and `apps/frontend` respectively. Each Dockerfile uses a multi-stage build so that the published layers only contain the compiled application and runtime dependencies.
 
-## Environment Variable to AWS Mapping
+### Backend API (`apps/backend/Dockerfile`)
 
-Every key from `.env.example` is fulfilled by an AWS resource, parameter, or secret. Secrets use AWS Secrets Manager unless noted otherwise; boolean and informational values live in Parameter Store (typed as `SecureString` to enable ECS injection).
+* **Base image:** `node:20-bookworm-slim`
+* **Build process:** installs workspace dependencies, compiles `packages/shared`, compiles the NestJS source, prunes dev dependencies, and keeps the Prisma CLI so migrations can run at start-up.
+* **Entrypoint:** `npx prisma migrate deploy && node apps/backend/dist/main.js`
+* **Exposed port:** `8000`
+* **Build arguments:**
+  * `APP_VERSION` &mdash; optional string that is baked into the image metadata and exported as `APP_VERSION` inside the container. Set this to the Git SHA or semantic version when building release artifacts.
+* **Key environment variables:**
 
-| Variable | AWS resource | Secret or parameter name | Value source |
-| --- | --- | --- | --- |
-| `DATABASE_URL` | RDS PostgreSQL | Secret `covenant-connect/database-url` | Connection string `postgresql://covenantconnect_app:<password>@covenant-connect-prod-db.cluster-<hash>.us-east-1.rds.amazonaws.com:5432/covenantconnect` generated after DB provisioning. |
-| `SECRET_KEY` | Secrets Manager | Secret `covenant-connect/app-secrets` key `SECRET_KEY` | 64-byte hex key generated via `python -c "import secrets; print(secrets.token_hex(32))"`. |
-| `ENVIRONMENT` | Parameter Store | `/covenant-connect/config/ENVIRONMENT` | Literal `production`. |
-| `FLASK_ENV` | Parameter Store | `/covenant-connect/config/FLASK_ENV` | Literal `production` to preserve backwards compatibility. |
-| `SESSION_COOKIE_SECURE` | Parameter Store | `/covenant-connect/config/SESSION_COOKIE_SECURE` | `true` to force secure cookies. |
-| `SESSION_COOKIE_HTTPONLY` | Parameter Store | `/covenant-connect/config/SESSION_COOKIE_HTTPONLY` | `true`. |
-| `REMEMBER_COOKIE_SECURE` | Parameter Store | `/covenant-connect/config/REMEMBER_COOKIE_SECURE` | `true`. |
-| `SESSION_COOKIE_SAMESITE` | Parameter Store | `/covenant-connect/config/SESSION_COOKIE_SAMESITE` | `Lax` unless a stricter policy is required. |
-| `PREFERRED_URL_SCHEME` | Parameter Store | `/covenant-connect/config/PREFERRED_URL_SCHEME` | `https`. |
-| `SERVER_NAME` | Parameter Store | `/covenant-connect/config/SERVER_NAME` | Public hostname `app.covenantconnect.org`. |
-| `MAIL_SERVER` | Parameter Store | `/covenant-connect/config/MAIL_SERVER` | `email-smtp.us-east-1.amazonaws.com` for SES SMTP. |
-| `MAIL_PORT` | Parameter Store | `/covenant-connect/config/MAIL_PORT` | `587`. |
-| `MAIL_USE_TLS` | Parameter Store | `/covenant-connect/config/MAIL_USE_TLS` | `true`. |
-| `MAIL_USERNAME` | Secrets Manager | Secret `covenant-connect/app-secrets` key `MAIL_USERNAME` | SES SMTP username created when enabling production access. |
-| `MAIL_PASSWORD` | Secrets Manager | Secret `covenant-connect/app-secrets` key `MAIL_PASSWORD` | SES SMTP password paired with the username. |
-| `MAIL_DEFAULT_SENDER` | Parameter Store | `/covenant-connect/config/MAIL_DEFAULT_SENDER` | `notifications@covenantconnect.org`. |
-| `REDIS_URL` | Parameter Store | `/covenant-connect/config/REDIS_URL` | `rediss://covenant-connect-prod-redis.<hash>.use1.cache.amazonaws.com:6379/0`. |
-| `PAYSTACK_SECRET_KEY` | Secrets Manager | Secret `covenant-connect/app-secrets` key `PAYSTACK_SECRET_KEY` | API key issued by Paystack. |
-| `FINCRA_SECRET_KEY` | Secrets Manager | Secret `covenant-connect/app-secrets` key `FINCRA_SECRET_KEY` | API key issued by Fincra. |
-| `STRIPE_SECRET_KEY` | Secrets Manager | Secret `covenant-connect/app-secrets` key `STRIPE_SECRET_KEY` | Stripe live secret key. |
-| `FLUTTERWAVE_SECRET_KEY` | Secrets Manager | Secret `covenant-connect/app-secrets` key `FLUTTERWAVE_SECRET_KEY` | Flutterwave live secret key. |
-| `CORS_ORIGINS` | Parameter Store | `/covenant-connect/config/CORS_ORIGINS` | Comma-separated list such as `https://app.covenantconnect.org,https://admin.covenantconnect.org`. |
+| Variable | Description | Default |
+| --- | --- | --- |
+| `APP_NAME` | Human friendly name used in logs. | `Covenant Connect` |
+| `APP_VERSION` | Propagated from the `APP_VERSION` build arg for observability. | `0.0.0` inside the Dockerfile |
+| `NODE_ENV` | Node runtime mode. | `production` |
+| `PORT` | HTTP listener for the Nest API. | `8000` |
+| `DATABASE_URL` | Prisma connection string (PostgreSQL). Secrets-managed in Helm. | Computed from the bundled PostgreSQL release values |
+| `SHADOW_DATABASE_URL` | Optional Prisma shadow database for migrations. | empty |
+| `REDIS_URL` | Redis connection string for queues and caching. | Computed from Redis release values |
+| `SESSION_SECRET` | Encryption secret for cookie/session signing. | _required_ |
+| `SESSION_TTL` | TTL in seconds for session cookies. | `604800` |
+| `QUEUE_DRIVER` | Either `redis` or `memory`. Use `redis` in production. | `redis` in docker-compose and values |
+| `QUEUE_MAX_ATTEMPTS` | Default BullMQ retry attempts. | `3` |
+| `CORS_ORIGINS` | Comma separated list of allowed CORS origins. | `http://localhost:3000` in dev, production override via Helm |
+| `COOKIE_DOMAIN` / `COOKIE_SECURE` | Hardens session cookie scope. | empty / `true` |
+| `ASSET_BASE_URL` | Optional CDN origin for uploaded assets. | empty |
+| `STORAGE_DRIVER` | `local` or `s3` driver for file uploads. | `local` |
+| `LOCAL_STORAGE_DIR` | Local uploads directory when using the `local` driver. | `/tmp/uploads` in docker-compose |
+| `AWS_*` variables | Required only when `STORAGE_DRIVER=s3`. | empty |
+| Payment secrets (`STRIPE_*`, `PAYSTACK_*`, `FINCRA_*`, `FLUTTERWAVE_*`) | Provider API keys and webhook secrets. | empty |
+| OAuth secrets (`GOOGLE_*`, `FACEBOOK_*`, `APPLE_*`) | Third-party sign-on credentials. | empty |
+| `KPI_DIGEST_CRON`, `FOLLOW_UP_CRON` | Cron schedules for background jobs. | `0 7 * * 1` / `0 */6 * * *` |
 
-## ECS Task Definitions and Secret Injection
+The Helm chart injects secrets through `deploy/helm/templates/backend-secret.yaml`, while the local compose file passes development-safe defaults from `docker-compose.yml`.
 
-The deployment pipeline registers the task definitions stored in `deploy/ecs/task-definition.json` (web) and `deploy/ecs/worker-task-definition.json` (background worker) during each release:
+### Frontend (`apps/frontend/Dockerfile`)
 
-1. Build and push the application container to `123456789012.dkr.ecr.us-east-1.amazonaws.com/covenant-connect`.
-2. Run `aws ecs register-task-definition --cli-input-json file://deploy/ecs/task-definition.json` followed by the worker variant.
-3. Update the ECS services:
-   ```bash
-   aws ecs update-service --cluster covenant-connect-cluster \
-       --service covenant-connect-web \
-       --task-definition covenant-connect-web
-   aws ecs update-service --cluster covenant-connect-cluster \
-       --service covenant-connect-worker \
-       --task-definition covenant-connect-worker
-   ```
+* **Base image:** `node:20-bookworm-slim`
+* **Build process:** installs workspace dependencies, compiles `packages/shared`, runs `next build`, and prunes dev dependencies.
+* **Entrypoint:** `node apps/frontend/node_modules/next/dist/bin/next start -p ${PORT}`
+* **Exposed port:** `3000`
+* **Build arguments:**
+  * `APP_VERSION` &mdash; same semantics as the backend image.
+* **Key environment variables:**
 
-Both task definitions rely exclusively on Secrets Manager or Parameter Store entries. ECS resolves the `valueFrom` references and injects the resolved values into each container before the application process starts, satisfying the requirement to load secrets at runtime without baking them into the image.
+| Variable | Description | Default |
+| --- | --- | --- |
+| `APP_VERSION` | Propagated from the build arg for traceability. | `0.0.0` |
+| `NODE_ENV` | Next.js runtime mode. | `production` |
+| `PORT` | HTTP listener for the Next.js server. | `3000` |
+| `NEXT_PUBLIC_API_BASE_URL` | Public API origin embedded in the browser bundle. Use the internal service DNS (e.g. `http://covenant-connect-backend:8000`) when running in Kubernetes. | `http://localhost:8000` when unset |
 
-## Background Worker Execution
+## Local orchestration with Docker Compose
 
-`deploy/ecs/worker-task-definition.json` defines a dedicated Fargate task that runs `python scripts/worker.py`. The worker service shares the same environment variables and secrets as the web task so it can connect to Redis and RDS. Scale the worker service by adjusting the desired count on the `covenant-connect-worker` ECS service.
+`docker-compose.yml` wires the two application containers together with PostgreSQL and Redis for end-to-end smoke testing on a workstation. The compose definition builds both Dockerfiles (injecting `APP_VERSION=local`), provisions `postgres:15-alpine` and `redis:7.2-alpine`, configures health checks, and publishes ports `3000` and `8000` for the UI and API respectively.【F:docker-compose.yml†L1-L58】
 
-## Outbound Email Verification
-
-* Ensure the web and worker tasks use the `sg-covenant-connect-app` security group with an egress rule allowing TCP 587 to `email-smtp.us-east-1.amazonaws.com` (or TCP 465 if switching to TLS/SSL).
-* Validate network pathing from a running task:
-  ```bash
-  aws ecs execute-command --cluster covenant-connect-cluster \
-      --task <task-id> --container web --command \
-      "openssl s_client -starttls smtp -connect email-smtp.us-east-1.amazonaws.com:587"
-  ```
-* Send a smoke-test email through SES using the configured credentials:
-  ```bash
-  python - <<'PY'
-  import os
-  import smtplib
-  from email.message import EmailMessage
-
-  msg = EmailMessage()
-  msg["Subject"] = "Covenant Connect SES smoke test"
-  msg["From"] = os.environ["MAIL_DEFAULT_SENDER"]
-  msg["To"] = os.environ["MAIL_DEFAULT_SENDER"]
-  msg.set_content("SES connectivity confirmed.")
-
-  with smtplib.SMTP(os.environ["MAIL_SERVER"], int(os.environ["MAIL_PORT"])) as smtp:
-      smtp.starttls()
-      smtp.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
-      smtp.send_message(msg)
-  PY
-  ```
-* Investigate failures by checking the VPC network ACLs, NAT gateway routes, and SES suppression list before re-trying.
-
-## Change Management
-
-* Secrets live in Secrets Manager and should be rotated annually or when staff changes occur. Update the corresponding keys in `covenant-connect/app-secrets` and re-deploy to roll the credentials.
-* Parameter Store values track non-secret configuration; changes to `/covenant-connect/config/*` trigger ECS to receive new values on the next task deployment or service restart.
-* Database schema migrations are applied using Alembic migrations before updating the ECS services.
-
-## Useful Commands
+Run the stack locally with:
 
 ```bash
-# List current secret values referenced by ECS
-aws secretsmanager get-secret-value --secret-id covenant-connect/app-secrets
-
-# Inspect active task definitions
-aws ecs describe-task-definition --task-definition covenant-connect-web
-aws ecs describe-task-definition --task-definition covenant-connect-worker
-
-# Restart services after changing configuration
-aws ecs update-service --cluster covenant-connect-cluster \
-    --service covenant-connect-web --force-new-deployment
+docker compose up --build
 ```
+
+The backend container runs `prisma migrate deploy` on start-up so the fresh PostgreSQL instance is seeded automatically. Data volumes (`postgres-data`, `redis-data`) persist database state between restarts, and environment variables mirror the production configuration while remaining safe for development.
+
+## Kubernetes deployment with Helm
+
+The `deploy/helm` chart provisions the full runtime in a single release. Installing the chart creates:
+
+* A backend `Deployment` and `Service` that run the Nest API and expose health probes on `/health/live` and `/health/ready`.【F:deploy/helm/templates/backend-deployment.yaml†L1-L45】【F:deploy/helm/templates/backend-service.yaml†L1-L15】
+* A frontend `Deployment`, `Service`, and optional `Ingress` for the Next.js UI.【F:deploy/helm/templates/frontend-deployment.yaml†L1-L42】【F:deploy/helm/templates/frontend-service.yaml†L1-L15】【F:deploy/helm/templates/frontend-ingress.yaml†L1-L24】
+* Stateful Redis and PostgreSQL workloads backed by persistent volume claims, plus dedicated secrets for their credentials.【F:deploy/helm/templates/redis-statefulset.yaml†L1-L40】【F:deploy/helm/templates/postgres-statefulset.yaml†L1-L43】【F:deploy/helm/templates/redis-secret.yaml†L1-L9】【F:deploy/helm/templates/postgres-secret.yaml†L1-L11】
+* A backend environment secret that captures all required application secrets and non-secret overrides.【F:deploy/helm/templates/backend-secret.yaml†L1-L33】
+
+### Required values
+
+Override the following values when deploying to a cluster:
+
+* `backend.image.repository` and `backend.image.tag` &mdash; point to the published GHCR image for the API.
+* `frontend.image.repository` and `frontend.image.tag` &mdash; point to the published GHCR image for the UI.
+* `backend.secretEnv.SESSION_SECRET` &mdash; at least 32 bytes of entropy.
+* `backend.secretEnv.DATABASE_URL` / `backend.secretEnv.REDIS_URL` if you are using managed services instead of the bundled StatefulSets.
+* `postgres.auth.password` &mdash; production-grade password; update the matching Helm secret when rotated.
+* `redis.auth.enabled=true` and `redis.auth.password` when Redis requires authentication.
+* Any payment or OAuth secrets that must be available to the API.
+
+### Installation
+
+Use the sample below as a starting point for production:
+
+```bash
+helm upgrade --install covenant-connect deploy/helm \
+  --set backend.image.repository=ghcr.io/<org>/covenant-connect/backend \
+  --set backend.image.tag=<git-sha> \
+  --set frontend.image.repository=ghcr.io/<org>/covenant-connect/frontend \
+  --set frontend.image.tag=<git-sha> \
+  --set backend.secretEnv.SESSION_SECRET=$(openssl rand -hex 32) \
+  --set postgres.auth.password=<postgres-password> \
+  --set backend.secretEnv.STRIPE_SECRET_KEY=<stripe-secret> \
+  --values deploy/helm/values.yaml
+```
+
+When deploying behind an ingress controller, enable and customise `ingress.*` in `values.yaml` so traffic reaches the frontend service. The default values file also exposes knobs for replica counts, resource requests, persistent volume sizes, and image pull secrets.【F:deploy/helm/values.yaml†L1-L84】
+
+## Continuous integration and image publishing
+
+`.github/workflows/ci.yml` contains two jobs:
+
+1. **`quality`** (existing) &mdash; installs dependencies, lints, type-checks, and runs tests across all workspaces.
+2. **`docker-images`** &mdash; uses Docker Buildx to build both production images, tags them as `ghcr.io/<repo>/backend` and `ghcr.io/<repo>/frontend`, and pushes `latest` + SHA tags on merges to `main`. Pull requests build the images for validation without publishing. Authentication happens via the built-in `GITHUB_TOKEN` with `packages: write` permission.【F:.github/workflows/ci.yml†L1-L73】
+
+The build step passes `APP_VERSION=${{ github.sha }}` so the resulting containers advertise the exact commit that produced them, aligning with the documentation above.【F:.github/workflows/ci.yml†L45-L72】
+
+## Release checklist
+
+1. Land application changes on `main`; CI will lint, test, and publish fresh backend/frontend images to GHCR.
+2. Promote the images in Kubernetes by running `helm upgrade` with the new tags (or configure Flux/Argo to watch GHCR tags).
+3. Update any rotated secrets via `helm upgrade --set backend.secretEnv.*=...` so they are re-materialised in the backing `Secret` resources.
+4. Verify health probes (`/health/live`, `/health/ready`) and Next.js status via `kubectl get pods` and `kubectl port-forward` as needed.
+
+## Troubleshooting tips
+
+* If the API pods crash on start-up, inspect the Prisma migration logs printed by the container entrypoint. Missing `DATABASE_URL` or incorrect credentials are the common causes.
+* Frontend pods returning 502s usually indicate `NEXT_PUBLIC_API_BASE_URL` pointing to an unreachable hostname; ensure it targets the internal backend service when running inside the cluster.
+* Redis or PostgreSQL PVC provisioning failures can be resolved by setting `redis.persistence.storageClassName` and `postgres.persistence.storageClassName` to a class supported by the cluster.

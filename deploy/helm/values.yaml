@@ -1,0 +1,105 @@
+global:
+  imagePullSecrets: []
+
+backend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/example/covenant-connect/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources: {}
+  env:
+    APP_NAME: Covenant Connect
+    NODE_ENV: production
+    PORT: "8000"
+    QUEUE_DRIVER: redis
+    CORS_ORIGINS: https://app.example.com,https://admin.example.com
+  secretEnv:
+    SESSION_SECRET: "change-me"
+    DATABASE_URL: ""
+    SHADOW_DATABASE_URL: ""
+    REDIS_URL: ""
+    STRIPE_SECRET_KEY: ""
+    STRIPE_WEBHOOK_SECRET: ""
+    PAYSTACK_SECRET_KEY: ""
+    PAYSTACK_WEBHOOK_SECRET: ""
+    FINCRA_SECRET_KEY: ""
+    FINCRA_WEBHOOK_SECRET: ""
+    FLUTTERWAVE_SECRET_KEY: ""
+    FLUTTERWAVE_WEBHOOK_SECRET: ""
+    GOOGLE_CLIENT_ID: ""
+    GOOGLE_CLIENT_SECRET: ""
+    FACEBOOK_CLIENT_ID: ""
+    FACEBOOK_CLIENT_SECRET: ""
+    APPLE_CLIENT_ID: ""
+    APPLE_TEAM_ID: ""
+    APPLE_KEY_ID: ""
+    APPLE_PRIVATE_KEY: ""
+    AWS_S3_BUCKET: ""
+    AWS_REGION: us-east-1
+    AWS_ACCESS_KEY_ID: ""
+    AWS_SECRET_ACCESS_KEY: ""
+    ASSET_BASE_URL: ""
+    SESSION_TTL: "604800"
+    COOKIE_SECURE: "true"
+    COOKIE_DOMAIN: app.example.com
+    KPI_DIGEST_CRON: "0 7 * * 1"
+    FOLLOW_UP_CRON: "0 */6 * * *"
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: ghcr.io/example/covenant-connect/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources: {}
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+    NEXT_PUBLIC_API_BASE_URL: http://{{ include "covenant-connect.fullname" . }}-backend:8000
+
+redis:
+  image: redis:7.2-alpine
+  service:
+    port: 6379
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    storageClassName: ""
+  auth:
+    enabled: false
+    password: ""
+
+postgres:
+  image: postgres:15-alpine
+  service:
+    port: 5432
+  auth:
+    username: covenant_connect
+    password: change-me
+    database: covenant_connect
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: frontend.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
