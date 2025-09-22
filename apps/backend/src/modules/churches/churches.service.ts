@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-
 import type { Church } from '@covenant-connect/shared';
 
 type CreateChurchInput = {

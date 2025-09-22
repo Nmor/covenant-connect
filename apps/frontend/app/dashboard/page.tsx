@@ -8,7 +8,8 @@ export default async function DashboardPage() {
     kpis: [
       { label: 'Total Giving', value: 0 },
       { label: 'Completed Donations', value: 0 },
-      { label: 'Upcoming Events', value: 0 }
+      { label: 'Upcoming Events', value: 0 },
+      { label: 'Open Prayer Requests', value: 0 }
     ]
   }));
 
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
         </p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {report.kpis.map((kpi) => (
           <article key={kpi.label} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-slate-400">{kpi.label}</p>

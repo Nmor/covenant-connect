@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
 import type { IntegrationSettings } from '@covenant-connect/shared';
 
 @Injectable()

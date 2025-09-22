@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
 import type { DashboardKpi } from '@covenant-connect/shared';
 
 import { DonationsService } from '../donations/donations.service';

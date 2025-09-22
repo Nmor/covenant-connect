@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-
 import type { Provider, ProviderIdentity, UserAccount } from '@covenant-connect/shared';
 
 @Injectable()

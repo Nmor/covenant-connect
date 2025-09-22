@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
-
 import type { IntegrationSettings } from '@covenant-connect/shared';
 
 import { IntegrationsService } from './integrations.service';

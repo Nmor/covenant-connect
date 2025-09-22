@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-
 import type { QueueJob } from '@covenant-connect/shared';
 
 @Injectable()

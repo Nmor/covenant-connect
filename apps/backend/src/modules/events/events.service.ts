@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-
 import type { Event, EventSegment, PaginatedResult, Pagination } from '@covenant-connect/shared';
 
 type CreateEventInput = {
@@ -20,6 +19,10 @@ type UpdateEventInput = Partial<CreateEventInput>;
 @Injectable()
 export class EventsService {
   private readonly events = new Map<string, Event>();
+
+  constructor() {
+    this.seedSampleEvents();
+  }
 
   async create(input: CreateEventInput): Promise<Event> {
     const now = new Date();
@@ -113,5 +116,92 @@ export class EventsService {
 
     lines.push('END:VCALENDAR');
     return lines.join('\n');
+  }
+
+  private seedSampleEvents(): void {
+    if (this.events.size > 0) {
+      return;
+    }
+
+    const base = new Date();
+    const offset = (date: Date, { days = 0, hours = 0, minutes = 0 }: { days?: number; hours?: number; minutes?: number }) =>
+      new Date(date.getTime() + (((days * 24 + hours) * 60 + minutes) * 60 * 1000));
+
+    const seeds: Array<{
+      title: string;
+      description: string;
+      startOffset: { days: number; hours: number; minutes?: number };
+      endOffset: { days: number; hours: number; minutes?: number };
+      location: string;
+      recurrenceRule?: string;
+      tags?: string[];
+      segments?: Array<Omit<EventSegment, 'id'>>;
+    }> = [
+      {
+        title: 'Sunday Worship Service',
+        description: 'Join us for corporate worship, teaching, and prayer.',
+        startOffset: { days: 2, hours: 9, minutes: 30 },
+        endOffset: { days: 2, hours: 11, minutes: 15 },
+        location: 'Main Sanctuary',
+        recurrenceRule: 'FREQ=WEEKLY;BYDAY=SU',
+        tags: ['worship', 'in-person'],
+        segments: [
+          { name: 'Team Prayer', startOffsetMinutes: -30, durationMinutes: 20, ownerId: null },
+          { name: 'Sound Check', startOffsetMinutes: -10, durationMinutes: 10, ownerId: 'member-adeola' }
+        ]
+      },
+      {
+        title: 'Youth Bible Study',
+        description: 'Weekly gathering for students to study Scripture and build friendships.',
+        startOffset: { days: 4, hours: 18 },
+        endOffset: { days: 4, hours: 19, minutes: 30 },
+        location: 'Youth Center',
+        tags: ['students', 'discipleship']
+      },
+      {
+        title: 'Community Outreach',
+        description: 'Serving at the downtown food bank with our outreach team.',
+        startOffset: { days: 7, hours: 9 },
+        endOffset: { days: 7, hours: 12 },
+        location: 'Downtown Food Bank',
+        tags: ['outreach', 'volunteers']
+      },
+      {
+        title: 'Prayer & Worship Night',
+        description: 'An extended evening of worship, testimony, and intercession.',
+        startOffset: { days: 14, hours: 19 },
+        endOffset: { days: 14, hours: 21 },
+        location: 'Chapel',
+        tags: ['worship', 'prayer'],
+        segments: [{ name: 'Prayer Teams', startOffsetMinutes: 0, durationMinutes: 120, ownerId: 'member-johnson' }]
+      }
+    ];
+
+    for (const seed of seeds) {
+      const startsAt = offset(base, seed.startOffset);
+      const endsAt = offset(base, seed.endOffset);
+      const now = new Date();
+      const segments: EventSegment[] = (seed.segments ?? []).map((segment) => ({
+        ...segment,
+        id: randomUUID()
+      }));
+
+      const event: Event = {
+        id: randomUUID(),
+        title: seed.title,
+        description: seed.description,
+        startsAt,
+        endsAt,
+        timezone: 'America/New_York',
+        recurrenceRule: seed.recurrenceRule,
+        segments,
+        tags: seed.tags ?? [],
+        location: seed.location,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      this.events.set(event.id, event);
+    }
   }
 }

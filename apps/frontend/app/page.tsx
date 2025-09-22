@@ -29,7 +29,8 @@ async function loadData() {
         kpis: [
           { label: 'Total Giving', value: 0 },
           { label: 'Completed Donations', value: 0 },
-          { label: 'Upcoming Events', value: 0 }
+          { label: 'Upcoming Events', value: 0 },
+          { label: 'Open Prayer Requests', value: 0 }
         ]
       },
       events: {
@@ -78,7 +79,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {report.kpis.map((kpi) => (
           <article key={kpi.label} className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
