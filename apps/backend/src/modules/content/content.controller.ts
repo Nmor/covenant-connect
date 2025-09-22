@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Post, Put } from '@nestjs/common';
-
 import type { HomeContent, PaginatedResult, Sermon } from '@covenant-connect/shared';
 
 import { ContentService } from './content.service';

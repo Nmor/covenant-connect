@@ -35,15 +35,19 @@ export type ApplicationConfig = {
   assetBaseUrl: string | null;
 };
 
-const parseCorsOrigins = (value: string | undefined): string[] => {
-  if (!value) {
-    return [];
-  }
+const FALLBACK_CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
-  return value
-    .split(',')
+const parseCorsOrigins = (value: string | undefined): string[] => {
+  const parsed = value
+    ?.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  if (parsed && parsed.length > 0) {
+    return parsed;
+  }
+
+  return FALLBACK_CORS_ORIGINS;
 };
 
 export default registerAs<ApplicationConfig>('application', () => ({

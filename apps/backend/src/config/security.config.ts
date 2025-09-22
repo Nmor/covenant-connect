@@ -1,11 +1,5 @@
 import { registerAs } from '@nestjs/config';
 
-type SessionConfig = {
-  secret: string;
-  secureCookies: boolean;
-  ttlSeconds: number;
-};
-
 export const securityConfig = registerAs('security', () => ({
   session: {
     secret: process.env.SESSION_SECRET ?? 'change-me',

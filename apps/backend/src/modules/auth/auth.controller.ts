@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-
 import type { Provider, UserAccount } from '@covenant-connect/shared';
 
 import { AuthService } from './auth.service';

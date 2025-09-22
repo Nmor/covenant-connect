@@ -1,21 +1,7 @@
 import React from 'react';
 
+import type { DashboardResponse, EventsResponse, HomeContentResponse } from '../lib/api';
 import { getDashboardReport, getHomeContent, getUpcomingEvents } from '../lib/api';
-
-type DashboardResponse = {
-  kpis: { label: string; value: number; change?: number }[];
-};
-
-type EventsResponse = {
-  data: { id: string; title: string; startsAt: string; location: string }[];
-};
-
-type HomeContentResponse = {
-  heroTitle: string;
-  heroSubtitle: string;
-  highlights: string[];
-  nextSteps: { label: string; url: string }[];
-};
 
 async function loadData() {
   try {
@@ -36,18 +22,24 @@ async function loadData() {
         highlights: [],
         nextSteps: [
           { label: 'Launch admin console', url: '/dashboard' },
-          { label: 'Review API docs', url: '/docs' }
+          { label: 'Browse events calendar', url: '/events' },
+          { label: 'Review giving activity', url: '/donations' },
+          { label: 'Manage prayer follow-up', url: '/prayer' }
         ]
       },
       report: {
         kpis: [
           { label: 'Total Giving', value: 0 },
           { label: 'Completed Donations', value: 0 },
-          { label: 'Upcoming Events', value: 0 }
+          { label: 'Upcoming Events', value: 0 },
+          { label: 'Open Prayer Requests', value: 0 }
         ]
       },
       events: {
-        data: []
+        data: [],
+        total: 0,
+        page: 1,
+        pageSize: 0
       }
     } satisfies {
       home: HomeContentResponse;
@@ -89,7 +81,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {report.kpis.map((kpi) => (
           <article key={kpi.label} className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
