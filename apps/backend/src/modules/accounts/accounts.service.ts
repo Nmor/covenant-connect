@@ -1,9 +1,21 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import argon2 from 'argon2';
 import type { Provider, ProviderIdentity, UserAccount } from '@covenant-connect/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
+
+type Argon2Module = typeof import('argon2');
+
+let argon2ModulePromise: Promise<Argon2Module> | null = null;
+
+const loadArgon2 = async (): Promise<Argon2Module> => {
+  if (!argon2ModulePromise) {
+    argon2ModulePromise = import('argon2');
+  }
+
+  const module = await argon2ModulePromise;
+  return (module as Argon2Module & { default?: Argon2Module }).default ?? module;
+};
 
 type CreateAccountInput = {
   email: string;
@@ -31,7 +43,7 @@ export class AccountsService {
     }
 
     const roles = input.roles && input.roles.length > 0 ? input.roles : ['member'];
-    const passwordHash = input.password ? await argon2.hash(input.password) : undefined;
+    const passwordHash = input.password ? await (await loadArgon2()).hash(input.password) : undefined;
     const username = await this.generateUsername(email);
 
     const created = await this.prisma.user.create({
@@ -223,6 +235,7 @@ export class AccountsService {
       return false;
     }
 
+    const argon2 = await loadArgon2();
     return argon2.verify(account.passwordHash, password);
   }
 

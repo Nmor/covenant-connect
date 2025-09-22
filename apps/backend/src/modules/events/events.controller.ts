@@ -1,13 +1,21 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import type { Event, PaginatedResult } from '@covenant-connect/shared';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { EventsService } from './events.service';
+import { EventsResponseDto } from './dto/events-response.dto';
+import { EventDto } from './dto/event.dto';
 
+@ApiTags('Events')
 @Controller('events')
 export class EventsController {
   constructor(private readonly events: EventsService) {}
 
+  @ApiOperation({ operationId: 'getEvents', summary: 'List upcoming events with pagination.' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, example: 25 })
+  @ApiOkResponse({ type: EventsResponseDto })
   @Get()
   list(
     @Query('page') page = '1',
@@ -19,6 +27,7 @@ export class EventsController {
     });
   }
 
+  @ApiOkResponse({ type: EventDto })
   @Post()
   create(
     @Body()
@@ -40,6 +49,7 @@ export class EventsController {
     });
   }
 
+  @ApiOkResponse({ type: EventDto })
   @Patch(':id')
   update(
     @Param('id') id: string,

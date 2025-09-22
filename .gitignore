@@ -55,3 +55,6 @@ yarn.lock
 .breakpoints
 *.lock
 poetry.lock
+
+# TypeScript build info
+*.tsbuildinfo
