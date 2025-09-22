@@ -93,6 +93,7 @@ export type EventSummary = {
 
 export type EventsResponse = PaginatedResponse<EventSummary>;
 
+ codex/verify-frontend-and-endpoints-connection-kqvbfr
 export type DonationRecord = {
   id: string;
   memberId: string | null;
@@ -121,7 +122,7 @@ export type PrayerRequestRecord = {
 };
 
 export type PrayerRequestsResponse = PaginatedResponse<PrayerRequestRecord>;
-
+       main
 export async function getDashboardReport(): Promise<DashboardResponse> {
   return request<DashboardResponse>('/reports/dashboard');
 }
@@ -131,6 +132,7 @@ export async function getHomeContent(): Promise<HomeContentResponse> {
 }
 
 export async function getUpcomingEvents(limit = 3): Promise<EventsResponse> {
+ codex/verify-frontend-and-endpoints-connection-kqvbfr
   return getEvents({ page: 1, pageSize: limit });
 }
 
@@ -160,4 +162,9 @@ export async function getPrayerRequests(): Promise<PrayerRequestsResponse> {
   return request<PrayerRequestsResponse>('/prayer/requests');
 }
 
+  const search = new URLSearchParams({ page: '1', pageSize: String(limit) });
+  return request<EventsResponse>(`/events?${search.toString()}`);
+}
+
+     main
 export { API_BASE_URL };
