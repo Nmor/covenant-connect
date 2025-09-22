@@ -352,7 +352,7 @@ export class AutomationService {
   }
 
   private resolveContextValue(context: AutomationContext, path: string): unknown {
-    const normalisedPath = path.replace(/[\[\]]/g, '.');
+    const normalisedPath = path.replace(/[[\]]/g, '.');
     const segments = normalisedPath.split('.').map((segment) => segment.trim()).filter(Boolean);
 
     let current: unknown = context;

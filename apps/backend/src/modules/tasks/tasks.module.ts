@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../prisma/prisma.module';
 import { EmailModule } from '../email/email.module';
-
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 import { TaskWorkerService } from './tasks.worker';

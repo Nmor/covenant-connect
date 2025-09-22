@@ -9,7 +9,6 @@ import {
   IsPositive,
   IsString
 } from 'class-validator';
-
 import type { Donation } from '@covenant-connect/shared';
 
 const DONATION_PROVIDERS: Donation['provider'][] = ['paystack', 'fincra', 'stripe', 'flutterwave'];

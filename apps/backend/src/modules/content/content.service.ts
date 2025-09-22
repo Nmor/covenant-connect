@@ -15,13 +15,11 @@ export class ContentService {
     ],
     nextSteps: [
       { label: 'Launch admin console', url: '/dashboard' },
- codex/verify-frontend-and-endpoints-connection-kqvbfr
       { label: 'Browse events calendar', url: '/events' },
       { label: 'Review giving activity', url: '/donations' },
-      { label: 'Manage prayer follow-up', url: '/prayer' }
+      { label: 'Manage prayer follow-up', url: '/prayer' },
       { label: 'Review API docs', url: '/docs' },
       { label: 'Explore product updates', url: '/changelog' }
-       main
     ]
   };
 

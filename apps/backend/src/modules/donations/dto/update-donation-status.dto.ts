@@ -1,6 +1,5 @@
 import { Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-
 import type { Donation } from '@covenant-connect/shared';
 
 const DONATION_STATUSES: Donation['status'][] = ['pending', 'completed', 'failed', 'refunded'];
