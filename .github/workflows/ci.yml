@@ -15,7 +15,9 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+ codex/update-ci-workflow-for-pnpm-usage-0bvrpj
           version: 8
+     main
           run_install: false
 
       - name: Use Node.js 20
