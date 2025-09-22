@@ -22,7 +22,9 @@ async function loadData() {
         highlights: [],
         nextSteps: [
           { label: 'Launch admin console', url: '/dashboard' },
-          { label: 'Review API docs', url: '/docs' }
+          { label: 'Browse events calendar', url: '/events' },
+          { label: 'Review giving activity', url: '/donations' },
+          { label: 'Manage prayer follow-up', url: '/prayer' }
         ]
       },
       report: {

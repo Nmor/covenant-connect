@@ -93,6 +93,36 @@ export type EventSummary = {
 
 export type EventsResponse = PaginatedResponse<EventSummary>;
 
+ codex/verify-frontend-and-endpoints-connection-kqvbfr
+export type DonationRecord = {
+  id: string;
+  memberId: string | null;
+  amount: number;
+  currency: string;
+  provider: 'paystack' | 'fincra' | 'stripe' | 'flutterwave';
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DonationsResponse = PaginatedResponse<DonationRecord>;
+
+export type PrayerRequestRecord = {
+  id: string;
+  requesterName: string;
+  requesterEmail?: string;
+  requesterPhone?: string;
+  message: string;
+  memberId?: string;
+  status: 'new' | 'assigned' | 'praying' | 'answered';
+  followUpAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PrayerRequestsResponse = PaginatedResponse<PrayerRequestRecord>;
+       main
 export async function getDashboardReport(): Promise<DashboardResponse> {
   return request<DashboardResponse>('/reports/dashboard');
 }
@@ -102,8 +132,39 @@ export async function getHomeContent(): Promise<HomeContentResponse> {
 }
 
 export async function getUpcomingEvents(limit = 3): Promise<EventsResponse> {
+ codex/verify-frontend-and-endpoints-connection-kqvbfr
+  return getEvents({ page: 1, pageSize: limit });
+}
+
+export async function getEvents({
+  page = 1,
+  pageSize = 25
+}: {
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<EventsResponse> {
+  const search = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return request<EventsResponse>(`/events?${search.toString()}`);
+}
+
+export async function getDonations({
+  page = 1,
+  pageSize = 25
+}: {
+  page?: number;
+  pageSize?: number;
+} = {}): Promise<DonationsResponse> {
+  const search = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return request<DonationsResponse>(`/donations?${search.toString()}`);
+}
+
+export async function getPrayerRequests(): Promise<PrayerRequestsResponse> {
+  return request<PrayerRequestsResponse>('/prayer/requests');
+}
+
   const search = new URLSearchParams({ page: '1', pageSize: String(limit) });
   return request<EventsResponse>(`/events?${search.toString()}`);
 }
 
+     main
 export { API_BASE_URL };
