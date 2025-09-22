@@ -137,7 +137,7 @@ export class EventsService {
       recurrenceRule: event.recurrenceRule ?? undefined,
       segments: this.parseSegments(event.serviceSegments),
       tags: (event.ministryTags as string[]) ?? [],
-      location: event.location ?? undefined,
+      location: event.location ?? '',
       createdAt: event.createdAt,
       updatedAt: event.updatedAt
     };
@@ -179,13 +179,16 @@ export class EventsService {
   private ensureSegmentsWithIds(
     segments: Array<Partial<EventSegment> & Omit<EventSegment, 'id'> | Omit<EventSegment, 'id'>>
   ): EventSegment[] {
-    return segments.map((segment) => ({
-      id: typeof segment.id === 'string' ? segment.id : randomUUID(),
-      name: segment.name,
-      startOffsetMinutes: segment.startOffsetMinutes,
-      durationMinutes: segment.durationMinutes,
-      ownerId: segment.ownerId ?? null
-    }));
+    return segments.map((segment) => {
+      const hasId = 'id' in segment && typeof segment.id === 'string';
+      return {
+        id: hasId ? (segment.id as string) : randomUUID(),
+        name: segment.name,
+        startOffsetMinutes: segment.startOffsetMinutes,
+        durationMinutes: segment.durationMinutes,
+        ownerId: segment.ownerId ?? null
+      };
+    });
   }
 
   private formatDate(value: Date): string {

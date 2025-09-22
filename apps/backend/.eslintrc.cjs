@@ -16,6 +16,15 @@ module.exports = {
     'plugin:import/typescript',
     'prettier'
   ],
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.ts', '.js'],
+        moduleDirectory: ['node_modules', 'src', '.']
+      }
+    },
+    'import/core-modules': ['@aws-sdk/client-ses', 'nodemailer', 'bullmq', 'ioredis']
+  },
   rules: {
     'import/order': [
       'error',

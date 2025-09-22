@@ -4,6 +4,10 @@ import { createHmac } from 'node:crypto';
 
 import { DonationsService } from './donations.service';
 import type { DonationPaymentProvider } from './providers/payment-provider.interface';
+import { PaystackPaymentProvider } from './providers/paystack.provider';
+import { FincraPaymentProvider } from './providers/fincra.provider';
+import { StripePaymentProvider } from './providers/stripe.provider';
+import { FlutterwavePaymentProvider } from './providers/flutterwave.provider';
 import type { PrismaService } from '../../prisma/prisma.service';
 
 type DonationRecord = {
@@ -21,7 +25,7 @@ type DonationRecord = {
   updatedAt: Date;
 };
 
-class InMemoryPrismaService implements Pick<PrismaService, 'donation' | '$transaction'> {
+class InMemoryPrismaService {
   private sequence = 1;
   private readonly records: DonationRecord[] = [];
 
@@ -206,10 +210,10 @@ describe('DonationsService', () => {
     service = new DonationsService(
       prisma as unknown as PrismaService,
       config,
-      paystack,
-      fincra,
-      stripe,
-      flutterwave
+      paystack as unknown as PaystackPaymentProvider,
+      fincra as unknown as FincraPaymentProvider,
+      stripe as unknown as StripePaymentProvider,
+      flutterwave as unknown as FlutterwavePaymentProvider
     );
   });
 

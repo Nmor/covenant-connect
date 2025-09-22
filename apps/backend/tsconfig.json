@@ -2,14 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "baseUrl": "./src",
     "paths": {
-      "@covenant-connect/shared": ["../../../packages/shared/src"],
-      "@covenant-connect/shared/*": ["../../../packages/shared/src/*"]
+      "@covenant-connect/shared": ["./types/covenant-connect__shared"],
+      "@covenant-connect/shared/*": ["./types/covenant-connect__shared"]
     },
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "typeRoots": ["./types", "../../node_modules/@types"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "types/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "test"]
 }

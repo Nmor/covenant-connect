@@ -20,7 +20,7 @@ export class TasksService {
   private readonly logger = new Logger(TasksService.name);
   private readonly queue: Queue;
   private readonly ready: Promise<void>;
-  private readonly queueConfig: Required<Pick<QueueConfiguration, 'redisUrl' | 'defaultAttempts'>>;
+  private readonly queueConfig: { redisUrl: string; defaultAttempts: number };
 
   constructor(private readonly configService: ConfigService) {
     const queueConfig = this.resolveQueueConfig();
@@ -86,7 +86,7 @@ export class TasksService {
       return;
     }
 
-    if (existing) {
+    if (existing?.key) {
       await this.queue.removeRepeatableByKey(existing.key);
     }
 
@@ -116,9 +116,11 @@ export class TasksService {
   }
 
   private mapJob(job: Job): QueueJob {
-    const scheduledAt = new Date(job.timestamp + (job.delay ?? 0));
+    const baseTimestamp = job.timestamp ?? Date.now();
+    const scheduledAt = new Date(baseTimestamp + (job.delay ?? 0));
+    const identifier = job.id ?? job.jobId ?? `${job.name}-${baseTimestamp}`;
     return {
-      id: job.id ? job.id.toString() : job.jobId?.toString() ?? `${job.name}-${job.timestamp}`,
+      id: identifier.toString(),
       name: job.name,
       payload: (job.data ?? {}) as Record<string, unknown>,
       scheduledAt

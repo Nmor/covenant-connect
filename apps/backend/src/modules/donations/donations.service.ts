@@ -112,14 +112,12 @@ export class DonationsService {
       })
     );
 
-    const combinedMetadata = {
-      ...baseMetadata,
-      ...initialization.metadata
-    };
-
-    if (!combinedMetadata.reference) {
-      combinedMetadata.reference = initialization.reference;
-    }
+    const providerMetadata = this.cloneMetadata(initialization.metadata);
+    const combinedMetadata = this.mergeMetadataRecords(
+      baseMetadata,
+      providerMetadata,
+      initialization.reference ? { reference: initialization.reference } : undefined
+    );
 
     const created = await this.prisma.donation.create({
       data: {
@@ -127,7 +125,7 @@ export class DonationsService {
         amount: new Prisma.Decimal(input.amount),
         currency: input.currency,
         paymentMethod: input.provider,
-        metadata: combinedMetadata,
+        metadata: combinedMetadata as Prisma.InputJsonValue,
         status: initialization.status ?? 'pending',
         reference: initialization.reference,
         transactionId: initialization.transactionId ?? null
@@ -162,7 +160,7 @@ export class DonationsService {
       );
       status = verification.status ?? input.status;
       transactionId = verification.transactionId ?? transactionId;
-      providerMetadata = verification.metadata;
+      providerMetadata = this.cloneMetadata(verification.metadata);
     } else if (input.status === 'refunded') {
       const reference = this.getRefundReference(existing);
       const amount = this.getAmountValue(existing.amount);
@@ -173,24 +171,21 @@ export class DonationsService {
           metadata: existingMetadata
         })
       );
-      providerMetadata = refund.metadata;
+      providerMetadata = this.cloneMetadata(refund.metadata);
     }
 
-    const combinedMetadata = {
-      ...existingMetadata,
-      ...providerMetadata,
-      ...(input.metadata ?? {})
-    };
-
-    if (existing.reference && !combinedMetadata.reference) {
-      combinedMetadata.reference = existing.reference;
-    }
+    const combinedMetadata = this.mergeMetadataRecords(
+      existingMetadata,
+      providerMetadata,
+      input.metadata,
+      existing.reference ? { reference: existing.reference } : undefined
+    );
 
     const updated = await this.prisma.donation.update({
       where: { id: existing.id },
       data: {
         status,
-        metadata: combinedMetadata,
+        metadata: combinedMetadata as Prisma.InputJsonValue,
         transactionId: transactionId ?? existing.transactionId ?? null
       }
     });
@@ -302,7 +297,7 @@ export class DonationsService {
         return { record: donation, wasUpdated: false } as const;
       }
 
-      const metadata = this.mergeMetadata(existingMetadata, update.metadata);
+      const metadata = this.mergeMetadataRecords(existingMetadata, update.metadata);
 
       const reference = update.reference ?? donation.reference;
       if (reference && !metadata.reference) {
@@ -310,7 +305,7 @@ export class DonationsService {
       }
 
       const data: Prisma.DonationUpdateInput = {
-        metadata
+        metadata: metadata as Prisma.InputJsonValue
       };
 
       if (statusShouldUpdate) {
@@ -347,11 +342,16 @@ export class DonationsService {
     return this.statusPriority[next] >= this.statusPriority[current];
   }
 
-  private mergeMetadata(
-    existing: Record<string, unknown>,
-    updates: Record<string, unknown>
+  private mergeMetadataRecords(
+    ...records: Array<Record<string, unknown> | null | undefined>
   ): Record<string, unknown> {
-    return { ...existing, ...updates };
+    return records.reduce<Record<string, unknown>>((acc, record) => {
+      if (record && typeof record === 'object' && !Array.isArray(record)) {
+        Object.assign(acc, record);
+      }
+
+      return acc;
+    }, {});
   }
 
   private hasMetadataChanges(existing: Record<string, unknown>, updates: Record<string, unknown>): boolean {
@@ -513,7 +513,7 @@ export class DonationsService {
     const statusSource = this.tryString(data, 'status') ?? this.tryString(record, 'event') ?? this.tryString(record, 'status');
     const status = this.normaliseStatus(statusSource);
 
-    let reason: string | undefined;
+    let reason: string | null | undefined;
     if (status === 'failed') {
       reason =
         this.tryString(data, 'gateway_response') ??
@@ -524,9 +524,7 @@ export class DonationsService {
       reason = null;
     }
 
-    const metadata: Record<string, unknown> = {
-      paystackWebhook: record
-    };
+    const metadata = this.mergeMetadataRecords({ paystackWebhook: record });
 
     if (statusSource) {
       metadata.paystackStatus = statusSource;
@@ -556,16 +554,14 @@ export class DonationsService {
     const statusSource = this.tryString(data, 'status') ?? this.tryString(record, 'status');
     const status = this.normaliseStatus(statusSource);
 
-    let reason: string | undefined;
+    let reason: string | null | undefined;
     if (status === 'failed') {
       reason = this.tryString(data, 'failureReason') ?? this.tryString(record, 'failureReason') ?? undefined;
     } else if (status === 'completed') {
       reason = null;
     }
 
-    const metadata: Record<string, unknown> = {
-      fincraWebhook: record
-    };
+    const metadata = this.mergeMetadataRecords({ fincraWebhook: record });
 
     if (statusSource) {
       metadata.fincraStatus = statusSource;
@@ -604,7 +600,7 @@ export class DonationsService {
       this.tryString(record, 'type');
     const status = this.normaliseStatus(statusSource);
 
-    let reason: string | undefined;
+    let reason: string | null | undefined;
     if (status === 'failed') {
       const lastPaymentError = this.coerceRecord(object.last_payment_error);
       reason = this.tryString(lastPaymentError, 'message') ?? this.tryString(object, 'status') ?? undefined;
@@ -612,9 +608,7 @@ export class DonationsService {
       reason = null;
     }
 
-    const metadata: Record<string, unknown> = {
-      stripeWebhook: record
-    };
+    const metadata = this.mergeMetadataRecords({ stripeWebhook: record });
 
     const eventType = this.tryString(record, 'type');
     if (eventType) {
@@ -654,7 +648,7 @@ export class DonationsService {
     const statusSource = this.tryString(data, 'status') ?? this.tryString(record, 'status');
     const status = this.normaliseStatus(statusSource);
 
-    let reason: string | undefined;
+    let reason: string | null | undefined;
     if (status === 'failed') {
       reason =
         this.tryString(data, 'processor_response') ??
@@ -665,9 +659,7 @@ export class DonationsService {
       reason = null;
     }
 
-    const metadata: Record<string, unknown> = {
-      flutterwaveWebhook: record
-    };
+    const metadata = this.mergeMetadataRecords({ flutterwaveWebhook: record });
 
     if (statusSource) {
       metadata.flutterwaveStatus = statusSource;
@@ -776,7 +768,7 @@ export class DonationsService {
     return resolved;
   }
 
-  private cloneMetadata(metadata?: Record<string, unknown>): Record<string, unknown> {
+  private cloneMetadata(metadata?: Record<string, unknown> | null): Record<string, unknown> {
     if (!metadata) {
       return {};
     }
