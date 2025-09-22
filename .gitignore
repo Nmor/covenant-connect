@@ -42,6 +42,7 @@ apps/**/dist/
 apps/**/.turbo/
 apps/**/coverage/
 packages/**/dist/
+packages/**/src/generated/
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
