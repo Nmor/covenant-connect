@@ -9,7 +9,7 @@ const normalizeBaseUrl = (input: string | undefined): string => {
   return trimmed.replace(/\/$/, '');
 };
 
-const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+export const API_BASE_URL = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 export class ApiError extends Error {
   constructor(
@@ -28,13 +28,17 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  headers.set('Accept', headers.get('Accept') ?? 'application/json');
+
+  if (init.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
   const response = await fetch(`${API_BASE_URL}${ensureLeadingSlash(path)}`, {
     ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init.headers ?? {})
-    },
+    headers,
     cache: init.cache ?? 'no-store'
   });
 
@@ -93,7 +97,6 @@ export type EventSummary = {
 
 export type EventsResponse = PaginatedResponse<EventSummary>;
 
- codex/verify-frontend-and-endpoints-connection-kqvbfr
 export type DonationRecord = {
   id: string;
   memberId: string | null;
@@ -122,17 +125,16 @@ export type PrayerRequestRecord = {
 };
 
 export type PrayerRequestsResponse = PaginatedResponse<PrayerRequestRecord>;
-       main
+
 export async function getDashboardReport(): Promise<DashboardResponse> {
-  return request<DashboardResponse>('/reports/dashboard');
+  return apiRequest<DashboardResponse>('/reports/dashboard');
 }
 
 export async function getHomeContent(): Promise<HomeContentResponse> {
-  return request<HomeContentResponse>('/content/home');
+  return apiRequest<HomeContentResponse>('/content/home');
 }
 
 export async function getUpcomingEvents(limit = 3): Promise<EventsResponse> {
- codex/verify-frontend-and-endpoints-connection-kqvbfr
   return getEvents({ page: 1, pageSize: limit });
 }
 
@@ -144,7 +146,7 @@ export async function getEvents({
   pageSize?: number;
 } = {}): Promise<EventsResponse> {
   const search = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-  return request<EventsResponse>(`/events?${search.toString()}`);
+  return apiRequest<EventsResponse>(`/events?${search.toString()}`);
 }
 
 export async function getDonations({
@@ -155,16 +157,9 @@ export async function getDonations({
   pageSize?: number;
 } = {}): Promise<DonationsResponse> {
   const search = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-  return request<DonationsResponse>(`/donations?${search.toString()}`);
+  return apiRequest<DonationsResponse>(`/donations?${search.toString()}`);
 }
 
 export async function getPrayerRequests(): Promise<PrayerRequestsResponse> {
-  return request<PrayerRequestsResponse>('/prayer/requests');
+  return apiRequest<PrayerRequestsResponse>('/prayer/requests');
 }
-
-  const search = new URLSearchParams({ page: '1', pageSize: String(limit) });
-  return request<EventsResponse>(`/events?${search.toString()}`);
-}
-
-     main
-export { API_BASE_URL };
