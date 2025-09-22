@@ -12,6 +12,7 @@ import type {
   VerifyPaymentInput,
   VerifyPaymentResult
 } from './payment-provider.interface';
+import { DonationProviderError } from './provider.error';
 
 @Injectable()
 export class PaystackPaymentProvider implements DonationPaymentProvider {
@@ -46,7 +47,7 @@ export class PaystackPaymentProvider implements DonationPaymentProvider {
     const authorizationUrl = this.tryString(data, 'authorization_url') ?? this.tryString(json, 'authorization_url');
 
     if (!authorizationUrl) {
-      throw new Error('Paystack initialize response did not include an authorization URL');
+      throw DonationProviderError.processing('Paystack initialize response did not include an authorization URL');
     }
 
     const resolvedReference = this.tryString(data, 'reference') ?? reference;
@@ -126,7 +127,7 @@ export class PaystackPaymentProvider implements DonationPaymentProvider {
   private getSecretKey(): string {
     const key = this.configService.get<string>('application.payments.paystackKey');
     if (!key) {
-      throw new Error('Paystack secret key is not configured');
+      throw DonationProviderError.processing('Paystack secret key is not configured');
     }
 
     return key;
@@ -147,7 +148,7 @@ export class PaystackPaymentProvider implements DonationPaymentProvider {
       return value;
     }
 
-    throw new Error(message);
+    throw DonationProviderError.validation(message);
   }
 
   private cloneMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
@@ -191,17 +192,19 @@ export class PaystackPaymentProvider implements DonationPaymentProvider {
       const response = await fetch(url, init);
       if (!response.ok) {
         const body = await this.safeReadBody(response);
-        throw new Error(`Paystack ${action} request failed with status ${response.status}: ${body}`);
+        throw DonationProviderError.processing(
+          `Paystack ${action} request failed with status ${response.status}: ${body}`
+        );
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Paystack')) {
+      if (error instanceof DonationProviderError) {
         throw error;
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Paystack ${action} request failed: ${message}`);
+      throw DonationProviderError.processing(`Paystack ${action} request failed: ${message}`);
     }
   }
 
@@ -210,7 +213,7 @@ export class PaystackPaymentProvider implements DonationPaymentProvider {
       return (await response.json()) as T;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Paystack ${action} response was not valid JSON: ${message}`);
+      throw DonationProviderError.processing(`Paystack ${action} response was not valid JSON: ${message}`);
     }
   }
 

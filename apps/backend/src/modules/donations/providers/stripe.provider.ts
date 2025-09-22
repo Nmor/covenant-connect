@@ -12,6 +12,7 @@ import type {
   VerifyPaymentInput,
   VerifyPaymentResult
 } from './payment-provider.interface';
+import { DonationProviderError } from './provider.error';
 
 @Injectable()
 export class StripePaymentProvider implements DonationPaymentProvider {
@@ -127,7 +128,7 @@ export class StripePaymentProvider implements DonationPaymentProvider {
   private getSecretKey(): string {
     const key = this.configService.get<string>('application.payments.stripeKey');
     if (!key) {
-      throw new Error('Stripe secret key is not configured');
+      throw DonationProviderError.processing('Stripe secret key is not configured');
     }
 
     return key;
@@ -148,7 +149,7 @@ export class StripePaymentProvider implements DonationPaymentProvider {
       return value;
     }
 
-    throw new Error(message);
+    throw DonationProviderError.validation(message);
   }
 
   private requireRecordString(record: Record<string, unknown>, key: string, message: string): string {
@@ -157,7 +158,7 @@ export class StripePaymentProvider implements DonationPaymentProvider {
       return value;
     }
 
-    throw new Error(message);
+    throw DonationProviderError.validation(message);
   }
 
   private tryString(record: Record<string, unknown>, key: string): string | null {
@@ -193,17 +194,19 @@ export class StripePaymentProvider implements DonationPaymentProvider {
       const response = await fetch(url, init);
       if (!response.ok) {
         const body = await this.safeReadBody(response);
-        throw new Error(`Stripe ${action} request failed with status ${response.status}: ${body}`);
+        throw DonationProviderError.processing(
+          `Stripe ${action} request failed with status ${response.status}: ${body}`
+        );
       }
 
       return response;
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith('Stripe')) {
+      if (error instanceof DonationProviderError) {
         throw error;
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Stripe ${action} request failed: ${message}`);
+      throw DonationProviderError.processing(`Stripe ${action} request failed: ${message}`);
     }
   }
 
@@ -212,7 +215,7 @@ export class StripePaymentProvider implements DonationPaymentProvider {
       return (await response.json()) as T;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Stripe ${action} response was not valid JSON: ${message}`);
+      throw DonationProviderError.processing(`Stripe ${action} response was not valid JSON: ${message}`);
     }
   }
 

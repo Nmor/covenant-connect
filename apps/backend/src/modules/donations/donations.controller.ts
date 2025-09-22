@@ -1,37 +1,51 @@
-import { Body, Controller, Get, Headers, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UsePipes,
+  ValidationPipe
+} from '@nestjs/common';
 import type { Donation, PaginatedResult } from '@covenant-connect/shared';
 import type { Request } from 'express';
 
 import { DonationsService } from './donations.service';
+import { CreateDonationDto } from './dto/create-donation.dto';
+import { ListDonationsQueryDto } from './dto/list-donations-query.dto';
+import { UpdateDonationStatusDto } from './dto/update-donation-status.dto';
 
+@UsePipes(
+  new ValidationPipe({
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+    whitelist: true,
+    forbidNonWhitelisted: true
+  })
+)
 @Controller('donations')
 export class DonationsController {
   constructor(private readonly donations: DonationsService) {}
 
   @Get()
-  list(
-    @Query('page') page = '1',
-    @Query('pageSize') pageSize = '25'
-  ): Promise<PaginatedResult<Donation>> {
+  list(@Query() query: ListDonationsQueryDto): Promise<PaginatedResult<Donation>> {
     return this.donations.list({
-      page: Number.parseInt(page, 10),
-      pageSize: Number.parseInt(pageSize, 10)
+      page: query.page,
+      pageSize: query.pageSize
     });
   }
 
   @Post()
-  create(
-    @Body()
-    body: { amount: number; currency: string; provider: Donation['provider']; memberId?: string | null }
-  ): Promise<Donation> {
+  create(@Body() body: CreateDonationDto): Promise<Donation> {
     return this.donations.create(body);
   }
 
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() body: { status: Donation['status']; metadata?: Record<string, unknown> }
-  ): Promise<Donation> {
+  updateStatus(@Param('id') id: string, @Body() body: UpdateDonationStatusDto): Promise<Donation> {
     return this.donations.updateStatus(id, body);
   }
 
