@@ -13,11 +13,14 @@ import {
 } from '@nestjs/common';
 import type { Donation, PaginatedResult } from '@covenant-connect/shared';
 import type { Request } from 'express';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { DonationsService } from './donations.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { ListDonationsQueryDto } from './dto/list-donations-query.dto';
 import { UpdateDonationStatusDto } from './dto/update-donation-status.dto';
+import { DonationsResponseDto } from './dto/donations-response.dto';
+import { DonationDto } from './dto/donation.dto';
 
 @UsePipes(
   new ValidationPipe({
@@ -27,10 +30,15 @@ import { UpdateDonationStatusDto } from './dto/update-donation-status.dto';
     forbidNonWhitelisted: true
   })
 )
+@ApiTags('Donations')
 @Controller('donations')
 export class DonationsController {
   constructor(private readonly donations: DonationsService) {}
 
+  @ApiOperation({ operationId: 'getDonations', summary: 'List donation records with pagination.' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, example: 25 })
+  @ApiOkResponse({ type: DonationsResponseDto })
   @Get()
   list(@Query() query: ListDonationsQueryDto): Promise<PaginatedResult<Donation>> {
     return this.donations.list({
@@ -39,11 +47,13 @@ export class DonationsController {
     });
   }
 
+  @ApiOkResponse({ type: DonationDto })
   @Post()
   create(@Body() body: CreateDonationDto): Promise<Donation> {
     return this.donations.create(body);
   }
 
+  @ApiOkResponse({ type: DonationDto })
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: UpdateDonationStatusDto): Promise<Donation> {
     return this.donations.updateStatus(id, body);

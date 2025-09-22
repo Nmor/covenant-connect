@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+import { setupSwagger } from './common/openapi';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -22,6 +23,8 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true
   });
+
+  setupSwagger(app);
 
   await app.listen(port);
   Logger.log(`Covenant Connect API listening on port ${port}`, 'Bootstrap');

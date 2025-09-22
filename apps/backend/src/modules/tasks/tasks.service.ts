@@ -15,6 +15,16 @@ type QueueConfiguration = {
 
 type RepeatScheduleOptions = RepeatOptions & { jobId: string };
 
+const createQueueStub = (): Queue =>
+  ({
+    add: async () => ({}) as Job,
+    getJobs: async () => [],
+    getRepeatableJobs: async () => [],
+    removeRepeatableByKey: async () => undefined,
+    waitUntilReady: async () => undefined,
+    close: async () => undefined
+  }) as unknown as Queue;
+
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
@@ -24,6 +34,17 @@ export class TasksService {
 
   constructor(private readonly configService: ConfigService) {
     const queueConfig = this.resolveQueueConfig();
+    if (process.env.SKIP_TASKS_QUEUE === 'true') {
+      this.queueConfig = {
+        redisUrl: queueConfig.redisUrl ?? '',
+        defaultAttempts: queueConfig.defaultAttempts ?? 3
+      };
+
+      this.queue = createQueueStub();
+      this.ready = Promise.resolve();
+      return;
+    }
+
     if (queueConfig.driver !== 'redis' || !queueConfig.redisUrl) {
       throw new Error('Redis queue configuration is required for automation tasks');
     }

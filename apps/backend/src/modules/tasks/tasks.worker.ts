@@ -27,6 +27,11 @@ export class TaskWorkerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    if (process.env.SKIP_TASKS_QUEUE === 'true') {
+      this.logger.warn('Task queue disabled; task worker will not start.');
+      return;
+    }
+
     if (typeof this.tasks?.waitUntilReady === 'function') {
       await this.tasks.waitUntilReady();
     }
@@ -66,6 +71,13 @@ export class TaskWorkerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private createWorkerConnection(): Redis {
+    if (process.env.SKIP_TASKS_QUEUE === 'true') {
+      return {
+        on: () => this.logger.warn('Task queue connection is disabled.'),
+        quit: async () => undefined
+      } as unknown as Redis;
+    }
+
     if (typeof this.tasks?.createClient === 'function') {
       return this.tasks.createClient();
     }

@@ -19,6 +19,11 @@ export class TaskSchedulerService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    if (process.env.SKIP_TASKS_QUEUE === 'true') {
+      this.logger.warn('Task queue disabled; scheduler will not register repeatable jobs.');
+      return;
+    }
+
     if (typeof this.tasks?.waitUntilReady === 'function') {
       await this.tasks.waitUntilReady();
     }

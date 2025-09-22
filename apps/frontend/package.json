@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "generate:client": "orval --config orval.config.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -33,6 +34,7 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.3",
     "typescript": "^5.2.2",
-    "vitest": "^0.34.5"
+    "vitest": "^0.34.5",
+    "orval": "^6.21.0"
   }
 }
