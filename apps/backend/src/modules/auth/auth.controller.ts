@@ -46,17 +46,9 @@ export class AuthController {
     @Param('provider') provider: string,
     @Body() body: ProviderCallbackDto
   ): Promise<{ account: UserAccount; session: Session; redirectUri?: string }> {
-    // TODO: Replace with real provider integration that exchanges `code` for a profile.
-    const mockProfile = {
-      providerId: body.code,
-      email: `${body.code}@${provider}.oauth`,
-      firstName: provider.charAt(0).toUpperCase() + provider.slice(1),
-      lastName: 'User'
-    };
-
     return this.authService.completeProviderLogin(
       this.mapProvider(provider),
-      mockProfile,
+      body.code,
       body.state
     );
   }

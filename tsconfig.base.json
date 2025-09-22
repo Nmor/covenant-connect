@@ -10,6 +10,9 @@
     "rootDir": "./",
     "baseUrl": "./",
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false
   }
 }

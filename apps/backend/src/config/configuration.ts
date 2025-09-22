@@ -18,6 +18,7 @@ type IntegrationsConfig = {
   googleClientSecret: string | null;
   facebookClientId: string | null;
   facebookClientSecret: string | null;
+  appleClientId: string | null;
   appleTeamId: string | null;
   appleKeyId: string | null;
   applePrivateKey: string | null;
@@ -73,6 +74,7 @@ export default registerAs<ApplicationConfig>('application', () => ({
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? null,
     facebookClientId: process.env.FACEBOOK_CLIENT_ID ?? null,
     facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? null,
+    appleClientId: process.env.APPLE_CLIENT_ID ?? null,
     appleTeamId: process.env.APPLE_TEAM_ID ?? null,
     appleKeyId: process.env.APPLE_KEY_ID ?? null,
     applePrivateKey: process.env.APPLE_PRIVATE_KEY ?? null
