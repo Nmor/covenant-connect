@@ -5,9 +5,10 @@
     "rootDir": "./src",
     "baseUrl": "./src",
     "paths": {
-      "@covenant-connect/shared/*": ["../../packages/shared/src/*"]
+      "@covenant-connect/shared": ["../../../packages/shared/src"],
+      "@covenant-connect/shared/*": ["../../../packages/shared/src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

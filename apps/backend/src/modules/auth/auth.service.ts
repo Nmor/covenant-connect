@@ -36,7 +36,7 @@ export class AuthService {
       roles: payload.roles
     });
 
-    const session = this.issueSession(account.id);
+    const session = await this.issueSession(account.id);
     return { account, session };
   }
 
@@ -51,12 +51,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const session = this.issueSession(account.id);
+    const session = await this.issueSession(account.id);
     return { account, session };
   }
 
   async resolveSession(token: string): Promise<UserAccount | null> {
-    const session = this.sessions.get(token);
+    const session = await this.sessions.get(token);
     if (!session) {
       return null;
     }
@@ -107,17 +107,17 @@ export class AuthService {
       });
     }
 
-    const session = this.issueSession(account.id);
+    const session = await this.issueSession(account.id);
     const redirectUri = this.extractRedirect(stateToken);
 
     return { account, session, redirectUri };
   }
 
   async logout(token: string): Promise<void> {
-    this.sessions.revoke(token);
+    await this.sessions.revoke(token);
   }
 
-  private issueSession(accountId: string): Session {
+  private issueSession(accountId: string): Promise<Session> {
     const ttl = this.configService.get<number>('security.session.ttlSeconds', 60 * 60 * 24 * 7);
     return this.sessions.create(accountId, ttl);
   }
