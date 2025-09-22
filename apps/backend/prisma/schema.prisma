@@ -3,6 +3,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator sharedTypes {
+  provider = "prisma-client-js"
+  output   = "../../../packages/shared/src/generated/prisma"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

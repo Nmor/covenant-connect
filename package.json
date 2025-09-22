@@ -8,10 +8,13 @@
     "packages/shared"
   ],
   "scripts": {
+    "prebuild": "pnpm run prisma:generate",
     "build": "npm run build --workspaces",
     "dev": "npm run dev -w apps/backend",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces",
+    "prisma:generate": "pnpm --filter @covenant-connect/backend prisma:generate",
+    "postinstall": "pnpm run prisma:generate"
   }
 }
