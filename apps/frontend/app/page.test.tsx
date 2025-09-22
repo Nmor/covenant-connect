@@ -41,7 +41,7 @@ describe('HomePage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /launch admin console/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /review giving activity/i })).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getAllByText('0')).toHaveLength(4);
   });
 
   it('displays API data when requests succeed', async () => {

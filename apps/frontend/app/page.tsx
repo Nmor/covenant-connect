@@ -5,11 +5,11 @@ import { getDashboardReport, getHomeContent, getUpcomingEvents } from '../lib/ap
 
 async function loadData() {
   try {
-    const [home, report, events] = await Promise.all<[
-      HomeContentResponse,
-      DashboardResponse,
-      EventsResponse
-    ]>([getHomeContent(), getDashboardReport(), getUpcomingEvents()]);
+    const [home, report, events] = await Promise.all([
+      getHomeContent(),
+      getDashboardReport(),
+      getUpcomingEvents()
+    ]);
 
     return { home, report, events };
   } catch (error) {

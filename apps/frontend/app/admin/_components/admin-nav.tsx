@@ -3,12 +3,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+type NavItem = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/care', label: 'Care follow-up' },
   { href: '/admin/reports/metrics', label: 'Reporting API', external: true }
-] as const;
+] satisfies readonly NavItem[];
 
 export default function AdminNav(): JSX.Element {
   const pathname = usePathname();
@@ -16,7 +22,8 @@ export default function AdminNav(): JSX.Element {
   return (
     <nav aria-label="Admin navigation" className="space-y-1">
       {NAV_ITEMS.map((item) => {
-        const isActive = item.external
+        const isExternal = item.external === true;
+        const isActive = isExternal
           ? false
           : pathname === item.href || pathname?.startsWith(`${item.href}/`);
         const baseClasses =
@@ -25,7 +32,7 @@ export default function AdminNav(): JSX.Element {
           ? 'bg-indigo-50 text-indigo-600'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
 
-        if (item.external) {
+        if (isExternal) {
           return (
             <a
               key={item.href}

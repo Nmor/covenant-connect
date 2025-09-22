@@ -26,7 +26,7 @@ export class PrayerNotificationService {
     }
 
     const admins = await this.prisma.user.findMany({
-      where: { isAdmin: true, email: { not: null } },
+      where: { isAdmin: true },
       select: { email: true }
     });
 

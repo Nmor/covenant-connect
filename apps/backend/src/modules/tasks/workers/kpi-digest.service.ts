@@ -71,7 +71,7 @@ export class KpiDigestService {
   async sendExecutiveDigest(rangeDays: number): Promise<number> {
     const metrics = await this.collectMetrics(rangeDays);
     const admins = await this.prisma.user.findMany({
-      where: { isAdmin: true, email: { not: null } },
+      where: { isAdmin: true },
       select: { email: true }
     });
 

@@ -6,7 +6,10 @@ export class EmailProviderError extends Error {
     message: string,
     options?: { cause?: unknown }
   ) {
-    super(message, options);
+    super(message);
+    if (options?.cause !== undefined) {
+      (this as { cause?: unknown }).cause = options.cause;
+    }
     this.name = 'EmailProviderError';
   }
 

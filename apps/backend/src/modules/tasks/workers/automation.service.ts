@@ -8,7 +8,9 @@ import { TasksService } from '../tasks.service';
 import { TaskJobNames } from '../task.constants';
 
 type AutomationWithSteps = Prisma.AutomationGetPayload<{ include: { steps: true } }>;
-type AutomationStepWithAutomation = Prisma.AutomationStepGetPayload<{ include: { automation: true } }>;
+type AutomationStepWithAutomation = Prisma.AutomationStepGetPayload<{
+  include: { automation: { include: { steps: true } } };
+}>;
 
 type AutomationContext = Record<string, unknown>;
 
@@ -71,7 +73,7 @@ export class AutomationService {
   ): Promise<void> {
     const step = await this.prisma.automationStep.findUnique({
       where: { id: stepId },
-      include: { automation: true }
+      include: { automation: { include: { steps: true } } }
     });
 
     if (!step || !step.automation || !step.automation.isActive) {
@@ -287,10 +289,10 @@ export class AutomationService {
     const recipients = new Set<string>();
 
     if (mode === 'admins') {
-      const admins = await this.prisma.user.findMany({
-        where: { isAdmin: true, email: { not: null } },
-        select: { email: true }
-      });
+    const admins = await this.prisma.user.findMany({
+      where: { isAdmin: true },
+      select: { email: true }
+    });
       for (const admin of admins) {
         if (admin.email) {
           recipients.add(admin.email);
