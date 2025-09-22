@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
+import { APP_FILTER } from '@nestjs/core';
 
 import configuration from './config/configuration';
+import { automationConfig } from './config/automation.config';
+import { databaseConfig } from './config/database.config';
 import { healthConfig } from './config/health.config';
 import { securityConfig } from './config/security.config';
 import { storageConfig } from './config/storage.config';
-import { automationConfig } from './config/automation.config';
+import { PrismaModule } from './prisma/prisma.module';
+import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChurchesModule } from './modules/churches/churches.module';
 import { ContentModule } from './modules/content/content.module';
@@ -23,8 +27,9 @@ import { TasksModule } from './modules/tasks/tasks.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration, healthConfig, securityConfig, storageConfig, automationConfig]
+      load: [configuration, healthConfig, securityConfig, storageConfig, automationConfig, databaseConfig]
     }),
+    PrismaModule,
     TerminusModule,
     HealthModule,
     AuthModule,
@@ -37,6 +42,12 @@ import { TasksModule } from './modules/tasks/tasks.module';
     EmailModule,
     IntegrationsModule,
     TasksModule
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: PrismaExceptionFilter
+    }
   ]
 })
 export class AppModule {}

@@ -1,0 +1,402 @@
+// Prisma schema generated from legacy SQLAlchemy models.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int       @id @default(autoincrement())
+  username                String    @unique
+  email                   String    @unique
+  passwordHash            String?   @map("password_hash")
+  firstName               String?   @map("first_name")
+  lastName                String?   @map("last_name")
+  avatarUrl               String?   @map("avatar_url")
+  isAdmin                 Boolean   @default(false) @map("is_admin")
+  roles                   String[]  @default(["member"])
+  notificationPreferences Json      @default("{}") @map("notification_preferences")
+  authProvider            String?   @map("auth_provider")
+  authProviderId          String?   @map("auth_provider_id")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at")
+  member                  Member?
+  careInteractions        CareInteraction[] @relation("CareInteractionCreatedBy")
+  ledDepartments          MinistryDepartment[] @relation("DepartmentLead")
+  coordinatedRoles        VolunteerRole[] @relation("VolunteerRoleCoordinator")
+  volunteerAssignments    VolunteerAssignment[] @relation("VolunteerAssignmentsVolunteer")
+  attendanceRecords       AttendanceRecord[] @relation("AttendanceVolunteer")
+  sessions                Session[]
+  providerIdentities      AccountProvider[]
+
+  @@unique([authProvider, authProviderId], map: "uq_users_provider_identity")
+  @@map("users")
+}
+
+model Household {
+  id            Int       @id @default(autoincrement())
+  name          String
+  primaryEmail  String?   @map("primary_email")
+  primaryPhone  String?   @map("primary_phone")
+  addressLine1  String?   @map("address_line1")
+  addressLine2  String?   @map("address_line2")
+  city          String?
+  state         String?
+  postalCode    String?   @map("postal_code")
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at")
+  members       Member[]
+
+  @@map("households")
+}
+
+model Member {
+  id                   Int              @id @default(autoincrement())
+  firstName            String           @map("first_name")
+  lastName             String?          @map("last_name")
+  email                String           @unique
+  phone                String?
+  birthDate            DateTime?        @map("birth_date") @db.Date
+  gender               String?
+  maritalStatus        String?          @map("marital_status")
+  membershipStatus     String           @default("guest") @map("membership_status")
+  assimilationStage    String?          @map("assimilation_stage")
+  campus               String?
+  milestones           Json             @default("{}")
+  notes                String?          @db.Text
+  preferredContact     String?          @map("preferred_contact_method")
+  joinedAt             DateTime?        @map("joined_at") @db.Date
+  lastInteractionAt    DateTime?        @map("last_interaction_at")
+  nextFollowUpDate     DateTime?        @map("next_follow_up_date")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @default(now()) @updatedAt @map("updated_at")
+  userId               Int?             @map("user_id") @unique
+  householdId          Int?             @map("household_id")
+  user                 User?            @relation(fields: [userId], references: [id])
+  household            Household?       @relation(fields: [householdId], references: [id])
+  careInteractions     CareInteraction[]
+  donations            Donation[]
+
+  @@map("members")
+}
+
+model AccountProvider {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  provider     String
+  providerId   String   @map("provider_id")
+  accessToken  String?  @map("access_token")
+  refreshToken String?  @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId], map: "uq_account_providers_identity")
+  @@map("account_providers")
+}
+
+model CareInteraction {
+  id                Int       @id @default(autoincrement())
+  memberId          Int       @map("member_id")
+  interactionType   String    @map("interaction_type")
+  interactionDate   DateTime  @default(now()) @map("interaction_date")
+  notes             String?   @db.Text
+  followUpRequired  Boolean   @default(false) @map("follow_up_required")
+  followUpDate      DateTime? @map("follow_up_date")
+  createdById       Int?      @map("created_by_id")
+  source            String?
+  extraData         Json      @default("{}") @map("extra_data")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  member            Member    @relation(fields: [memberId], references: [id])
+  createdBy         User?     @relation("CareInteractionCreatedBy", fields: [createdById], references: [id])
+
+  @@map("care_interactions")
+}
+
+model PrayerRequest {
+  id           Int      @id @default(autoincrement())
+  requesterName String  @map("name")
+  requesterEmail String? @map("email")
+  requesterPhone String? @map("phone")
+  message     String   @db.Text @map("request")
+  memberId    String?  @map("member_id")
+  status      String   @default("new")
+  followUpAt  DateTime? @map("follow_up_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  isPublic    Boolean  @default(false) @map("is_public")
+
+  @@map("prayer_requests")
+}
+
+model MinistryDepartment {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  description String?           @db.Text
+  leadId      Int?              @map("lead_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at")
+  lead        User?             @relation("DepartmentLead", fields: [leadId], references: [id])
+  roles       VolunteerRole[]
+  events      Event[]
+
+  @@map("ministry_departments")
+}
+
+model VolunteerRole {
+  id                Int                 @id @default(autoincrement())
+  departmentId      Int                 @map("department_id")
+  name              String
+  description       String?             @db.Text
+  coordinatorId     Int?                @map("coordinator_id")
+  neededVolunteers  Int                 @default(1) @map("needed_volunteers")
+  isActive          Boolean             @default(true) @map("is_active")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at")
+  department        MinistryDepartment  @relation(fields: [departmentId], references: [id])
+  coordinator       User?               @relation("VolunteerRoleCoordinator", fields: [coordinatorId], references: [id])
+  assignments       VolunteerAssignment[]
+  events            Event[]
+  attendanceRecords AttendanceRecord[]
+
+  @@map("volunteer_roles")
+}
+
+model VolunteerAssignment {
+  id          Int       @id @default(autoincrement())
+  roleId      Int       @map("role_id")
+  volunteerId Int       @map("volunteer_id")
+  eventId     Int?      @map("event_id")
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  role        VolunteerRole @relation(fields: [roleId], references: [id])
+  volunteer   User          @relation("VolunteerAssignmentsVolunteer", fields: [volunteerId], references: [id])
+  event       Event?        @relation(fields: [eventId], references: [id])
+
+  @@map("volunteer_assignments")
+}
+
+model Event {
+  id                 Int                  @id @default(autoincrement())
+  title              String
+  description        String?              @db.Text
+  startDate          DateTime             @map("start_date")
+  endDate            DateTime             @map("end_date")
+  timezone           String               @default("UTC")
+  location           String?
+  campus             String?
+  recurrenceRule     String?              @map("recurrence_rule")
+  recurrenceEndDate  DateTime?            @map("recurrence_end_date")
+  serviceSegments    Json                 @default("[]") @map("service_segments")
+  ministryTags       Json                 @default("[]") @map("ministry_tags")
+  departmentId       Int?                 @map("department_id")
+  volunteerRoleId    Int?                 @map("volunteer_role_id")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at")
+  department         MinistryDepartment?  @relation(fields: [departmentId], references: [id])
+  volunteerRole      VolunteerRole?       @relation(fields: [volunteerRoleId], references: [id])
+  facilityReservations FacilityReservation[]
+  attendanceRecords  AttendanceRecord[]
+  volunteerAssignments VolunteerAssignment[]
+
+  @@map("events")
+}
+
+model Sermon {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?  @db.Text
+  preacher    String?
+  date        DateTime @default(now())
+  mediaUrl    String?  @map("media_url")
+  mediaType   String?  @map("media_type")
+
+  @@map("sermons")
+}
+
+model Gallery {
+  id          Int      @id @default(autoincrement())
+  title       String?
+  imageUrl    String   @map("image_url")
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("gallery")
+}
+
+model Church {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("churches")
+}
+
+model Donation {
+  id            Int      @id @default(autoincrement())
+  memberId      Int?     @map("member_id")
+  email         String?
+  amount        Decimal  @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  reference     String?  @unique
+  status        String   @default("pending")
+  paymentMethod String   @map("payment_method")
+  transactionId String?  @map("transaction_id") @unique
+  errorMessage  String?  @map("error_message") @db.Text
+  metadata      Json     @default("{}") @map("payment_info")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  member        Member?  @relation(fields: [memberId], references: [id])
+
+  @@map("donations")
+}
+
+model ServiceIntegration {
+  id          Int      @id @default(autoincrement())
+  service     String
+  provider    String
+  displayName String   @map("display_name")
+  config      Json     @default("{}")
+  isActive    Boolean  @default(false) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([service, provider], map: "uq_service_provider")
+  @@map("service_integrations")
+}
+
+model Settings {
+  id                Int      @id @default(autoincrement())
+  businessName      String   @default("Covenant Connect") @map("business_name")
+  logoUrl           String?  @map("logo_url")
+  themePreference   String   @default("dark") @map("theme_preference")
+  addresses         Json     @default("[]")
+  socialMediaLinks  Json     @default("{}") @map("social_media_links")
+  contactInfo       Json     @default("{}") @map("contact_info")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model Automation {
+  id               Int              @id @default(autoincrement())
+  name             String
+  trigger          String
+  description      String?          @db.Text
+  isActive         Boolean          @default(true) @map("is_active")
+  defaultChannel   String?          @map("default_channel")
+  targetDepartment String?          @map("target_department")
+  triggerFilters   Json             @default("{}") @map("trigger_filters")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at")
+  steps            AutomationStep[]
+
+  @@map("automations")
+}
+
+model AutomationStep {
+  id           Int        @id @default(autoincrement())
+  automationId Int        @map("automation_id")
+  title        String?
+  actionType   String     @map("action_type")
+  channel      String?
+  department   String?
+  order        Int        @default(0)
+  delayMinutes Int        @default(0) @map("delay_minutes")
+  config       Json       @default("{}")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at")
+  automation   Automation @relation(fields: [automationId], references: [id])
+
+  @@map("automation_steps")
+}
+
+model Facility {
+  id           Int        @id @default(autoincrement())
+  name         String
+  location     String?
+  capacity     Int        @default(0)
+  description  String?    @db.Text
+  isActive     Boolean    @default(true) @map("is_active")
+  reservations FacilityReservation[]
+  resources    Resource[]
+
+  @@map("facilities")
+}
+
+model Resource {
+  id               Int                  @id @default(autoincrement())
+  name             String
+  category         String?
+  quantityAvailable Int                 @default(1) @map("quantity_available")
+  description      String?              @db.Text
+  facilityId       Int?                 @map("facility_id")
+  isActive         Boolean              @default(true) @map("is_active")
+  facility         Facility?            @relation(fields: [facilityId], references: [id])
+  allocations      ResourceAllocation[]
+
+  @@map("resources")
+}
+
+model FacilityReservation {
+  id            Int       @id @default(autoincrement())
+  eventId       Int       @map("event_id")
+  facilityId    Int       @map("facility_id")
+  ministryName  String    @map("ministry_name")
+  startTime     DateTime  @map("start_time")
+  endTime       DateTime  @map("end_time")
+  status        String    @default("requested")
+  event         Event     @relation(fields: [eventId], references: [id])
+  facility      Facility  @relation(fields: [facilityId], references: [id])
+  resourceRequests ResourceAllocation[]
+
+  @@map("facility_reservations")
+}
+
+model ResourceAllocation {
+  id                 Int       @id @default(autoincrement())
+  reservationId      Int       @map("reservation_id")
+  resourceId         Int       @map("resource_id")
+  quantityRequested  Int       @default(1) @map("quantity_requested")
+  quantityApproved   Int?      @map("quantity_approved")
+  notes              String?   @db.Text
+  reservation        FacilityReservation @relation(fields: [reservationId], references: [id])
+  resource           Resource            @relation(fields: [resourceId], references: [id])
+
+  @@map("resource_allocations")
+}
+
+model AttendanceRecord {
+  id               Int       @id @default(autoincrement())
+  eventId          Int       @map("event_id")
+  roleId           Int?      @map("role_id")
+  volunteerId      Int?      @map("volunteer_id")
+  checkInTime      DateTime  @default(now()) @map("check_in_time")
+  expectedAttendees Int?     @map("expected_attendees")
+  checkedInCount   Int       @default(0) @map("checked_in_count")
+  notes            String?   @db.Text
+  event            Event     @relation(fields: [eventId], references: [id])
+  role             VolunteerRole? @relation(fields: [roleId], references: [id])
+  volunteer        User?     @relation("AttendanceVolunteer", fields: [volunteerId], references: [id])
+
+  @@map("attendance_records")
+}
+
+model Session {
+  token     String   @id
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}

@@ -59,7 +59,8 @@ export default registerAs<ApplicationConfig>('application', () => ({
     cors: parseCorsOrigins(process.env.CORS_ORIGINS),
     cookieDomain: process.env.COOKIE_DOMAIN ?? null
   },
-  databaseUrl: process.env.DATABASE_URL ?? null,
+  databaseUrl:
+    process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/covenant_dev?schema=public',
   redisUrl: process.env.REDIS_URL ?? null,
   payments: {
     stripeKey: process.env.STRIPE_SECRET_KEY ?? null,

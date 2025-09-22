@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import type { Event as EventModel } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import type { Event, EventSegment, PaginatedResult, Pagination } from '@covenant-connect/shared';
+
+import { PrismaService } from '../../prisma/prisma.service';
 
 type CreateEventInput = {
   title: string;
@@ -14,102 +18,106 @@ type CreateEventInput = {
   segments?: Omit<EventSegment, 'id'>[];
 };
 
-type UpdateEventInput = Partial<CreateEventInput>;
+type UpdateEventInput = Partial<CreateEventInput> & {
+  segments?: Array<Partial<EventSegment> & Omit<EventSegment, 'id'>>;
+};
 
 @Injectable()
 export class EventsService {
-  private readonly events = new Map<string, Event>();
-
-  constructor() {
-    this.seedSampleEvents();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateEventInput): Promise<Event> {
-    const now = new Date();
-    const segments: EventSegment[] = (input.segments ?? []).map((segment) => ({
-      ...segment,
-      id: randomUUID()
-    }));
+    const segments = this.ensureSegmentsWithIds(input.segments ?? []);
+    const created = await this.prisma.event.create({
+      data: {
+        title: input.title,
+        description: input.description,
+        startDate: input.startsAt,
+        endDate: input.endsAt,
+        timezone: input.timezone,
+        recurrenceRule: input.recurrenceRule,
+        serviceSegments: segments,
+        ministryTags: input.tags ?? [],
+        location: input.location
+      }
+    });
 
-    const event: Event = {
-      id: randomUUID(),
-      title: input.title,
-      description: input.description,
-      startsAt: input.startsAt,
-      endsAt: input.endsAt,
-      timezone: input.timezone,
-      recurrenceRule: input.recurrenceRule,
-      segments,
-      tags: input.tags ?? [],
-      location: input.location,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    this.events.set(event.id, event);
-    return event;
+    return this.toDomain(created);
   }
 
   async list(pagination: Pagination): Promise<PaginatedResult<Event>> {
-    const data = Array.from(this.events.values()).sort(
-      (left, right) => left.startsAt.getTime() - right.startsAt.getTime()
-    );
+    const skip = (pagination.page - 1) * pagination.pageSize;
+    const take = pagination.pageSize;
 
-    const start = (pagination.page - 1) * pagination.pageSize;
-    const end = start + pagination.pageSize;
+    const [events, total] = await this.prisma.$transaction([
+      this.prisma.event.findMany({
+        skip,
+        take,
+        orderBy: { startDate: 'asc' }
+      }),
+      this.prisma.event.count()
+    ]);
 
     return {
-      data: data.slice(start, end),
-      total: data.length,
+      data: events.map((event) => this.toDomain(event)),
+      total,
       page: pagination.page,
       pageSize: pagination.pageSize
     };
   }
 
   async update(eventId: string, input: UpdateEventInput): Promise<Event> {
-    const existing = this.events.get(eventId);
+    const id = this.parseId(eventId);
+    const existing = await this.prisma.event.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException('Event not found');
     }
 
     const segments = input.segments
-      ? input.segments.map((segment) => ({
-          ...segment,
-          id: segment.id ?? randomUUID()
-        }))
-      : existing.segments;
+      ? this.ensureSegmentsWithIds(input.segments)
+      : this.parseSegments(existing.serviceSegments);
 
-    const updated: Event = {
-      ...existing,
-      ...input,
-      segments,
-      tags: input.tags ?? existing.tags,
-      updatedAt: new Date()
-    };
+    const updated = await this.prisma.event.update({
+      where: { id },
+      data: {
+        title: input.title ?? existing.title,
+        description: input.description ?? existing.description,
+        startDate: input.startsAt ?? existing.startDate,
+        endDate: input.endsAt ?? existing.endDate,
+        timezone: input.timezone ?? existing.timezone,
+        recurrenceRule: input.recurrenceRule ?? existing.recurrenceRule,
+        serviceSegments: segments,
+        ministryTags: input.tags ?? (existing.ministryTags as string[]),
+        location: input.location ?? existing.location
+      }
+    });
 
-    this.events.set(updated.id, updated);
-    return updated;
+    return this.toDomain(updated);
   }
 
   async toICalendar(): Promise<string> {
+    const events = await this.prisma.event.findMany();
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//Covenant Connect//EN'
     ];
 
-    for (const event of this.events.values()) {
+    for (const event of events) {
+      const domain = this.toDomain(event);
       lines.push('BEGIN:VEVENT');
-      lines.push(`UID:${event.id}`);
-      lines.push(`SUMMARY:${event.title}`);
-      if (event.description) {
-        lines.push(`DESCRIPTION:${event.description}`);
+      lines.push(`UID:${domain.id}`);
+      lines.push(`SUMMARY:${domain.title}`);
+      if (domain.description) {
+        lines.push(`DESCRIPTION:${domain.description}`);
       }
-      lines.push(`DTSTART:${event.startsAt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}`);
-      lines.push(`DTEND:${event.endsAt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}`);
-      lines.push(`LOCATION:${event.location}`);
-      if (event.recurrenceRule) {
-        lines.push(`RRULE:${event.recurrenceRule}`);
+      lines.push(`DTSTART:${this.formatDate(domain.startsAt)}`);
+      lines.push(`DTEND:${this.formatDate(domain.endsAt)}`);
+      if (domain.location) {
+        lines.push(`LOCATION:${domain.location}`);
+      }
+      if (domain.recurrenceRule) {
+        lines.push(`RRULE:${domain.recurrenceRule}`);
       }
       lines.push('END:VEVENT');
     }
@@ -118,90 +126,78 @@ export class EventsService {
     return lines.join('\n');
   }
 
-  private seedSampleEvents(): void {
-    if (this.events.size > 0) {
-      return;
+  private toDomain(event: EventModel): Event {
+    return {
+      id: event.id.toString(),
+      title: event.title,
+      description: event.description ?? undefined,
+      startsAt: event.startDate,
+      endsAt: event.endDate,
+      timezone: event.timezone,
+      recurrenceRule: event.recurrenceRule ?? undefined,
+      segments: this.parseSegments(event.serviceSegments),
+      tags: (event.ministryTags as string[]) ?? [],
+      location: event.location ?? undefined,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt
+    };
+  }
+
+  private parseSegments(value: Prisma.JsonValue): EventSegment[] {
+    if (!Array.isArray(value)) {
+      return [];
     }
 
-    const base = new Date();
-    const offset = (date: Date, { days = 0, hours = 0, minutes = 0 }: { days?: number; hours?: number; minutes?: number }) =>
-      new Date(date.getTime() + (((days * 24 + hours) * 60 + minutes) * 60 * 1000));
+    return value
+      .map((item) => {
+        if (typeof item !== 'object' || item === null) {
+          return null;
+        }
 
-    const seeds: Array<{
-      title: string;
-      description: string;
-      startOffset: { days: number; hours: number; minutes?: number };
-      endOffset: { days: number; hours: number; minutes?: number };
-      location: string;
-      recurrenceRule?: string;
-      tags?: string[];
-      segments?: Array<Omit<EventSegment, 'id'>>;
-    }> = [
-      {
-        title: 'Sunday Worship Service',
-        description: 'Join us for corporate worship, teaching, and prayer.',
-        startOffset: { days: 2, hours: 9, minutes: 30 },
-        endOffset: { days: 2, hours: 11, minutes: 15 },
-        location: 'Main Sanctuary',
-        recurrenceRule: 'FREQ=WEEKLY;BYDAY=SU',
-        tags: ['worship', 'in-person'],
-        segments: [
-          { name: 'Team Prayer', startOffsetMinutes: -30, durationMinutes: 20, ownerId: null },
-          { name: 'Sound Check', startOffsetMinutes: -10, durationMinutes: 10, ownerId: 'member-adeola' }
-        ]
-      },
-      {
-        title: 'Youth Bible Study',
-        description: 'Weekly gathering for students to study Scripture and build friendships.',
-        startOffset: { days: 4, hours: 18 },
-        endOffset: { days: 4, hours: 19, minutes: 30 },
-        location: 'Youth Center',
-        tags: ['students', 'discipleship']
-      },
-      {
-        title: 'Community Outreach',
-        description: 'Serving at the downtown food bank with our outreach team.',
-        startOffset: { days: 7, hours: 9 },
-        endOffset: { days: 7, hours: 12 },
-        location: 'Downtown Food Bank',
-        tags: ['outreach', 'volunteers']
-      },
-      {
-        title: 'Prayer & Worship Night',
-        description: 'An extended evening of worship, testimony, and intercession.',
-        startOffset: { days: 14, hours: 19 },
-        endOffset: { days: 14, hours: 21 },
-        location: 'Chapel',
-        tags: ['worship', 'prayer'],
-        segments: [{ name: 'Prayer Teams', startOffsetMinutes: 0, durationMinutes: 120, ownerId: 'member-johnson' }]
-      }
-    ];
+        const segment = item as Record<string, unknown>;
+        const id = typeof segment.id === 'string' ? segment.id : randomUUID();
+        const name = typeof segment.name === 'string' ? segment.name : 'Segment';
+        const startOffsetMinutes = Number.isFinite(Number(segment.startOffsetMinutes))
+          ? Number(segment.startOffsetMinutes)
+          : 0;
+        const durationMinutes = Number.isFinite(Number(segment.durationMinutes))
+          ? Number(segment.durationMinutes)
+          : 0;
+        const ownerId = typeof segment.ownerId === 'string' ? segment.ownerId : null;
 
-    for (const seed of seeds) {
-      const startsAt = offset(base, seed.startOffset);
-      const endsAt = offset(base, seed.endOffset);
-      const now = new Date();
-      const segments: EventSegment[] = (seed.segments ?? []).map((segment) => ({
-        ...segment,
-        id: randomUUID()
-      }));
+        return {
+          id,
+          name,
+          startOffsetMinutes,
+          durationMinutes,
+          ownerId
+        } satisfies EventSegment;
+      })
+      .filter((segment): segment is EventSegment => Boolean(segment));
+  }
 
-      const event: Event = {
-        id: randomUUID(),
-        title: seed.title,
-        description: seed.description,
-        startsAt,
-        endsAt,
-        timezone: 'America/New_York',
-        recurrenceRule: seed.recurrenceRule,
-        segments,
-        tags: seed.tags ?? [],
-        location: seed.location,
-        createdAt: now,
-        updatedAt: now
-      };
+  private ensureSegmentsWithIds(
+    segments: Array<Partial<EventSegment> & Omit<EventSegment, 'id'> | Omit<EventSegment, 'id'>>
+  ): EventSegment[] {
+    return segments.map((segment) => ({
+      id: typeof segment.id === 'string' ? segment.id : randomUUID(),
+      name: segment.name,
+      startOffsetMinutes: segment.startOffsetMinutes,
+      durationMinutes: segment.durationMinutes,
+      ownerId: segment.ownerId ?? null
+    }));
+  }
 
-      this.events.set(event.id, event);
+  private formatDate(value: Date): string {
+    return value.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  }
+
+  private parseId(id: string): number {
+    const parsed = Number.parseInt(id, 10);
+    if (Number.isNaN(parsed)) {
+      throw new NotFoundException('Event not found');
     }
+
+    return parsed;
   }
 }

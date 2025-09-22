@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { Prisma } from '@prisma/client';
+import type { Donation as DonationModel } from '@prisma/client';
 import type { Donation, PaginatedResult, Pagination } from '@covenant-connect/shared';
+
+import { PrismaService } from '../../prisma/prisma.service';
 
 type CreateDonationInput = {
   memberId?: string | null;
@@ -17,128 +20,98 @@ type UpdateDonationStatusInput = {
 
 @Injectable()
 export class DonationsService {
-  private readonly donations = new Map<string, Donation>();
-
-  constructor() {
-    this.seedSampleDonations();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async list(pagination: Pagination): Promise<PaginatedResult<Donation>> {
-    const data = Array.from(this.donations.values());
-    const start = (pagination.page - 1) * pagination.pageSize;
-    const end = start + pagination.pageSize;
+    const skip = (pagination.page - 1) * pagination.pageSize;
+    const take = pagination.pageSize;
+
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.donation.findMany({
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.donation.count()
+    ]);
 
     return {
-      data: data.slice(start, end),
-      total: data.length,
+      data: records.map((record) => this.toDomain(record)),
+      total,
       page: pagination.page,
       pageSize: pagination.pageSize
     };
   }
 
   async create(input: CreateDonationInput): Promise<Donation> {
-    const now = new Date();
-    const donation: Donation = {
-      id: randomUUID(),
-      memberId: input.memberId ?? null,
-      amount: input.amount,
-      currency: input.currency,
-      provider: input.provider,
-      status: 'pending',
-      metadata: input.metadata ?? {},
-      createdAt: now,
-      updatedAt: now
-    };
+    const memberId = this.parseMemberId(input.memberId);
+    const created = await this.prisma.donation.create({
+      data: {
+        memberId,
+        amount: new Prisma.Decimal(input.amount),
+        currency: input.currency,
+        paymentMethod: input.provider,
+        metadata: input.metadata ?? {},
+        status: 'pending'
+      }
+    });
 
-    this.donations.set(donation.id, donation);
-    return donation;
+    return this.toDomain(created);
   }
 
   async updateStatus(donationId: string, input: UpdateDonationStatusInput): Promise<Donation> {
-    const existing = this.donations.get(donationId);
+    const existing = await this.prisma.donation.findUnique({
+      where: { id: this.parseId(donationId) }
+    });
+
     if (!existing) {
       throw new NotFoundException('Donation not found');
     }
 
-    const updated: Donation = {
-      ...existing,
-      status: input.status,
-      metadata: { ...existing.metadata, ...(input.metadata ?? {}) },
-      updatedAt: new Date()
-    };
+    const updated = await this.prisma.donation.update({
+      where: { id: existing.id },
+      data: {
+        status: input.status,
+        metadata: {
+          ...((existing.metadata as Record<string, unknown>) ?? {}),
+          ...(input.metadata ?? {})
+        }
+      }
+    });
 
-    this.donations.set(updated.id, updated);
-    return updated;
+    return this.toDomain(updated);
   }
 
-  private seedSampleDonations(): void {
-    if (this.donations.size > 0) {
-      return;
+  private toDomain(record: DonationModel): Donation {
+    const amount = record.amount instanceof Prisma.Decimal ? record.amount.toNumber() : Number(record.amount);
+    return {
+      id: record.id.toString(),
+      memberId: record.memberId !== null ? record.memberId.toString() : null,
+      amount,
+      currency: record.currency,
+      provider: record.paymentMethod as Donation['provider'],
+      status: record.status as Donation['status'],
+      metadata: (record.metadata as Record<string, unknown>) ?? {},
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt
+    };
+  }
+
+  private parseMemberId(memberId?: string | null): number | null {
+    if (!memberId) {
+      return null;
     }
 
-    const now = new Date();
-    const seeds: Array<{
-      amount: number;
-      currency: string;
-      provider: Donation['provider'];
-      status: Donation['status'];
-      metadata?: Record<string, unknown>;
-      memberId?: string | null;
-      occurredHoursAgo: number;
-    }> = [
-      {
-        amount: 250,
-        currency: 'USD',
-        provider: 'stripe',
-        status: 'completed',
-        metadata: { fund: 'General Offering' },
-        memberId: 'member-johnson',
-        occurredHoursAgo: 6
-      },
-      {
-        amount: 125,
-        currency: 'USD',
-        provider: 'paystack',
-        status: 'completed',
-        metadata: { fund: 'Building Campaign' },
-        memberId: 'member-adeola',
-        occurredHoursAgo: 30
-      },
-      {
-        amount: 75,
-        currency: 'USD',
-        provider: 'flutterwave',
-        status: 'pending',
-        metadata: { fund: 'Youth Retreat' },
-        memberId: 'member-chen',
-        occurredHoursAgo: 2
-      },
-      {
-        amount: 50,
-        currency: 'USD',
-        provider: 'fincra',
-        status: 'failed',
-        metadata: { fund: 'Compassion' },
-        memberId: null,
-        occurredHoursAgo: 72
-      }
-    ];
+    const parsed = Number.parseInt(memberId, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
 
-    for (const seed of seeds) {
-      const timestamp = new Date(now.getTime() - seed.occurredHoursAgo * 60 * 60 * 1000);
-      const donation: Donation = {
-        id: randomUUID(),
-        memberId: seed.memberId ?? null,
-        amount: seed.amount,
-        currency: seed.currency,
-        provider: seed.provider,
-        status: seed.status,
-        metadata: seed.metadata ?? {},
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-
-      this.donations.set(donation.id, donation);
+  private parseId(id: string): number {
+    const parsed = Number.parseInt(id, 10);
+    if (Number.isNaN(parsed)) {
+      throw new NotFoundException('Donation not found');
     }
+
+    return parsed;
   }
 }
