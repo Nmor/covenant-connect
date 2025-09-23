@@ -14,6 +14,11 @@ deployment.
 > landing experience and an operational dashboard. Shared domain interfaces are
 > published from [`packages/shared`](packages/shared), and the architecture is
 > documented in [docs/js-architecture.md](docs/js-architecture.md).
+>
+> Need to surface content on a church website? Drop the installable WordPress
+> plugin in [`integrations/wordpress-plugin`](integrations/wordpress-plugin)
+> into `wp-content/plugins`, configure the API endpoint, and use the provided
+> shortcodes to render sermons and events without custom theme work.
 
 ## Environment configuration
 

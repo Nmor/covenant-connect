@@ -1,0 +1,90 @@
+.covenant-connect {
+  margin: 1.5rem 0;
+  font-family: inherit;
+}
+
+.covenant-connect__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.covenant-connect--cards .covenant-connect__list {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.covenant-connect__item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.covenant-connect__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.covenant-connect__meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  color: #475569;
+}
+
+.covenant-connect__description {
+  margin: 0 0 1rem;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.covenant-connect__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  background: linear-gradient(135deg, #2563eb, #9333ea);
+  color: #ffffff;
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.covenant-connect__button:hover,
+.covenant-connect__button:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+}
+
+.covenant-connect__notice {
+  border-left: 4px solid #2563eb;
+  padding: 0.75rem 1rem;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 0.5rem;
+  color: #1e3a8a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .covenant-connect__item {
+    background: rgba(15, 23, 42, 0.75);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .covenant-connect__meta {
+    color: #cbd5f5;
+  }
+
+  .covenant-connect__description {
+    color: #e2e8f0;
+  }
+
+  .covenant-connect__notice {
+    background: rgba(37, 99, 235, 0.16);
+    color: #bfdbfe;
+  }
+}

@@ -116,12 +116,13 @@ declare module '@covenant-connect/shared' {
   };
 
   export type Sermon = {
-    id: string;
+    id: number;
     title: string;
-    speaker: string;
-    description?: string;
-    mediaUrl?: string;
-    recordedAt?: Date;
+    description: string | null;
+    preacher: string | null;
+    date: Date;
+    mediaUrl: string | null;
+    mediaType: string | null;
   };
 
   export type HomeContent = {
