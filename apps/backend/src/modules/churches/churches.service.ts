@@ -1,64 +1,207 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import type { Church } from '@covenant-connect/shared';
+import { Prisma } from '@prisma/client';
+import type { Church as ChurchModel } from '@prisma/client';
+
+import { PrismaService } from '../../prisma/prisma.service';
 
 type CreateChurchInput = {
   name: string;
   timezone: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  settings?: Record<string, unknown>;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  settings?: Record<string, unknown> | null;
 };
 
 type UpdateChurchInput = Partial<CreateChurchInput>;
 
 @Injectable()
 export class ChurchesService {
-  private readonly churches = new Map<string, Church>();
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateChurchInput): Promise<Church> {
-    const now = new Date();
-    const church: Church = {
-      id: randomUUID(),
-      name: input.name,
-      timezone: input.timezone,
-      country: input.country,
-      state: input.state,
-      city: input.city,
-      settings: input.settings ?? {},
-      createdAt: now,
-      updatedAt: now
-    };
+    const created = await this.prisma.church.create({
+      data: {
+        name: input.name,
+        timezone: input.timezone,
+        country: this.toNullableString(input.country),
+        state: this.toNullableString(input.state),
+        city: this.toNullableString(input.city),
+        settings: this.prepareSettings(input.settings) as Prisma.InputJsonValue
+      }
+    });
 
-    this.churches.set(church.id, church);
-    return church;
+    return this.toDomain(created);
   }
 
   async list(): Promise<Church[]> {
-    return Array.from(this.churches.values());
+    const churches = await this.prisma.church.findMany({
+      orderBy: { createdAt: 'asc' }
+    });
+
+    return churches.map((church) => this.toDomain(church));
   }
 
   async getById(churchId: string): Promise<Church> {
-    const church = this.churches.get(churchId);
+    const id = this.parseId(churchId);
+    if (id === null) {
+      throw new NotFoundException('Church not found');
+    }
+
+    const church = await this.prisma.church.findUnique({ where: { id } });
     if (!church) {
       throw new NotFoundException('Church not found');
     }
 
-    return church;
+    return this.toDomain(church);
   }
 
   async update(churchId: string, input: UpdateChurchInput): Promise<Church> {
-    const existing = await this.getById(churchId);
+    const id = this.parseId(churchId);
+    if (id === null) {
+      throw new NotFoundException('Church not found');
+    }
 
-    const updated: Church = {
-      ...existing,
-      ...input,
-      settings: { ...existing.settings, ...(input.settings ?? {}) },
-      updatedAt: new Date()
+    const existing = await this.prisma.church.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Church not found');
+    }
+
+    const data: Prisma.ChurchUpdateInput = {};
+
+    if (input.name !== undefined) {
+      data.name = input.name;
+    }
+
+    if (input.timezone !== undefined) {
+      data.timezone = input.timezone;
+    }
+
+    if (input.country !== undefined) {
+      data.country = this.toNullableString(input.country);
+    }
+
+    if (input.state !== undefined) {
+      data.state = this.toNullableString(input.state);
+    }
+
+    if (input.city !== undefined) {
+      data.city = this.toNullableString(input.city);
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
+      if (mergedSettings !== null) {
+        data.settings = mergedSettings as Prisma.InputJsonValue;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.toDomain(existing);
+    }
+
+    const updated = await this.prisma.church.update({
+      where: { id },
+      data
+    });
+
+    return this.toDomain(updated);
+  }
+
+  private toDomain(church: ChurchModel): Church {
+    return {
+      id: church.id.toString(),
+      name: church.name,
+      timezone: church.timezone,
+      country: church.country ?? undefined,
+      state: church.state ?? undefined,
+      city: church.city ?? undefined,
+      settings: this.normalizeSettings(church.settings),
+      createdAt: church.createdAt,
+      updatedAt: church.updatedAt
     };
+  }
 
-    this.churches.set(updated.id, updated);
-    return updated;
+  private prepareSettings(settings: unknown): Record<string, unknown> {
+    return this.normalizeIncomingSettings(settings);
+  }
+
+  private mergeSettings(
+    existing: Prisma.JsonValue | null | undefined,
+    updates: unknown
+  ): Record<string, unknown> | null {
+    const current = this.normalizeSettings(existing);
+    const incoming = this.normalizeIncomingSettings(updates);
+
+    if (Object.keys(incoming).length === 0) {
+      return null;
+    }
+
+    const merged = { ...current, ...incoming };
+    return this.areSettingsEqual(current, merged) ? null : merged;
+  }
+
+  private normalizeSettings(settings: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+    if (!this.isPlainObject(settings)) {
+      return {};
+    }
+
+    return Object.fromEntries(Object.entries(settings as Record<string, unknown>));
+  }
+
+  private normalizeIncomingSettings(settings: unknown): Record<string, unknown> {
+    if (!this.isPlainObject(settings)) {
+      return {};
+    }
+
+    return Object.fromEntries(Object.entries(settings as Record<string, unknown>));
+  }
+
+  private areSettingsEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+
+    if (aKeys.length !== bKeys.length) {
+      return false;
+    }
+
+    return aKeys.every((key) => Object.is(a[key], b[key]));
+  }
+
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.prototype.toString.call(value) === '[object Object]'
+    );
+  }
+
+  private toNullableString(value: string | null | undefined): string | null {
+    if (value === undefined || value === null) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  }
+
+  private parseId(id: string): number | null {
+    if (typeof id !== 'string') {
+      return null;
+    }
+
+    const normalized = id.trim();
+    if (normalized.length === 0 || !/^[0-9]+$/.test(normalized)) {
+      return null;
+    }
+
+    const parsed = Number.parseInt(normalized, 10);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+      return null;
+    }
+
+    return parsed;
   }
 }

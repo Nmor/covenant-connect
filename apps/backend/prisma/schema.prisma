@@ -252,7 +252,13 @@ model Church {
   id        Int      @id @default(autoincrement())
   name      String
   address   String?
+  timezone  String   @default("UTC")
+  country   String?
+  state     String?
+  city      String?
+  settings  Json     @default("{}")
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("churches")
 }
