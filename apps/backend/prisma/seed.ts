@@ -19,7 +19,11 @@ async function main(): Promise<void> {
     create: {
       id: 1,
       name: 'Covenant Connect Church',
-      address: '123 Covenant Way'
+      address: '123 Covenant Way',
+      timezone: 'America/New_York',
+      country: 'USA',
+      state: 'NY',
+      city: 'New York'
     }
   });
 }

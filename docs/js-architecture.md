@@ -49,7 +49,7 @@ apps/backend
 │       └── tasks/          # Background job queue abstraction
 ```
 
-Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Today the services rely on in-memory stores to keep the initial commit lightweight; the method contracts align with Prisma models so the repository layer can swap to a real database with minimal churn.
+Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Many services already persist data through Prisma (for example the accounts and churches modules), while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
 
 ### Frontend structure
 

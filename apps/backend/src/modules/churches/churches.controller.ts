@@ -3,12 +3,23 @@ import type { Church } from '@covenant-connect/shared';
 
 import { ChurchesService } from './churches.service';
 
+type CreateChurchRequest = {
+  name: string;
+  timezone: string;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  settings?: Record<string, unknown>;
+};
+
+type UpdateChurchRequest = Partial<CreateChurchRequest>;
+
 @Controller('churches')
 export class ChurchesController {
   constructor(private readonly churches: ChurchesService) {}
 
   @Post()
-  create(@Body() body: { name: string; timezone: string; country?: string; state?: string; city?: string }): Promise<Church> {
+  create(@Body() body: CreateChurchRequest): Promise<Church> {
     return this.churches.create(body);
   }
 
@@ -23,7 +34,7 @@ export class ChurchesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: Partial<Church>): Promise<Church> {
+  update(@Param('id') id: string, @Body() body: UpdateChurchRequest): Promise<Church> {
     return this.churches.update(id, body);
   }
 }
