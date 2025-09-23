@@ -11,7 +11,12 @@ type CreateChurchInput = {
   country?: string | null;
   state?: string | null;
   city?: string | null;
+ codex/confirm-removal-of-python-implementations-z8k1zh
   settings?: Record<string, unknown> | null;
+ codex/confirm-removal-of-python-implementations-ih9bbr
+  settings?: Record<string, unknown> | null;
+  settings?: Record<string, unknown>;
+     main
 };
 
 type UpdateChurchInput = Partial<CreateChurchInput>;
@@ -25,10 +30,16 @@ export class ChurchesService {
       data: {
         name: input.name,
         timezone: input.timezone,
+       main
         country: this.toNullableString(input.country),
         state: this.toNullableString(input.state),
         city: this.toNullableString(input.city),
         settings: this.prepareSettings(input.settings) as Prisma.InputJsonValue
+        country: input.country ?? null,
+        state: input.state ?? null,
+        city: input.city ?? null,
+        settings: (input.settings ?? {}) as Prisma.InputJsonValue
+         main
       }
     });
 
@@ -77,7 +88,6 @@ export class ChurchesService {
     if (input.timezone !== undefined) {
       data.timezone = input.timezone;
     }
-
     if (input.country !== undefined) {
       data.country = this.toNullableString(input.country);
     }
@@ -109,6 +119,58 @@ export class ChurchesService {
     return this.toDomain(updated);
   }
 
+    if (input.country !== undefined) {
+      data.country = this.toNullableString(input.country);
+    }
+
+    if (input.state !== undefined) {
+      data.state = this.toNullableString(input.state);
+    }
+
+    if (input.city !== undefined) {
+      data.city = this.toNullableString(input.city);
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
+      if (mergedSettings !== null) {
+        data.settings = mergedSettings as Prisma.InputJsonValue;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.toDomain(existing);
+
+    if (input.country !== undefined) {
+      data.country = input.country ?? null;
+    }
+
+    if (input.state !== undefined) {
+      data.state = input.state ?? null;
+    }
+
+    if (input.city !== undefined) {
+      data.city = input.city ?? null;
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = {
+        ...this.normalizeSettings(existing.settings),
+        ...input.settings
+      };
+
+      data.settings = mergedSettings as Prisma.InputJsonValue;
+       main
+    }
+
+    const updated = await this.prisma.church.update({
+      where: { id },
+      data
+    });
+
+    return this.toDomain(updated);
+  }
+   main
   private toDomain(church: ChurchModel): Church {
     return {
       id: church.id.toString(),
@@ -123,6 +185,7 @@ export class ChurchesService {
     };
   }
 
+       main
   private prepareSettings(settings: unknown): Record<string, unknown> {
     return this.normalizeIncomingSettings(settings);
   }
@@ -199,6 +262,18 @@ export class ChurchesService {
 
     const parsed = Number.parseInt(normalized, 10);
     if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+  private normalizeSettings(settings: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+    if (!settings || Array.isArray(settings) || typeof settings !== 'object') {
+      return {};
+    }
+
+    return settings as Record<string, unknown>;
+  }
+
+  private parseId(id: string): number | null {
+    const parsed = Number.parseInt(id, 10);
+    if (Number.isNaN(parsed)) {
+     main
       return null;
     }
 
