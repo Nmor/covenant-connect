@@ -9,7 +9,7 @@ type CreateChurchRequest = {
   country?: string | null;
   state?: string | null;
   city?: string | null;
-   codex/confirm-removal-of-python-implementations-z8k1zh
+  settings?: Record<string, unknown> | null;
   settings?: Record<string, unknown> | null;
  codex/confirm-removal-of-python-implementations-ih9bbr
   settings?: Record<string, unknown> | null;

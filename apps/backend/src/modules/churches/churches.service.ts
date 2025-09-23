@@ -11,9 +11,8 @@ type CreateChurchInput = {
   country?: string | null;
   state?: string | null;
   city?: string | null;
- codex/confirm-removal-of-python-implementations-z8k1zh
   settings?: Record<string, unknown> | null;
- codex/confirm-removal-of-python-implementations-ih9bbr
+  settings?: Record<string, unknown> | null;
   settings?: Record<string, unknown> | null;
   settings?: Record<string, unknown>;
      main
@@ -88,6 +87,28 @@ export class ChurchesService {
     if (input.timezone !== undefined) {
       data.timezone = input.timezone;
     }
+
+    if (input.country !== undefined) {
+      data.country = this.toNullableString(input.country);
+    }
+
+    if (input.state !== undefined) {
+      data.state = this.toNullableString(input.state);
+    }
+
+    if (input.city !== undefined) {
+      data.city = this.toNullableString(input.city);
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
+      if (mergedSettings !== null) {
+        data.settings = mergedSettings as Prisma.InputJsonValue;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.toDomain(existing);
     if (input.country !== undefined) {
       data.country = this.toNullableString(input.country);
     }

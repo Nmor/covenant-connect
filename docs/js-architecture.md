@@ -22,6 +22,8 @@ This document captures the initial structure for the JavaScript/TypeScript rewri
 ├── apps
 │   ├── backend             # NestJS API
 │   └── frontend            # Next.js web experience
+├── integrations
+│   └── wordpress-plugin    # Installable WordPress plugin that consumes the API
 └── packages
     └── shared              # Domain interfaces shared across the stack
 ```
@@ -50,10 +52,8 @@ apps/backend
 ```
 
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Accounts, churches, donations, and the content module’s sermon endpoints already persist data through Prisma, while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
-=======
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Many services already persist data through Prisma (for example the accounts and churches modules), while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
      main
-
 ### Frontend structure
 
 ```
@@ -70,6 +70,20 @@ apps/frontend
 
 All data fetching uses the shared API client which reads `NEXT_PUBLIC_API_BASE_URL`. When the backend is unavailable the UI falls back to placeholder content so the experience degrades gracefully during local development.
 
+### WordPress plugin
+
+```
+integrations/wordpress-plugin
+├── covenant-connect.php           # Plugin bootstrap and constants
+├── includes/
+│   ├── class-covenant-connect-api-client.php
+│   └── class-covenant-connect-plugin.php
+├── assets/style.css               # Theme-friendly frontend styles
+└── README.md                      # Installation and shortcode usage guide
+```
+
+The plugin registers admin settings so site owners can point WordPress at the Covenant Connect API, then exposes `[covenant_connect_sermons]` and `[covenant_connect_events]` shortcodes that render responsive listings. Responses are cached via WordPress transients to limit API calls, and the HTML inherits theme typography so churches can drop embeds into existing pages without bespoke styling.
+
 ## Follow-up work
 
 1. **Database schema migration** – Translate the SQLAlchemy models into Prisma schema and generate the client. Replace the in-memory repositories in `accounts`, `donations`, `events`, etc. with Prisma-backed services.
@@ -78,5 +92,6 @@ All data fetching uses the shared API client which reads `NEXT_PUBLIC_API_BASE_U
 4. **Queue infrastructure** – Connect the tasks module to Redis-backed BullMQ workers and port scheduled jobs (KPI digests, follow-ups, automation runners).
 5. **Testing & CI** – Introduce Vitest/Jest suites that mirror the Python pytest coverage and configure GitHub Actions for linting, type-checking, and tests across the monorepo.
 6. **Deployment scripts** – Author Dockerfiles and Terraform/Helm manifests for the Node services, aligning with the deployment practices documented in `docs/deployment-runbook.md`.
+7. **WordPress polish** – Ship Gutenberg blocks and richer templating around the new shortcodes, plus automated packaging so the plugin can be distributed through managed releases.
 
 This scaffold provides a production-ready foundation while leaving room to iteratively port the remaining domain logic from the Flask application.
