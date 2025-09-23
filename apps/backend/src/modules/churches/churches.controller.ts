@@ -10,6 +10,11 @@ type CreateChurchRequest = {
   state?: string | null;
   city?: string | null;
   settings?: Record<string, unknown> | null;
+  settings?: Record<string, unknown> | null;
+ codex/confirm-removal-of-python-implementations-ih9bbr
+  settings?: Record<string, unknown> | null;
+  settings?: Record<string, unknown>;
+     main
 };
 
 type UpdateChurchRequest = Partial<CreateChurchRequest>;
