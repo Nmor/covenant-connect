@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { HomeContent, PaginatedResult, Sermon } from '@covenant-connect/shared';
 
 import { ContentService } from './content.service';
 import { HomeContentDto } from './dto/home-content.dto';
+
+type CreateSermonRequest = {
+  title: string;
+  description?: string | null;
+  preacher?: string | null;
+  date?: string | null;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
+};
 
 @ApiTags('Content')
 @Controller('content')
@@ -23,13 +32,28 @@ export class ContentController {
     return this.content.updateHome(body);
   }
 
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, example: 25 })
   @Get('sermons')
-  listSermons(): Promise<PaginatedResult<Sermon>> {
-    return this.content.listSermons();
+  listSermons(
+    @Query('page') page = '1',
+    @Query('pageSize') pageSize = '25'
+  ): Promise<PaginatedResult<Sermon>> {
+    return this.content.listSermons({
+      page: Number.parseInt(page, 10),
+      pageSize: Number.parseInt(pageSize, 10)
+    });
   }
 
   @Post('sermons')
-  addSermon(@Body() sermon: Sermon): Promise<{ success: boolean }> {
-    return this.content.addSermon(sermon).then(() => ({ success: true }));
+  addSermon(@Body() body: CreateSermonRequest): Promise<Sermon> {
+    return this.content.addSermon({
+      title: body.title,
+      description: body.description ?? null,
+      preacher: body.preacher ?? null,
+      date: body.date ? new Date(body.date) : undefined,
+      mediaUrl: body.mediaUrl ?? null,
+      mediaType: body.mediaType ?? null
+    });
   }
 }

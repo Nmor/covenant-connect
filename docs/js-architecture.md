@@ -7,7 +7,7 @@ This document captures the initial structure for the JavaScript/TypeScript rewri
 | Area      | Selection | Rationale |
 |-----------|-----------|-----------|
 | Backend   | [NestJS](https://nestjs.com/) on Node 18+ | Decorator-driven modules mirror Flask blueprints, dependency injection keeps the code modular, and the ecosystem integrates well with Prisma, class-validator, and BullMQ. |
-| ORM       | Prisma (planned) | Prisma offers schema-first modelling with type-safe client generation. The current code ships with an in-memory repository layer that can be swapped for Prisma once the schema migration is authored. |
+| ORM       | Prisma | Prisma offers schema-first modelling with type-safe client generation. Accounts, churches, donations, and sermons already persist through Prisma models, with the remaining services staged for migration. |
 | Auth      | argon2 password hashing + pluggable OAuth handlers | Mirrors the existing local login and social sign-in flows while allowing future provider-specific strategies. |
 | Queue     | BullMQ/Redis (planned) | The in-memory task queue abstracts the interface required for follow-up scheduling, making it simple to drop in BullMQ workers later. |
 | Frontend  | Next.js 13 app router + Tailwind CSS | Provides hybrid SSG/SSR for marketing pages and authenticated dashboards, while Tailwind accelerates UI delivery. |
@@ -49,7 +49,10 @@ apps/backend
 │       └── tasks/          # Background job queue abstraction
 ```
 
+Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Accounts, churches, donations, and the content module’s sermon endpoints already persist data through Prisma, while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
+=======
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Many services already persist data through Prisma (for example the accounts and churches modules), while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
+     main
 
 ### Frontend structure
 

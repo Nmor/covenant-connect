@@ -24,6 +24,22 @@ async function main(): Promise<void> {
       country: 'USA',
       state: 'NY',
       city: 'New York'
+ codex/confirm-removal-of-python-implementations-z8k1zh
+    }
+  });
+
+  await prisma.sermon.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      title: 'Welcome Home Sunday',
+      preacher: 'Pastor Alicia Turner',
+      description: 'Kick off the new season with a message of belonging and mission.',
+      date: new Date('2024-01-07T15:00:00Z'),
+      mediaUrl: 'https://media.covenantconnect.example/sermons/welcome-home',
+      mediaType: 'video'
+     main
     }
   });
 }

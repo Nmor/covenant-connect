@@ -2,6 +2,8 @@ declare global {
   interface JestMatchers {
     toEqual(expected: unknown): void;
     toBe(value: unknown): void;
+    toBeNull(): void;
+    toHaveLength(length: number): void;
     toHaveBeenCalledWith(...args: unknown[]): void;
     toHaveBeenCalledTimes(count: number): void;
     toHaveBeenCalled(): void;

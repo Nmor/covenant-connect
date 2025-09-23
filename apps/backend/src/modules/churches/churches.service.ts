@@ -11,6 +11,8 @@ type CreateChurchInput = {
   country?: string | null;
   state?: string | null;
   city?: string | null;
+ codex/confirm-removal-of-python-implementations-z8k1zh
+  settings?: Record<string, unknown> | null;
  codex/confirm-removal-of-python-implementations-ih9bbr
   settings?: Record<string, unknown> | null;
   settings?: Record<string, unknown>;
@@ -28,7 +30,7 @@ export class ChurchesService {
       data: {
         name: input.name,
         timezone: input.timezone,
- codex/confirm-removal-of-python-implementations-ih9bbr
+       main
         country: this.toNullableString(input.country),
         state: this.toNullableString(input.state),
         city: this.toNullableString(input.city),
@@ -86,7 +88,36 @@ export class ChurchesService {
     if (input.timezone !== undefined) {
       data.timezone = input.timezone;
     }
- codex/confirm-removal-of-python-implementations-ih9bbr
+    if (input.country !== undefined) {
+      data.country = this.toNullableString(input.country);
+    }
+
+    if (input.state !== undefined) {
+      data.state = this.toNullableString(input.state);
+    }
+
+    if (input.city !== undefined) {
+      data.city = this.toNullableString(input.city);
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
+      if (mergedSettings !== null) {
+        data.settings = mergedSettings as Prisma.InputJsonValue;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.toDomain(existing);
+    }
+
+    const updated = await this.prisma.church.update({
+      where: { id },
+      data
+    });
+
+    return this.toDomain(updated);
+  }
 
     if (input.country !== undefined) {
       data.country = this.toNullableString(input.country);
@@ -139,7 +170,7 @@ export class ChurchesService {
 
     return this.toDomain(updated);
   }
-
+   main
   private toDomain(church: ChurchModel): Church {
     return {
       id: church.id.toString(),
@@ -154,7 +185,7 @@ export class ChurchesService {
     };
   }
 
- codex/confirm-removal-of-python-implementations-ih9bbr
+       main
   private prepareSettings(settings: unknown): Record<string, unknown> {
     return this.normalizeIncomingSettings(settings);
   }
