@@ -25,8 +25,8 @@ export default async function CareFollowUpPage(): Promise<JSX.Element> {
           endpoints are live, this page will support completing follow-ups, rescheduling, and escalating tasks.
         </p>
         <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-xs text-indigo-700">
-          Tip: keep the Flask dashboard open while we finish the Next.js migration so you can cross-reference long-form member
-          profiles.
+          Tip: cross-reference the operations dashboard while we add inline editing so follow-up notes stay in sync across
+          teams.
         </div>
       </section>
 

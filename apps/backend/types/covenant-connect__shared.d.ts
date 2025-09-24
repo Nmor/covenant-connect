@@ -152,6 +152,7 @@ declare module '@covenant-connect/shared' {
     id: string;
     name: string;
     timezone: string;
+    address?: string;
     country?: string;
     state?: string;
     city?: string;

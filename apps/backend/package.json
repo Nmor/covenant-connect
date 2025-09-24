@@ -2,7 +2,7 @@
   "name": "@covenant-connect/backend",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/main.js",
+  "main": "dist/src/main.js",
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"
   },
@@ -11,7 +11,8 @@
     "build": "tsc -p tsconfig.build.json && node dist/src/scripts/generate-openapi.js",
     "generate:openapi": "node dist/src/scripts/generate-openapi.js",
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
-    "start": "node dist/main.js",
+    "start": "node dist/src/main.js",
+    "worker": "node dist/src/task-worker.main.js",
     "lint": "eslint --ext .ts src",
     "typecheck": "tsc --noEmit",
     "test": "jest --coverage"

@@ -11,7 +11,6 @@ export type {
   AutomationStep,
   VolunteerAssignment,
   IntegrationSetting,
-  Church,
   Sermon,
 } from './generated/prisma';
 
@@ -20,6 +19,7 @@ import type {
   User,
   Member,
   EmailProvider as PrismaEmailProvider,
+  Church as PrismaChurch,
 } from './generated/prisma';
 
 export type Provider = 'google' | 'facebook' | 'apple' | 'password';
@@ -28,6 +28,18 @@ export type ProviderIdentity = AccountProvider;
 export type UserAccount = User;
 export type MemberProfile = Member;
 export type EmailProvider = PrismaEmailProvider;
+
+export type Church = Omit<
+  PrismaChurch,
+  'id' | 'address' | 'country' | 'state' | 'city' | 'settings'
+> & {
+  id: string;
+  address?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  settings: Record<string, unknown>;
+};
 
 export type EventSegment = {
   id: string;
