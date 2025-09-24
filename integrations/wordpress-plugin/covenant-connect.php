@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Covenant Connect Bridge
  * Description: Embed sermons and events from the Covenant Connect API directly in WordPress pages.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Covenant Connect
  * License: GPLv2 or later
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (! defined('ABSPATH')) {
 }
 
 if (! defined('COVENANT_CONNECT_PLUGIN_VERSION')) {
-    define('COVENANT_CONNECT_PLUGIN_VERSION', '0.1.0');
+    define('COVENANT_CONNECT_PLUGIN_VERSION', '0.2.0');
 }
 
 if (! defined('COVENANT_CONNECT_PLUGIN_DIR')) {

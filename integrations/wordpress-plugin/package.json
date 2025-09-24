@@ -1,0 +1,14 @@
+{
+	"name": "@covenant-connect/wordpress-plugin",
+	"version": "0.2.0",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
+		"lint": "wp-scripts lint-js",
+		"package": "wp-scripts build && node ./scripts/package-wordpress.mjs"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^27.4.0"
+	}
+}
