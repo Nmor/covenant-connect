@@ -22,6 +22,7 @@ deployment.
 > The Next.js frontend now ships a `/solutions/wordpress-plugin` landing page,
 > moving the marketing flow off the legacy Flask templates as we transition to
 > the all-TypeScript stack.
+     main
 
 ## Environment configuration
 

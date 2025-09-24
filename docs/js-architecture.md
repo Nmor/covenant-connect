@@ -53,6 +53,8 @@ apps/backend
 
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Accounts, churches, donations, and the content module’s sermon endpoints already persist data through Prisma, while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
 
+Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Many services already persist data through Prisma (for example the accounts and churches modules), while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
+     
 ### Frontend structure
 
 ```
