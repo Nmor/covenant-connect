@@ -5,8 +5,9 @@
 	"scripts": {
 		"build": "wp-scripts build",
 		"start": "wp-scripts start",
-		"lint": "wp-scripts lint-js",
-		"package": "wp-scripts build && node ./scripts/package-wordpress.mjs"
+                "lint": "wp-scripts lint-js",
+                "typecheck": "echo 'No TypeScript sources to typecheck in the WordPress plugin.'",
+                "package": "wp-scripts build && node ./scripts/package-wordpress.mjs"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^27.4.0"

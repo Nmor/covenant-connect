@@ -3,7 +3,15 @@ import { Prisma } from '@prisma/client';
 import { createHmac } from 'node:crypto';
 
 import { DonationsService } from './donations.service';
-import type { DonationPaymentProvider } from './providers/payment-provider.interface';
+import type {
+  DonationPaymentProvider,
+  InitializePaymentInput,
+  InitializePaymentResult,
+  RefundPaymentInput,
+  RefundPaymentResult,
+  VerifyPaymentInput,
+  VerifyPaymentResult,
+} from './providers/payment-provider.interface';
 import { PaystackPaymentProvider } from './providers/paystack.provider';
 import { FincraPaymentProvider } from './providers/fincra.provider';
 import { StripePaymentProvider } from './providers/stripe.provider';
@@ -184,9 +192,9 @@ describe('DonationsService', () => {
   let service: DonationsService;
 
   const createProvider = (): jest.Mocked<DonationPaymentProvider> => ({
-    initializePayment: jest.fn(),
-    verifyPayment: jest.fn(),
-    refund: jest.fn(),
+    initializePayment: jest.fn<Promise<InitializePaymentResult>, [InitializePaymentInput]>(),
+    verifyPayment: jest.fn<Promise<VerifyPaymentResult>, [VerifyPaymentInput]>(),
+    refund: jest.fn<Promise<RefundPaymentResult>, [RefundPaymentInput]>(),
   });
 
   beforeEach(() => {
