@@ -109,6 +109,28 @@ export class ChurchesService {
 
     if (Object.keys(data).length === 0) {
       return this.toDomain(existing);
+
+    if (input.country !== undefined) {
+      data.country = this.toNullableString(input.country);
+    }
+
+    if (input.state !== undefined) {
+      data.state = this.toNullableString(input.state);
+    }
+
+    if (input.city !== undefined) {
+      data.city = this.toNullableString(input.city);
+    }
+
+    if (input.settings !== undefined) {
+      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
+      if (mergedSettings !== null) {
+        data.settings = mergedSettings as Prisma.InputJsonValue;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.toDomain(existing);
     if (input.country !== undefined) {
       data.country = this.toNullableString(input.country);
     }
@@ -191,6 +213,7 @@ export class ChurchesService {
 
     return this.toDomain(updated);
   }
+
    main
   private toDomain(church: ChurchModel): Church {
     return {
@@ -205,7 +228,6 @@ export class ChurchesService {
       updatedAt: church.updatedAt
     };
   }
-
        main
   private prepareSettings(settings: unknown): Record<string, unknown> {
     return this.normalizeIncomingSettings(settings);

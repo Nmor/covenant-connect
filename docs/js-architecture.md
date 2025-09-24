@@ -52,8 +52,9 @@ apps/backend
 ```
 
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Accounts, churches, donations, and the content module’s sermon endpoints already persist data through Prisma, while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
+
 Each module exposes a Nest `Module`, `Service`, and (where relevant) `Controller`. Many services already persist data through Prisma (for example the accounts and churches modules), while the remaining modules still use in-memory stores whose method contracts align with the Prisma models for a straightforward swap to the database.
-     main
+     
 ### Frontend structure
 
 ```
@@ -61,12 +62,15 @@ apps/frontend
 ├── app/                    # Next.js app router routes
 │   ├── layout.tsx          # Global shell + font loading
 │   ├── page.tsx            # Marketing landing page with SSR data fetch
+│   ├── solutions/wordpress-plugin/page.tsx  # WordPress plugin marketing experience
 │   └── dashboard/page.tsx  # Staff dashboard view
 ├── lib/api.ts              # Thin typed fetch wrappers for backend endpoints
 ├── tailwind.config.ts      # Tailwind design tokens
 ├── postcss.config.js       # Tailwind + autoprefixer pipeline
 └── app/globals.css         # Tailwind entry point + base styles
 ```
+
+The marketing surface for the WordPress integration now lives in the Next.js app (`/solutions/wordpress-plugin`), replacing the Flask-rendered landing page and moving more of the public experience into the TypeScript stack.
 
 All data fetching uses the shared API client which reads `NEXT_PUBLIC_API_BASE_URL`. When the backend is unavailable the UI falls back to placeholder content so the experience degrades gracefully during local development.
 

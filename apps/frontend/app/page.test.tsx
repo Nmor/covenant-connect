@@ -41,6 +41,7 @@ describe('HomePage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /launch admin console/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /review giving activity/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /explore wordpress plugin/i })).toBeInTheDocument();
     expect(screen.getAllByText('0')).toHaveLength(4);
   });
 

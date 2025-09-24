@@ -19,6 +19,10 @@ deployment.
 > plugin in [`integrations/wordpress-plugin`](integrations/wordpress-plugin)
 > into `wp-content/plugins`, configure the API endpoint, and use the provided
 > shortcodes to render sermons and events without custom theme work.
+> The Next.js frontend now ships a `/solutions/wordpress-plugin` landing page,
+> moving the marketing flow off the legacy Flask templates as we transition to
+> the all-TypeScript stack.
+     main
 
 ## Environment configuration
 

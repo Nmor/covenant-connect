@@ -36,6 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link className="transition hover:text-indigo-600" href="/donations">
                   Donations
                 </Link>
+                <Link className="transition hover:text-indigo-600" href="/solutions/wordpress-plugin">
+                  WordPress
+                </Link>
                 <Link className="transition hover:text-indigo-600" href="/prayer">
                   Prayer
                 </Link>

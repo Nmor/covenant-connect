@@ -24,7 +24,8 @@ async function loadData() {
           { label: 'Launch admin console', url: '/dashboard' },
           { label: 'Browse events calendar', url: '/events' },
           { label: 'Review giving activity', url: '/donations' },
-          { label: 'Manage prayer follow-up', url: '/prayer' }
+          { label: 'Manage prayer follow-up', url: '/prayer' },
+          { label: 'Explore WordPress plugin', url: '/solutions/wordpress-plugin' }
         ]
       },
       report: {
