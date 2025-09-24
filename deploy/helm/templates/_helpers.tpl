@@ -27,6 +27,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ include "covenant-connect.fullname" . }}-backend
 {{- end -}}
 
+{{- define "covenant-connect.workerName" -}}
+{{ include "covenant-connect.fullname" . }}-worker
+{{- end -}}
+
 {{- define "covenant-connect.frontendName" -}}
 {{ include "covenant-connect.fullname" . }}-frontend
 {{- end -}}

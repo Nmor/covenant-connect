@@ -49,6 +49,19 @@ backend:
     KPI_DIGEST_CRON: "0 7 * * 1"
     FOLLOW_UP_CRON: "0 */6 * * *"
 
+worker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/example/covenant-connect/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  env:
+    APP_NAME: Covenant Connect Worker
+    NODE_ENV: production
+    QUEUE_DRIVER: redis
+  resources: {}
+
 frontend:
   replicaCount: 2
   image:
