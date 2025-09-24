@@ -8,6 +8,9 @@
   },
   "scripts": {
     "prisma:generate": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "verify:migration": "ts-node --transpile-only src/scripts/verify-migration.ts",
     "build": "tsc -p tsconfig.build.json && node dist/src/scripts/generate-openapi.js",
     "generate:openapi": "node dist/src/scripts/generate-openapi.js",
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",

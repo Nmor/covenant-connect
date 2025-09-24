@@ -28,6 +28,30 @@ services:
     ports:
       - '8000:8000'
 
+  worker:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      args:
+        APP_VERSION: local
+    image: covenant-connect/backend:local
+    command: ['node', 'dist/src/task-worker.main.js']
+    environment:
+      APP_NAME: Covenant Connect Worker
+      APP_VERSION: local
+      NODE_ENV: production
+      DATABASE_URL: postgresql://covenant_connect:covenantconnect@db:5432/covenant_connect?schema=public
+      REDIS_URL: redis://redis:6379/0
+      QUEUE_DRIVER: redis
+      SESSION_SECRET: localdevsupersecret
+      STORAGE_DRIVER: local
+      LOCAL_STORAGE_DIR: /tmp/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   frontend:
     build:
       context: .

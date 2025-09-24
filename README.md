@@ -62,7 +62,9 @@ provided shortcodes.
 
 A Docker Compose configuration lives at `docker-compose.yml` for end-to-end
 local runs with PostgreSQL and Redis pre-wired. Run `docker compose up --build`
-to exercise the entire stack in containers.
+to exercise the entire stack in containers; the compose stack now launches the
+API, frontend, and BullMQ worker so background jobs execute just like they do in
+production.
 
 ## Scripts
 
@@ -71,6 +73,12 @@ The workspace root exposes convenience scripts that fan out to each package:
 * `pnpm run build` &mdash; build the shared package, backend, and frontend.
 * `pnpm run lint` / `pnpm run typecheck` / `pnpm run test` &mdash; quality gates for
   every workspace.
+* `pnpm run migrate:deploy` &mdash; apply the committed Prisma migrations to the
+  database configured via `DATABASE_URL`.
+* `pnpm run migrate:status` &mdash; display pending Prisma migrations for the
+  target database.
+* `pnpm run verify:migration` &mdash; run post-migration validation that checks key
+  tables and confirms no unapplied Prisma migrations remain.
 * `pnpm --filter @covenant-connect/backend generate:openapi` &mdash; regenerate the
   OpenAPI document after making controller or DTO changes.
 

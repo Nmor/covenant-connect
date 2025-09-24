@@ -60,7 +60,7 @@ The Helm chart injects secrets through `deploy/helm/templates/backend-secret.yam
 
 ## Local orchestration with Docker Compose
 
-`docker-compose.yml` wires the two application containers together with PostgreSQL and Redis for end-to-end smoke testing on a workstation. The compose definition builds both Dockerfiles (injecting `APP_VERSION=local`), provisions `postgres:15-alpine` and `redis:7.2-alpine`, configures health checks, and publishes ports `3000` and `8000` for the UI and API respectively.【F:docker-compose.yml†L1-L58】
+`docker-compose.yml` wires the application containers together with PostgreSQL and Redis for end-to-end smoke testing on a workstation. The compose definition builds both Dockerfiles (injecting `APP_VERSION=local`), provisions `postgres:15-alpine` and `redis:7.2-alpine`, configures health checks, publishes ports `3000` and `8000` for the UI and API, and runs the BullMQ worker so background tasks execute locally.【F:docker-compose.yml†L1-L100】
 
 Run the stack locally with:
 
@@ -74,7 +74,8 @@ The backend container runs `prisma migrate deploy` on start-up so the fresh Post
 
 The `deploy/helm` chart provisions the full runtime in a single release. Installing the chart creates:
 
-* A backend `Deployment` and `Service` that run the Nest API and expose health probes on `/health/live` and `/health/ready`.【F:deploy/helm/templates/backend-deployment.yaml†L1-L45】【F:deploy/helm/templates/backend-service.yaml†L1-L15】
+* A backend `Deployment` and `Service` that run the Nest API and expose health probes on `/health/live` and `/health/ready`; the readiness probe now checks Prisma migrations and Redis connectivity before serving traffic.【F:deploy/helm/templates/backend-deployment.yaml†L1-L45】【F:deploy/helm/templates/backend-service.yaml†L1-L15】【F:apps/backend/src/modules/health/health.indicator.ts†L1-L138】
+* A dedicated worker `Deployment` that launches `node dist/src/task-worker.main.js` so BullMQ jobs stay online when the Python services are decommissioned.【F:deploy/helm/templates/worker-deployment.yaml†L1-L48】
 * A frontend `Deployment`, `Service`, and optional `Ingress` for the Next.js UI.【F:deploy/helm/templates/frontend-deployment.yaml†L1-L42】【F:deploy/helm/templates/frontend-service.yaml†L1-L15】【F:deploy/helm/templates/frontend-ingress.yaml†L1-L24】
 * Stateful Redis and PostgreSQL workloads backed by persistent volume claims, plus dedicated secrets for their credentials.【F:deploy/helm/templates/redis-statefulset.yaml†L1-L40】【F:deploy/helm/templates/postgres-statefulset.yaml†L1-L43】【F:deploy/helm/templates/redis-secret.yaml†L1-L9】【F:deploy/helm/templates/postgres-secret.yaml†L1-L11】
 * A backend environment secret that captures all required application secrets and non-secret overrides.【F:deploy/helm/templates/backend-secret.yaml†L1-L33】

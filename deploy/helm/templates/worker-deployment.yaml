@@ -1,0 +1,48 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "covenant-connect.workerName" . }}
+  labels:
+    {{- include "covenant-connect.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "covenant-connect.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "covenant-connect.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: worker
+          image: {{ printf "%s:%s" .Values.worker.image.repository .Values.worker.image.tag | quote }}
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy | default .Values.backend.image.pullPolicy }}
+          command: ["node", "dist/src/task-worker.main.js"]
+          env:
+            - name: APP_VERSION
+              value: {{ default .Chart.AppVersion .Values.worker.env.APP_VERSION | quote }}
+            {{- range $key, $value := .Values.worker.env }}
+            {{- if ne $key "APP_VERSION" }}
+            - name: {{ $key }}
+              value: {{ tpl (printf "%v" $value) $ | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $_ := .Values.backend.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "covenant-connect.backendSecretName" $ }}
+                  key: {{ $key }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+{{- end }}

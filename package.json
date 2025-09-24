@@ -15,6 +15,9 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces",
     "prisma:generate": "pnpm --filter @covenant-connect/backend prisma:generate",
+    "migrate:deploy": "pnpm --filter @covenant-connect/backend migrate:deploy",
+    "migrate:status": "pnpm --filter @covenant-connect/backend migrate:status",
+    "verify:migration": "pnpm --filter @covenant-connect/backend verify:migration",
     "postinstall": "pnpm run prisma:generate"
   }
 }
