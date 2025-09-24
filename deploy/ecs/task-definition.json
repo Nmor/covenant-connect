@@ -1,9 +1,7 @@
 {
   "family": "covenant-connect-web",
   "networkMode": "awsvpc",
-  "requiresCompatibilities": [
-    "FARGATE"
-  ],
+  "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
   "executionRoleArn": "arn:aws:iam::123456789012:role/covenant-connect-ecs-execution",
@@ -11,21 +9,25 @@
   "containerDefinitions": [
     {
       "name": "web",
-      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/covenant-connect:latest",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/covenant-connect-backend:latest",
       "essential": true,
       "portMappings": [
         {
-          "containerPort": 5000,
+          "containerPort": 8000,
           "protocol": "tcp"
         }
       ],
       "command": [
-        "gunicorn",
-        "main:app",
-        "--bind",
-        "0.0.0.0:5000",
-        "--workers",
-        "4"
+        "sh",
+        "-c",
+        "npx prisma migrate deploy && node apps/backend/dist/src/main.js"
+      ],
+      "environment": [
+        { "name": "APP_NAME", "value": "Covenant Connect" },
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "8000" },
+        { "name": "QUEUE_DRIVER", "value": "redis" },
+        { "name": "STORAGE_DRIVER", "value": "s3" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -36,110 +38,41 @@
         }
       },
       "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "curl -f http://localhost:5000/ || exit 1"
-        ],
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health/live || exit 1"],
         "interval": 30,
         "timeout": 5,
         "startPeriod": 60,
         "retries": 3
       },
-      "environment": [
-        {
-          "name": "AWS_REGION",
-          "value": "us-east-1"
-        }
-      ],
       "secrets": [
-        {
-          "name": "DATABASE_URL",
-          "valueFrom": "covenant-connect/database-url"
-        },
-        {
-          "name": "SECRET_KEY",
-          "valueFrom": "covenant-connect/app-secrets:SECRET_KEY::"
-        },
-        {
-          "name": "MAIL_USERNAME",
-          "valueFrom": "covenant-connect/app-secrets:MAIL_USERNAME::"
-        },
-        {
-          "name": "MAIL_PASSWORD",
-          "valueFrom": "covenant-connect/app-secrets:MAIL_PASSWORD::"
-        },
-        {
-          "name": "PAYSTACK_SECRET_KEY",
-          "valueFrom": "covenant-connect/app-secrets:PAYSTACK_SECRET_KEY::"
-        },
-        {
-          "name": "FINCRA_SECRET_KEY",
-          "valueFrom": "covenant-connect/app-secrets:FINCRA_SECRET_KEY::"
-        },
-        {
-          "name": "STRIPE_SECRET_KEY",
-          "valueFrom": "covenant-connect/app-secrets:STRIPE_SECRET_KEY::"
-        },
-        {
-          "name": "FLUTTERWAVE_SECRET_KEY",
-          "valueFrom": "covenant-connect/app-secrets:FLUTTERWAVE_SECRET_KEY::"
-        },
-        {
-          "name": "ENVIRONMENT",
-          "valueFrom": "/covenant-connect/config/ENVIRONMENT"
-        },
-        {
-          "name": "FLASK_ENV",
-          "valueFrom": "/covenant-connect/config/FLASK_ENV"
-        },
-        {
-          "name": "SESSION_COOKIE_SECURE",
-          "valueFrom": "/covenant-connect/config/SESSION_COOKIE_SECURE"
-        },
-        {
-          "name": "SESSION_COOKIE_HTTPONLY",
-          "valueFrom": "/covenant-connect/config/SESSION_COOKIE_HTTPONLY"
-        },
-        {
-          "name": "REMEMBER_COOKIE_SECURE",
-          "valueFrom": "/covenant-connect/config/REMEMBER_COOKIE_SECURE"
-        },
-        {
-          "name": "SESSION_COOKIE_SAMESITE",
-          "valueFrom": "/covenant-connect/config/SESSION_COOKIE_SAMESITE"
-        },
-        {
-          "name": "PREFERRED_URL_SCHEME",
-          "valueFrom": "/covenant-connect/config/PREFERRED_URL_SCHEME"
-        },
-        {
-          "name": "SERVER_NAME",
-          "valueFrom": "/covenant-connect/config/SERVER_NAME"
-        },
-        {
-          "name": "MAIL_SERVER",
-          "valueFrom": "/covenant-connect/config/MAIL_SERVER"
-        },
-        {
-          "name": "MAIL_PORT",
-          "valueFrom": "/covenant-connect/config/MAIL_PORT"
-        },
-        {
-          "name": "MAIL_USE_TLS",
-          "valueFrom": "/covenant-connect/config/MAIL_USE_TLS"
-        },
-        {
-          "name": "MAIL_DEFAULT_SENDER",
-          "valueFrom": "/covenant-connect/config/MAIL_DEFAULT_SENDER"
-        },
-        {
-          "name": "REDIS_URL",
-          "valueFrom": "/covenant-connect/config/REDIS_URL"
-        },
-        {
-          "name": "CORS_ORIGINS",
-          "valueFrom": "/covenant-connect/config/CORS_ORIGINS"
-        }
+        { "name": "DATABASE_URL", "valueFrom": "covenant-connect/database-url" },
+        { "name": "SESSION_SECRET", "valueFrom": "covenant-connect/app-secrets:SESSION_SECRET::" },
+        { "name": "REDIS_URL", "valueFrom": "covenant-connect/app-secrets:REDIS_URL::" },
+        { "name": "STRIPE_SECRET_KEY", "valueFrom": "covenant-connect/app-secrets:STRIPE_SECRET_KEY::" },
+        { "name": "STRIPE_WEBHOOK_SECRET", "valueFrom": "covenant-connect/app-secrets:STRIPE_WEBHOOK_SECRET::" },
+        { "name": "PAYSTACK_SECRET_KEY", "valueFrom": "covenant-connect/app-secrets:PAYSTACK_SECRET_KEY::" },
+        { "name": "PAYSTACK_WEBHOOK_SECRET", "valueFrom": "covenant-connect/app-secrets:PAYSTACK_WEBHOOK_SECRET::" },
+        { "name": "FINCRA_SECRET_KEY", "valueFrom": "covenant-connect/app-secrets:FINCRA_SECRET_KEY::" },
+        { "name": "FINCRA_WEBHOOK_SECRET", "valueFrom": "covenant-connect/app-secrets:FINCRA_WEBHOOK_SECRET::" },
+        { "name": "FLUTTERWAVE_SECRET_KEY", "valueFrom": "covenant-connect/app-secrets:FLUTTERWAVE_SECRET_KEY::" },
+        { "name": "FLUTTERWAVE_WEBHOOK_SECRET", "valueFrom": "covenant-connect/app-secrets:FLUTTERWAVE_WEBHOOK_SECRET::" },
+        { "name": "GOOGLE_CLIENT_ID", "valueFrom": "covenant-connect/app-secrets:GOOGLE_CLIENT_ID::" },
+        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "covenant-connect/app-secrets:GOOGLE_CLIENT_SECRET::" },
+        { "name": "FACEBOOK_CLIENT_ID", "valueFrom": "covenant-connect/app-secrets:FACEBOOK_CLIENT_ID::" },
+        { "name": "FACEBOOK_CLIENT_SECRET", "valueFrom": "covenant-connect/app-secrets:FACEBOOK_CLIENT_SECRET::" },
+        { "name": "APPLE_CLIENT_ID", "valueFrom": "covenant-connect/app-secrets:APPLE_CLIENT_ID::" },
+        { "name": "APPLE_TEAM_ID", "valueFrom": "covenant-connect/app-secrets:APPLE_TEAM_ID::" },
+        { "name": "APPLE_KEY_ID", "valueFrom": "covenant-connect/app-secrets:APPLE_KEY_ID::" },
+        { "name": "APPLE_PRIVATE_KEY", "valueFrom": "covenant-connect/app-secrets:APPLE_PRIVATE_KEY::" },
+        { "name": "AWS_S3_BUCKET", "valueFrom": "covenant-connect/app-secrets:AWS_S3_BUCKET::" },
+        { "name": "AWS_REGION", "valueFrom": "covenant-connect/app-secrets:AWS_REGION::" },
+        { "name": "AWS_ACCESS_KEY_ID", "valueFrom": "covenant-connect/app-secrets:AWS_ACCESS_KEY_ID::" },
+        { "name": "AWS_SECRET_ACCESS_KEY", "valueFrom": "covenant-connect/app-secrets:AWS_SECRET_ACCESS_KEY::" },
+        { "name": "ASSET_BASE_URL", "valueFrom": "covenant-connect/app-secrets:ASSET_BASE_URL::" },
+        { "name": "SESSION_TTL", "valueFrom": "covenant-connect/app-secrets:SESSION_TTL::" },
+        { "name": "COOKIE_SECURE", "valueFrom": "covenant-connect/app-secrets:COOKIE_SECURE::" },
+        { "name": "COOKIE_DOMAIN", "valueFrom": "covenant-connect/app-secrets:COOKIE_DOMAIN::" },
+        { "name": "LOCAL_STORAGE_DIR", "valueFrom": "covenant-connect/app-secrets:LOCAL_STORAGE_DIR::" }
       ]
     }
   ]

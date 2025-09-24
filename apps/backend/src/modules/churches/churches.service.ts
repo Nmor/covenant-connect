@@ -8,14 +8,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 type CreateChurchInput = {
   name: string;
   timezone: string;
+  address?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
   settings?: Record<string, unknown> | null;
-  settings?: Record<string, unknown> | null;
-  settings?: Record<string, unknown> | null;
-  settings?: Record<string, unknown>;
-     main
 };
 
 type UpdateChurchInput = Partial<CreateChurchInput>;
@@ -29,16 +26,11 @@ export class ChurchesService {
       data: {
         name: input.name,
         timezone: input.timezone,
-       main
+        address: this.toNullableString(input.address),
         country: this.toNullableString(input.country),
         state: this.toNullableString(input.state),
         city: this.toNullableString(input.city),
-        settings: this.prepareSettings(input.settings) as Prisma.InputJsonValue
-        country: input.country ?? null,
-        state: input.state ?? null,
-        city: input.city ?? null,
-        settings: (input.settings ?? {}) as Prisma.InputJsonValue
-         main
+        settings: this.normalizeIncomingSettings(input.settings) as Prisma.InputJsonValue
       }
     });
 
@@ -55,11 +47,8 @@ export class ChurchesService {
 
   async getById(churchId: string): Promise<Church> {
     const id = this.parseId(churchId);
-    if (id === null) {
-      throw new NotFoundException('Church not found');
-    }
-
     const church = await this.prisma.church.findUnique({ where: { id } });
+
     if (!church) {
       throw new NotFoundException('Church not found');
     }
@@ -69,11 +58,8 @@ export class ChurchesService {
 
   async update(churchId: string, input: UpdateChurchInput): Promise<Church> {
     const id = this.parseId(churchId);
-    if (id === null) {
-      throw new NotFoundException('Church not found');
-    }
-
     const existing = await this.prisma.church.findUnique({ where: { id } });
+
     if (!existing) {
       throw new NotFoundException('Church not found');
     }
@@ -88,49 +74,10 @@ export class ChurchesService {
       data.timezone = input.timezone;
     }
 
-    if (input.country !== undefined) {
-      data.country = this.toNullableString(input.country);
+    if (input.address !== undefined) {
+      data.address = this.toNullableString(input.address);
     }
 
-    if (input.state !== undefined) {
-      data.state = this.toNullableString(input.state);
-    }
-
-    if (input.city !== undefined) {
-      data.city = this.toNullableString(input.city);
-    }
-
-    if (input.settings !== undefined) {
-      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
-      if (mergedSettings !== null) {
-        data.settings = mergedSettings as Prisma.InputJsonValue;
-      }
-    }
-
-    if (Object.keys(data).length === 0) {
-      return this.toDomain(existing);
-
-    if (input.country !== undefined) {
-      data.country = this.toNullableString(input.country);
-    }
-
-    if (input.state !== undefined) {
-      data.state = this.toNullableString(input.state);
-    }
-
-    if (input.city !== undefined) {
-      data.city = this.toNullableString(input.city);
-    }
-
-    if (input.settings !== undefined) {
-      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
-      if (mergedSettings !== null) {
-        data.settings = mergedSettings as Prisma.InputJsonValue;
-      }
-    }
-
-    if (Object.keys(data).length === 0) {
-      return this.toDomain(existing);
     if (input.country !== undefined) {
       data.country = this.toNullableString(input.country);
     }
@@ -162,75 +109,19 @@ export class ChurchesService {
     return this.toDomain(updated);
   }
 
-    if (input.country !== undefined) {
-      data.country = this.toNullableString(input.country);
-    }
-
-    if (input.state !== undefined) {
-      data.state = this.toNullableString(input.state);
-    }
-
-    if (input.city !== undefined) {
-      data.city = this.toNullableString(input.city);
-    }
-
-    if (input.settings !== undefined) {
-      const mergedSettings = this.mergeSettings(existing.settings, input.settings);
-      if (mergedSettings !== null) {
-        data.settings = mergedSettings as Prisma.InputJsonValue;
-      }
-    }
-
-    if (Object.keys(data).length === 0) {
-      return this.toDomain(existing);
-
-    if (input.country !== undefined) {
-      data.country = input.country ?? null;
-    }
-
-    if (input.state !== undefined) {
-      data.state = input.state ?? null;
-    }
-
-    if (input.city !== undefined) {
-      data.city = input.city ?? null;
-    }
-
-    if (input.settings !== undefined) {
-      const mergedSettings = {
-        ...this.normalizeSettings(existing.settings),
-        ...input.settings
-      };
-
-      data.settings = mergedSettings as Prisma.InputJsonValue;
-       main
-    }
-
-    const updated = await this.prisma.church.update({
-      where: { id },
-      data
-    });
-
-    return this.toDomain(updated);
-  }
-
-   main
   private toDomain(church: ChurchModel): Church {
     return {
       id: church.id.toString(),
       name: church.name,
       timezone: church.timezone,
-      country: church.country ?? undefined,
-      state: church.state ?? undefined,
-      city: church.city ?? undefined,
+      address: this.toOptionalString(church.address),
+      country: this.toOptionalString(church.country),
+      state: this.toOptionalString(church.state),
+      city: this.toOptionalString(church.city),
       settings: this.normalizeSettings(church.settings),
       createdAt: church.createdAt,
       updatedAt: church.updatedAt
     };
-  }
-       main
-  private prepareSettings(settings: unknown): Record<string, unknown> {
-    return this.normalizeIncomingSettings(settings);
   }
 
   private mergeSettings(
@@ -293,31 +184,24 @@ export class ChurchesService {
     return trimmed.length === 0 ? null : trimmed;
   }
 
-  private parseId(id: string): number | null {
+  private toOptionalString(value: string | null | undefined): string | undefined {
+    const normalized = this.toNullableString(value);
+    return normalized ?? undefined;
+  }
+
+  private parseId(id: string): number {
     if (typeof id !== 'string') {
-      return null;
+      throw new NotFoundException('Church not found');
     }
 
     const normalized = id.trim();
     if (normalized.length === 0 || !/^[0-9]+$/.test(normalized)) {
-      return null;
+      throw new NotFoundException('Church not found');
     }
 
     const parsed = Number.parseInt(normalized, 10);
     if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-  private normalizeSettings(settings: Prisma.JsonValue | null | undefined): Record<string, unknown> {
-    if (!settings || Array.isArray(settings) || typeof settings !== 'object') {
-      return {};
-    }
-
-    return settings as Record<string, unknown>;
-  }
-
-  private parseId(id: string): number | null {
-    const parsed = Number.parseInt(id, 10);
-    if (Number.isNaN(parsed)) {
-     main
-      return null;
+      throw new NotFoundException('Church not found');
     }
 
     return parsed;

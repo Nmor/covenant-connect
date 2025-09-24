@@ -1,83 +1,110 @@
 # Covenant Connect
 
-This project powers the Covenant Connect ministry management application.  The
-legacy application is built with Flask and SQLAlchemy and ships with a helper
-script for provisioning the first administrator account in a brand-new
-deployment.
+Covenant Connect is a monorepo that powers the ministry management platform with
+a fully type-safe stack. The NestJS API, Next.js frontend, and shared domain
+package live side-by-side so features ship with consistent contracts from the
+UI down to the database.
 
-> **New TypeScript rewrite**
->
-> A greenfield JavaScript/TypeScript implementation now lives under
-> [`apps/backend`](apps/backend) and [`apps/frontend`](apps/frontend). The NestJS
-> backend exposes modular services for authentication, donations, events,
-> prayer, content, and reporting while the Next.js frontend provides the
-> landing experience and an operational dashboard. Shared domain interfaces are
-> published from [`packages/shared`](packages/shared), and the architecture is
-> documented in [docs/js-architecture.md](docs/js-architecture.md).
->
-> Need to surface content on a church website? Drop the installable WordPress
-> plugin in [`integrations/wordpress-plugin`](integrations/wordpress-plugin)
-> into `wp-content/plugins`, configure the API endpoint, and use the provided
-> shortcodes to render sermons and events without custom theme work.
-> The Next.js frontend now ships a `/solutions/wordpress-plugin` landing page,
-> moving the marketing flow off the legacy Flask templates as we transition to
-> the all-TypeScript stack.
-     main
+## Project layout
 
-## Environment configuration
-
-Set the ``ENVIRONMENT`` (or legacy ``FLASK_ENV``) variable to ``production`` to
-enable secure defaults for cookies and URL generation.  In production the
-configuration will automatically mark session and remember-me cookies as secure,
-default the preferred URL scheme to HTTPS and require explicit CORS origins.  A
-comma-separated ``CORS_ORIGINS`` list can be provided when hosting on AWS or any
-other multi-domain environment.  ``SERVER_NAME`` may also be defined when Flask
-needs to know the canonical hostname for URL generation.
-
-If any of the secure defaults are overridden while running in production the
-application will log a warning during startup, allowing operators to spot
-misconfigurations quickly.
-
-### Social sign-on providers
-
-Support for Google, Apple, and Facebook single sign-on is available when the
-corresponding OAuth credentials are supplied via environment variables:
-
-* ``GOOGLE_CLIENT_ID`` and ``GOOGLE_CLIENT_SECRET``
-* ``APPLE_CLIENT_ID`` and ``APPLE_CLIENT_SECRET``
-* ``FACEBOOK_CLIENT_ID`` and ``FACEBOOK_CLIENT_SECRET``
-
-When any of the above pairs are present the login screen automatically surfaces
-buttons for the configured providers.  Successful sign-ins create a user record
-that links the provider identity while leaving the password unset, allowing a
-smooth passwordless experience for SSO-only accounts.
-
-## Seeding the initial admin user
-
-Use ``create_admin.py`` to create the very first administrator.  The script
-reads credentials from command-line arguments or the ``ADMIN_USERNAME``,
-``ADMIN_EMAIL`` and ``ADMIN_PASSWORD`` environment variables.  The password must
-be at least 12 characters long and include an uppercase letter, lowercase
-letter, digit and symbol.
-
-```bash
-# Option 1: provide everything inline
-python create_admin.py --username covenant-admin \
-    --email admin@example.com \
-    --password 'Sup3r$ecretP@ss'
-
-# Option 2: rely on environment variables for non-interactive deployments
-export ADMIN_USERNAME=covenant-admin
-export ADMIN_EMAIL=admin@example.com
-export ADMIN_PASSWORD='Sup3r$ecretP@ss'
-python create_admin.py
+```
+.
+├── apps
+│   ├── backend   # NestJS API (Prisma, BullMQ, Swagger)
+│   └── frontend  # Next.js 13 App Router experience
+├── packages
+│   └── shared    # Generated Prisma types + shared domain helpers
+├── deploy        # Helm chart + ECS task definitions for the Node services
+└── docs          # Architecture and operational runbooks
 ```
 
-If the script is run again with the same email address it exits cleanly without
-creating a duplicate administrator account, making it safe to re-run as part of
-deployment automation.
+* `apps/backend` exposes modules for accounts, churches, donations, events,
+  prayer, content, integrations, reporting, and task orchestration. Everything
+  persists through Prisma models so the API can run against PostgreSQL with
+  migration enforcement at startup.
+* `apps/frontend` renders the public marketing site and authenticated dashboard.
+  It consumes the shared TypeScript contracts and targets the same API used by
+  partner integrations.
+* `packages/shared` publishes the generated Prisma client typings together with
+  friendly aliases such as `UserAccount`, `Donation`, and the string-id `Church`
+  interface consumed by both apps.
 
-## Deployment runbook
+Need to surface event and sermon listings on a WordPress site? Install the
+plugin under `integrations/wordpress-plugin`, point it at the API, and embed the
+provided shortcodes.
 
-Operational details, AWS resource mappings, and ECS deployment instructions live in [docs/deployment-runbook.md](docs/deployment-runbook.md).
+## Getting started
 
+1. Install dependencies and generate the Prisma client:
+
+   ```bash
+   pnpm install
+   pnpm run prisma:generate
+   ```
+
+2. Provide a PostgreSQL connection string:
+
+   ```bash
+   export DATABASE_URL="postgresql://user:password@localhost:5432/covenant_connect"
+   ```
+
+3. Start the backend in watch mode:
+
+   ```bash
+   pnpm --filter @covenant-connect/backend dev
+   ```
+
+4. (Optional) Start the Next.js frontend:
+
+   ```bash
+   pnpm --filter @covenant-connect/frontend dev
+   ```
+
+A Docker Compose configuration lives at `docker-compose.yml` for end-to-end
+local runs with PostgreSQL and Redis pre-wired. Run `docker compose up --build`
+to exercise the entire stack in containers.
+
+## Scripts
+
+The workspace root exposes convenience scripts that fan out to each package:
+
+* `pnpm run build` &mdash; build the shared package, backend, and frontend.
+* `pnpm run lint` / `pnpm run typecheck` / `pnpm run test` &mdash; quality gates for
+  every workspace.
+* `pnpm --filter @covenant-connect/backend generate:openapi` &mdash; regenerate the
+  OpenAPI document after making controller or DTO changes.
+
+The backend build produces `dist/src/main.js` for the HTTP API and
+`dist/src/task-worker.main.js` for BullMQ workers. Both entry points are shipped
+in the production container image.
+
+## Configuration highlights
+
+Backend configuration is sourced from environment variables and strongly typed
+configuration factories. Important values include:
+
+| Variable | Description |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string for Prisma. |
+| `REDIS_URL` | Redis connection string when using the BullMQ queue driver. |
+| `SESSION_SECRET` | Session encryption key. |
+| `QUEUE_DRIVER` | Either `redis` or `memory` (development only). |
+| `CORS_ORIGINS` | Comma separated list of allowed origins. |
+| `STRIPE_*`, `PAYSTACK_*`, `FINCRA_*`, `FLUTTERWAVE_*` | Payment gateway secrets. |
+| `GOOGLE_*`, `FACEBOOK_*`, `APPLE_*` | OAuth credentials for social sign-in. |
+
+See [`docs/deployment-runbook.md`](docs/deployment-runbook.md) for detailed
+production configuration, container build information, and Helm chart usage.
+
+## Testing
+
+Run the full backend test suite with:
+
+```bash
+pnpm --filter @covenant-connect/backend test
+```
+
+Vitest/Jest specs cover Prisma-backed services (accounts, donations, events,
+churches, etc.), email providers, OAuth flows, and queue orchestration so the
+TypeScript stack maintains the parity previously provided by the Flask
+implementation.
