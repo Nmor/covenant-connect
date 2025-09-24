@@ -20,7 +20,7 @@ module.exports = {
     'import/resolver': {
       node: {
         extensions: ['.ts', '.js'],
-        moduleDirectory: ['node_modules', 'src', '.']
+        moduleDirectory: ['node_modules', '../../node_modules', 'src', '.']
       }
     },
     'import/core-modules': ['@aws-sdk/client-ses', 'nodemailer', 'bullmq', 'ioredis']
