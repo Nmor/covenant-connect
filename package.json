@@ -5,7 +5,8 @@
   "workspaces": [
     "apps/backend",
     "apps/frontend",
-    "packages/shared"
+    "packages/shared",
+    "integrations/wordpress-plugin"
   ],
   "scripts": {
     "prebuild": "pnpm run prisma:generate",
@@ -18,6 +19,7 @@
     "migrate:deploy": "pnpm --filter @covenant-connect/backend migrate:deploy",
     "migrate:status": "pnpm --filter @covenant-connect/backend migrate:status",
     "verify:migration": "pnpm --filter @covenant-connect/backend verify:migration",
-    "postinstall": "pnpm run prisma:generate"
+    "postinstall": "pnpm run prisma:generate",
+    "package:wordpress": "pnpm --filter @covenant-connect/wordpress-plugin run package"
   }
 }

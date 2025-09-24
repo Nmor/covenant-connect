@@ -32,10 +32,11 @@ class Plugin
 
     private function __construct()
     {
+        add_action('init', array($this, 'registerAssets'));
         add_action('init', array($this, 'registerShortcodes'));
+        add_action('init', array($this, 'registerBlocks'));
         add_action('admin_menu', array($this, 'registerSettingsPage'));
         add_action('admin_init', array($this, 'registerSettings'));
-        add_action('wp_enqueue_scripts', array($this, 'registerAssets'));
     }
 
     /**
@@ -43,11 +44,104 @@ class Plugin
      */
     public function registerAssets()
     {
+        $styleUrl = COVENANT_CONNECT_PLUGIN_URL . 'assets/style.css';
+
         wp_register_style(
             'covenant-connect',
-            COVENANT_CONNECT_PLUGIN_URL . 'assets/style.css',
+            $styleUrl,
             array(),
             COVENANT_CONNECT_PLUGIN_VERSION
+        );
+
+        wp_register_style(
+            'covenant-connect-editor',
+            $styleUrl,
+            array(),
+            COVENANT_CONNECT_PLUGIN_VERSION
+        );
+    }
+
+    /**
+     * Register Gutenberg blocks for sermons and events.
+     */
+    public function registerBlocks()
+    {
+        if (! function_exists('register_block_type')) {
+            return;
+        }
+
+        $assetPath  = COVENANT_CONNECT_PLUGIN_DIR . 'build/index.asset.php';
+        $scriptPath = COVENANT_CONNECT_PLUGIN_DIR . 'build/index.js';
+
+        if (! file_exists($assetPath) || ! file_exists($scriptPath)) {
+            return;
+        }
+
+        $asset = require $assetPath;
+
+        $dependencies = array();
+        $version      = filemtime($scriptPath) ?: COVENANT_CONNECT_PLUGIN_VERSION;
+
+        if (is_array($asset)) {
+            if (isset($asset['dependencies']) && is_array($asset['dependencies'])) {
+                $dependencies = $asset['dependencies'];
+            }
+
+            if (! empty($asset['version'])) {
+                $version = $asset['version'];
+            }
+        }
+
+        wp_register_script(
+            'covenant-connect-blocks',
+            COVENANT_CONNECT_PLUGIN_URL . 'build/index.js',
+            $dependencies,
+            $version,
+            true
+        );
+
+        register_block_type(
+            'covenant-connect/sermons',
+            array(
+                'api_version'     => 2,
+                'editor_script'   => 'covenant-connect-blocks',
+                'style'           => 'covenant-connect',
+                'editor_style'    => 'covenant-connect-editor',
+                'render_callback' => array($this, 'renderSermonsBlock'),
+                'attributes'      => array(
+                    'limit'         => array('type' => 'number', 'default' => 5),
+                    'layout'        => array('type' => 'string', 'default' => 'list'),
+                    'cache_minutes' => array('type' => 'number', 'default' => 5),
+                    'show_preacher' => array('type' => 'boolean', 'default' => true),
+                    'show_date'     => array('type' => 'boolean', 'default' => true),
+                ),
+                'supports'        => array(
+                    'align' => false,
+                    'html'  => false,
+                ),
+            )
+        );
+
+        register_block_type(
+            'covenant-connect/events',
+            array(
+                'api_version'     => 2,
+                'editor_script'   => 'covenant-connect-blocks',
+                'style'           => 'covenant-connect',
+                'editor_style'    => 'covenant-connect-editor',
+                'render_callback' => array($this, 'renderEventsBlock'),
+                'attributes'      => array(
+                    'limit'         => array('type' => 'number', 'default' => 5),
+                    'layout'        => array('type' => 'string', 'default' => 'list'),
+                    'cache_minutes' => array('type' => 'number', 'default' => 5),
+                    'show_location' => array('type' => 'boolean', 'default' => true),
+                    'show_time'     => array('type' => 'boolean', 'default' => true),
+                ),
+                'supports'        => array(
+                    'align' => false,
+                    'html'  => false,
+                ),
+            )
         );
     }
 
@@ -187,11 +281,13 @@ class Plugin
             'covenant_connect_sermons'
         );
 
+        $normalized = $this->normalizeAttributes('sermons', $attributes);
+
         return $this->renderContent(
             'sermons',
-            (int) $attributes['limit'],
-            (int) $attributes['cache_minutes'],
-            $attributes
+            $normalized['limit'],
+            $normalized['cache_minutes'],
+            $normalized
         );
     }
 
@@ -214,12 +310,97 @@ class Plugin
             'covenant_connect_events'
         );
 
+        $normalized = $this->normalizeAttributes('events', $attributes);
+
         return $this->renderContent(
             'events',
-            (int) $attributes['limit'],
-            (int) $attributes['cache_minutes'],
-            $attributes
+            $normalized['limit'],
+            $normalized['cache_minutes'],
+            $normalized
         );
+    }
+
+    /**
+     * Render the sermons block output.
+     *
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function renderSermonsBlock($attributes)
+    {
+        $normalized = $this->normalizeAttributes('sermons', (array) $attributes);
+
+        return $this->renderContent(
+            'sermons',
+            $normalized['limit'],
+            $normalized['cache_minutes'],
+            $normalized
+        );
+    }
+
+    /**
+     * Render the events block output.
+     *
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function renderEventsBlock($attributes)
+    {
+        $normalized = $this->normalizeAttributes('events', (array) $attributes);
+
+        return $this->renderContent(
+            'events',
+            $normalized['limit'],
+            $normalized['cache_minutes'],
+            $normalized
+        );
+    }
+
+    /**
+     * Normalize attributes shared between shortcodes and blocks.
+     *
+     * @param 'sermons'|'events' $type
+     * @param array<string, mixed> $attributes
+     * @return array<string, mixed>
+     */
+    private function normalizeAttributes($type, array $attributes)
+    {
+        if ('sermons' === $type) {
+            $defaults = array(
+                'limit'         => 5,
+                'layout'        => 'list',
+                'cache_minutes' => 5,
+                'show_preacher' => true,
+                'show_date'     => true,
+            );
+        } else {
+            $defaults = array(
+                'limit'         => 5,
+                'layout'        => 'list',
+                'cache_minutes' => 5,
+                'show_location' => true,
+                'show_time'     => true,
+            );
+        }
+
+        $normalized = array_merge(
+            $defaults,
+            array_intersect_key($attributes, $defaults)
+        );
+
+        $normalized['limit']         = (int) $normalized['limit'];
+        $normalized['cache_minutes'] = (int) $normalized['cache_minutes'];
+        $normalized['layout']        = (string) $normalized['layout'];
+
+        if ('sermons' === $type) {
+            $normalized['show_preacher'] = $this->toBool($normalized['show_preacher']);
+            $normalized['show_date']     = $this->toBool($normalized['show_date']);
+        } else {
+            $normalized['show_location'] = $this->toBool($normalized['show_location']);
+            $normalized['show_time']     = $this->toBool($normalized['show_time']);
+        }
+
+        return $normalized;
     }
 
     /**
