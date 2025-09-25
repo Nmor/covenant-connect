@@ -7,6 +7,7 @@ FROM base AS deps
 COPY package.json ./
 COPY apps/frontend/package.json ./apps/frontend/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
+COPY scripts/postinstall.js ./scripts/postinstall.js
 RUN npm install
 
 FROM deps AS build
