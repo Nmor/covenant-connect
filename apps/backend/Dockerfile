@@ -8,6 +8,7 @@ FROM base AS deps
 COPY package.json ./
 COPY apps/backend/package.json ./apps/backend/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
+COPY apps/backend/prisma ./apps/backend/prisma
 RUN npm install
 
 FROM deps AS build

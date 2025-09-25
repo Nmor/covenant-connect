@@ -13,6 +13,10 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./test/setup.js'],
     hookTimeout: 120000,
-    testTimeout: 120000
+    testTimeout: 120000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov']
+    }
   }
 });
