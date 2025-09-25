@@ -13,11 +13,7 @@ if (!existsSync(workspaceManifest)) {
   process.exit(0);
 }
 
-const prismaArgs = [
-  'run',
-  'prisma:generate',
-  '--workspace=@covenant-connect/backend'
-];
+const backendWorkspaceDir = path.dirname(workspaceManifest);
 
 const npmExec = process.env.npm_execpath;
 
@@ -26,13 +22,16 @@ let args;
 
 if (npmExec) {
   command = process.execPath;
-  args = [npmExec, ...prismaArgs];
+  args = [npmExec, 'run', 'prisma:generate'];
 } else {
   command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  args = prismaArgs;
+  args = ['run', 'prisma:generate'];
 }
 
-const result = spawnSync(command, args, { stdio: 'inherit' });
+const result = spawnSync(command, args, {
+  stdio: 'inherit',
+  cwd: backendWorkspaceDir
+});
 
 if (result.error) {
   console.error(result.error);
