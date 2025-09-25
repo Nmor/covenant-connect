@@ -84,6 +84,29 @@ describeIfPostgres('Prisma-backed services', () => {
   let prayer;
   let integrations;
 
+  const createStubPaymentProvider = (name) => ({
+    async initializePayment() {
+      return {
+        reference: `${name}-reference`,
+        transactionId: `${name}-transaction`,
+        metadata: { provider: name },
+        status: 'pending'
+      };
+    },
+    async verifyPayment() {
+      return {
+        status: 'completed',
+        transactionId: `${name}-transaction`,
+        metadata: { verified: true }
+      };
+    },
+    async refund() {
+      return {
+        metadata: { refunded: true }
+      };
+    }
+  });
+
   beforeAll(async () => {
     process.env.DATABASE_URL = databaseUrl;
 
@@ -98,7 +121,14 @@ describeIfPostgres('Prisma-backed services', () => {
     await prisma.onModuleInit();
 
     accounts = new AccountsService(prisma);
-    donations = new DonationsService(prisma);
+    donations = new DonationsService(
+      prisma,
+      configService,
+      createStubPaymentProvider('paystack'),
+      createStubPaymentProvider('fincra'),
+      createStubPaymentProvider('stripe'),
+      createStubPaymentProvider('flutterwave')
+    );
     events = new EventsService(prisma);
     prayer = new PrayerService(prisma);
     integrations = new IntegrationsService(prisma);
