@@ -19,7 +19,7 @@
     "migrate:deploy": "npm run migrate:deploy --workspace=@covenant-connect/backend",
     "migrate:status": "npm run migrate:status --workspace=@covenant-connect/backend",
     "verify:migration": "npm run verify:migration --workspace=@covenant-connect/backend",
-    "postinstall": "npm run prisma:generate --workspace=@covenant-connect/backend",
+    "postinstall": "node scripts/postinstall.js",
     "package:wordpress": "npm run package --workspace=@covenant-connect/wordpress-plugin"
   }
 }
