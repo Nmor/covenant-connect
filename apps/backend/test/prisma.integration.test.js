@@ -27,6 +27,18 @@ const psqlEnv = {
   PGPASSWORD: POSTGRES_PASSWORD
 };
 
+const canRunPostgresIntegrations = (() => {
+  try {
+    execFileSync('psql', ['--version'], { stdio: 'ignore', env: psqlEnv });
+    return true;
+  } catch {
+    console.warn('Skipping Prisma service integration tests because the `psql` command is unavailable.');
+    return false;
+  }
+})();
+
+const describeIfPostgres = canRunPostgresIntegrations ? describe : describe.skip;
+
 function execPsql(args) {
   execFileSync('psql', ['-q', ...args], { stdio: 'inherit', env: psqlEnv });
 }
@@ -64,7 +76,7 @@ function applyMigrations() {
   }
 }
 
-describe('Prisma-backed services', () => {
+describeIfPostgres('Prisma-backed services', () => {
   let prisma;
   let accounts;
   let donations;
