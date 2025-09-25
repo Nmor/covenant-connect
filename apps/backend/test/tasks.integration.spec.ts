@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
 
 import { ConfigService } from '@nestjs/config';
@@ -144,7 +144,19 @@ const waitFor = async (predicate: () => Promise<boolean> | boolean, timeout = 50
   throw new Error('Condition not met within timeout');
 };
 
-describe('TasksModule integration', () => {
+const canRunRedisIntegrations = (() => {
+  try {
+    execFileSync('redis-server', ['--version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    console.warn('Skipping tasks integration tests because the `redis-server` command is unavailable.');
+    return false;
+  }
+})();
+
+const describeIfRedis = canRunRedisIntegrations ? describe : describe.skip;
+
+describeIfRedis('TasksModule integration', () => {
   let redisProcess: ReturnType<typeof spawn> | null;
   const redisPort = 6380;
   let prisma: StubPrismaService;

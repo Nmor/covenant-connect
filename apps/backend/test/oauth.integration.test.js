@@ -29,6 +29,18 @@ const psqlEnv = {
   PGPASSWORD: POSTGRES_PASSWORD
 };
 
+const canRunPostgresIntegrations = (() => {
+  try {
+    execFileSync('psql', ['--version'], { stdio: 'ignore', env: psqlEnv });
+    return true;
+  } catch {
+    console.warn('Skipping OAuth provider integration tests because the `psql` command is unavailable.');
+    return false;
+  }
+})();
+
+const describeIfPostgres = canRunPostgresIntegrations ? describe : describe.skip;
+
 const APPLE_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgVeNDNxMtkr+Bc74T\nzMPCeDXmDtepU43qrAPy9nMBYX+hRANCAASkXWJMFa7XhffY/av0z07gG6ThuDky\nnxQ33IBcKeI/pwd8kNxXyuUN86hYKM3plAtlYWUO2Yw80gi8C8J2U0Yi\n-----END PRIVATE KEY-----`;
 
 function execPsql(args) {
@@ -74,7 +86,7 @@ function makeIdToken(payload) {
   return `${header}.${body}.signature`;
 }
 
-describe('OAuth provider flows', () => {
+describeIfPostgres('OAuth provider flows', () => {
   let configService;
   let prisma;
   let accounts;
