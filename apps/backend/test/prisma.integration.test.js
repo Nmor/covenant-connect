@@ -27,6 +27,18 @@ const psqlEnv = {
   PGPASSWORD: POSTGRES_PASSWORD
 };
 
+const canRunPostgresIntegrations = (() => {
+  try {
+    execFileSync('psql', ['--version'], { stdio: 'ignore', env: psqlEnv });
+    return true;
+  } catch {
+    console.warn('Skipping Prisma service integration tests because the `psql` command is unavailable.');
+    return false;
+  }
+})();
+
+const describeIfPostgres = canRunPostgresIntegrations ? describe : describe.skip;
+
 function execPsql(args) {
   execFileSync('psql', ['-q', ...args], { stdio: 'inherit', env: psqlEnv });
 }
@@ -64,13 +76,36 @@ function applyMigrations() {
   }
 }
 
-describe('Prisma-backed services', () => {
+describeIfPostgres('Prisma-backed services', () => {
   let prisma;
   let accounts;
   let donations;
   let events;
   let prayer;
   let integrations;
+
+  const createStubPaymentProvider = (name) => ({
+    async initializePayment() {
+      return {
+        reference: `${name}-reference`,
+        transactionId: `${name}-transaction`,
+        metadata: { provider: name },
+        status: 'pending'
+      };
+    },
+    async verifyPayment() {
+      return {
+        status: 'completed',
+        transactionId: `${name}-transaction`,
+        metadata: { verified: true }
+      };
+    },
+    async refund() {
+      return {
+        metadata: { refunded: true }
+      };
+    }
+  });
 
   beforeAll(async () => {
     process.env.DATABASE_URL = databaseUrl;
@@ -86,7 +121,14 @@ describe('Prisma-backed services', () => {
     await prisma.onModuleInit();
 
     accounts = new AccountsService(prisma);
-    donations = new DonationsService(prisma);
+    donations = new DonationsService(
+      prisma,
+      configService,
+      createStubPaymentProvider('paystack'),
+      createStubPaymentProvider('fincra'),
+      createStubPaymentProvider('stripe'),
+      createStubPaymentProvider('flutterwave')
+    );
     events = new EventsService(prisma);
     prayer = new PrayerService(prisma);
     integrations = new IntegrationsService(prisma);
