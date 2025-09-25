@@ -9,17 +9,17 @@
     "integrations/wordpress-plugin"
   ],
   "scripts": {
-    "prebuild": "pnpm run prisma:generate",
+    "prebuild": "npm run prisma:generate --workspace=@covenant-connect/backend",
     "build": "npm run build --workspaces",
     "dev": "npm run dev -w apps/backend",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test --workspaces",
-    "prisma:generate": "pnpm --filter @covenant-connect/backend prisma:generate",
-    "migrate:deploy": "pnpm --filter @covenant-connect/backend migrate:deploy",
-    "migrate:status": "pnpm --filter @covenant-connect/backend migrate:status",
-    "verify:migration": "pnpm --filter @covenant-connect/backend verify:migration",
-    "postinstall": "pnpm run prisma:generate",
-    "package:wordpress": "pnpm --filter @covenant-connect/wordpress-plugin run package"
+    "prisma:generate": "npm run prisma:generate --workspace=@covenant-connect/backend",
+    "migrate:deploy": "npm run migrate:deploy --workspace=@covenant-connect/backend",
+    "migrate:status": "npm run migrate:status --workspace=@covenant-connect/backend",
+    "verify:migration": "npm run verify:migration --workspace=@covenant-connect/backend",
+    "postinstall": "npm run prisma:generate --workspace=@covenant-connect/backend",
+    "package:wordpress": "npm run package --workspace=@covenant-connect/wordpress-plugin"
   }
 }
