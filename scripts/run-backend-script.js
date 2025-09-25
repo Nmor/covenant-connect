@@ -7,12 +7,14 @@ const { spawnSync } = require('child_process');
 const args = process.argv.slice(2);
 const [scriptName, ...rest] = args;
 const skipIfMissing = rest.includes('--skip-if-missing');
+const forwardedArgs = rest.filter((arg) => arg !== '--skip-if-missing');
 
 if (!scriptName) {
   console.error('Error: expected a backend script name as the first argument.');
   process.exit(1);
 }
 
+const workspaceName = '@covenant-connect/backend';
 const backendPath = join(process.cwd(), 'apps', 'backend');
 
 if (!existsSync(backendPath)) {
@@ -26,14 +28,44 @@ if (!existsSync(backendPath)) {
   process.exit(1);
 }
 
-const result = spawnSync(
-  'npm',
-  ['--workspace', '@covenant-connect/backend', 'run', scriptName, ...rest.filter((arg) => arg !== '--skip-if-missing')],
-  {
-    stdio: 'inherit',
-    env: process.env,
+const { npm_execpath: npmExecPath, npm_node_execpath: nodeExecPath, npm_config_user_agent: userAgent } = process.env;
+
+function detectPackageManager(execPath, ua) {
+  const source = execPath || ua || '';
+  if (/pnpm/i.test(source)) {
+    return 'pnpm';
   }
-);
+  if (/yarn/i.test(source)) {
+    return 'yarn';
+  }
+  return 'npm';
+}
+
+const packageManager = detectPackageManager(npmExecPath, userAgent);
+
+let command;
+let commandArgs;
+
+if (npmExecPath && nodeExecPath) {
+  command = nodeExecPath;
+  commandArgs = [npmExecPath];
+} else {
+  command = packageManager;
+  commandArgs = [];
+}
+
+if (packageManager === 'pnpm') {
+  commandArgs.push('--filter', workspaceName, 'run', scriptName, ...forwardedArgs);
+} else if (packageManager === 'yarn') {
+  commandArgs.push('workspace', workspaceName, 'run', scriptName, ...forwardedArgs);
+} else {
+  commandArgs.push('--workspace', workspaceName, 'run', scriptName, ...forwardedArgs);
+}
+
+const result = spawnSync(command, commandArgs, {
+  stdio: 'inherit',
+  env: process.env,
+});
 
 if (result.error) {
   console.error(result.error.message);
