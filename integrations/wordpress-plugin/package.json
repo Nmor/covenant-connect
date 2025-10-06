@@ -10,6 +10,6 @@
                 "package": "wp-scripts build && node ./scripts/package-wordpress.mjs"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^27.4.0"
+		"@wordpress/scripts": "^30.25.0"
 	}
 }
