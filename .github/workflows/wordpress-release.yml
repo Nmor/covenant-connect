@@ -35,7 +35,7 @@ jobs:
         run: pnpm package:wordpress
 
       - name: Upload plugin artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: covenant-connect-wordpress
           path: integrations/wordpress-plugin/dist/*.zip
