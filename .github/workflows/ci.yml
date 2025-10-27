@@ -115,7 +115,7 @@ jobs:
         run: pnpm --filter @covenant-connect/backend exec vitest run --coverage
 
       - name: Upload backend coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: backend-coverage
           path: apps/backend/coverage
@@ -159,7 +159,7 @@ jobs:
         run: pnpm --filter @covenant-connect/frontend test
 
       - name: Upload frontend coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: frontend-coverage
           path: apps/frontend/coverage
@@ -184,7 +184,7 @@ jobs:
         run: helm template covenant-connect deploy/helm --values deploy/helm/values.yaml > /tmp/helm-rendered.yaml
 
       - name: Upload rendered manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: helm-rendered-manifest
           path: /tmp/helm-rendered.yaml
